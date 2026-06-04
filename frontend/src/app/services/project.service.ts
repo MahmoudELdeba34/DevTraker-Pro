@@ -10,21 +10,27 @@ export class ProjectService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<ApiResponse<Project[]>> {
-    return this.http.get<ApiResponse<Project[]>>(this.apiUrl);
+  getAll(workspaceId?: string | null): Observable<ApiResponse<Project[]>> {
+    let url = this.apiUrl;
+    if (workspaceId !== undefined) {
+      url += `?workspaceId=${workspaceId === null ? 'null' : workspaceId}`;
+    }
+    return this.http.get<ApiResponse<Project[]>>(url);
   }
 
   create(data: {
     title: string;
     description?: string;
     deadline?: string;
+    members?: string[];
+    workspaceId?: string | null;
   }): Observable<ApiResponse<Project>> {
     return this.http.post<ApiResponse<Project>>(this.apiUrl, data);
   }
 
   update(
     id: string,
-    data: Partial<{ title: string; description: string; deadline: string }>
+    data: Partial<{ title: string; description: string; deadline: string; members: string[] }>
   ): Observable<ApiResponse<Project>> {
     return this.http.put<ApiResponse<Project>>(`${this.apiUrl}/${id}`, data);
   }

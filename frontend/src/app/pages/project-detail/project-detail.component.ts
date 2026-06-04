@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   signal,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -10,7 +11,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TaskService } from '../../services/task.service';
 import { ProjectService } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
-import { Task, Project, TaskPriority, TaskStatus } from '../../models/types';
+import { UserService } from '../../services/user.service';
+import { Task, Project, User, TaskPriority, TaskStatus } from '../../models/types';
 import { TaskCardComponent } from '../../components/task-card/task-card.component';
 import { FilterBarComponent } from '../../components/filter-bar/filter-bar.component';
 
@@ -26,41 +28,6 @@ import { FilterBarComponent } from '../../components/filter-bar/filter-bar.compo
     FilterBarComponent,
   ],
   template: `
-    <div class="app-layout">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <div class="sidebar-logo">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 11l3 3L22 4"/>
-            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-          </svg>
-          <span>DevTracker Pro</span>
-        </div>
-        <nav class="sidebar-nav">
-          <a class="nav-item" routerLink="/dashboard">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-            </svg>
-            Dashboard
-          </a>
-        </nav>
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="user-avatar">{{ userInitial() }}</div>
-            <div>
-              <p class="user-name">{{ userName() }}</p>
-            </div>
-          </div>
-          <button class="btn-logout" (click)="logout()" title="Sign out">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-              <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-        </div>
-      </aside>
-
       <!-- Main Content -->
       <main class="main-content">
         <!-- Breadcrumb -->
@@ -99,8 +66,8 @@ import { FilterBarComponent } from '../../components/filter-bar/filter-bar.compo
 
         <!-- Add Task Form -->
         @if (showAddTask()) {
-          <div class="card form-card">
-            <h2 class="form-title">New Task</h2>
+          <div class="card form-card bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6">
+            <h2 class="form-title text-white">New Task</h2>
             <form [formGroup]="taskForm" (ngSubmit)="createTask()" class="inline-form">
               <div class="form-row">
                 <div class="form-group">
@@ -119,9 +86,16 @@ import { FilterBarComponent } from '../../components/filter-bar/filter-bar.compo
                   <label for="task-deadline">Deadline</label>
                   <input id="task-deadline" type="date" formControlName="deadline" />
                 </div>
+                <div class="form-group">
+                  <label for="task-assignee">Assignee</label>
+                  <select id="task-assignee" formControlName="assignedTo" class="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg focus:outline-none focus:border-purple-500 p-2.5">
+                    <option value="">Unassigned</option>
+                    <option *ngFor="let user of allUsers()" [value]="user._id">{{ user.name }} ({{ user.role }})</option>
+                  </select>
+                </div>
               </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary" [disabled]="addingTask()">
+              <div class="form-actions mt-4">
+                <button type="submit" class="btn-primary bg-purple-600 hover:bg-purple-500 text-white font-medium" [disabled]="addingTask()">
                   {{ addingTask() ? 'Adding...' : 'Add Task' }}
                 </button>
                 <button type="button" class="btn-ghost" (click)="cancelAddTask()">Cancel</button>
@@ -171,7 +145,6 @@ import { FilterBarComponent } from '../../components/filter-bar/filter-bar.compo
           }
         }
       </main>
-    </div>
   `,
 })
 export class ProjectDetailComponent implements OnInit {
@@ -182,6 +155,7 @@ export class ProjectDetailComponent implements OnInit {
   error = signal('');
   showAddTask = signal(false);
   addingTask = signal(false);
+  allUsers = signal<User[]>([]);
 
   taskForm!: FormGroup;
   private projectId!: string;
@@ -191,6 +165,7 @@ export class ProjectDetailComponent implements OnInit {
     private taskService: TaskService,
     private projectService: ProjectService,
     private authService: AuthService,
+    private userService: UserService,
     private fb: FormBuilder
   ) {}
 
@@ -199,15 +174,22 @@ export class ProjectDetailComponent implements OnInit {
       title: ['', Validators.required],
       priority: ['medium'],
       deadline: [''],
+      assignedTo: [''],
     });
 
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
     this.loadProject();
     this.loadTasks();
+    this.loadTeamUsers();
   }
 
   userName = () => this.authService.currentUser()?.name ?? '';
+  userEmail = () => this.authService.currentUser()?.email ?? '';
+  userRole = () => this.authService.currentUser()?.role ?? 'employee';
   userInitial = () => (this.authService.currentUser()?.name ?? 'U')[0].toUpperCase();
+  isAdmin = () => this.authService.currentUser()?.role === 'admin';
+  isHRManagerAdmin = () => ['admin', 'hr', 'manager'].includes(this.authService.currentUser()?.role || '');
+  isAccountantHRAdmin = () => ['admin', 'hr', 'accountant'].includes(this.authService.currentUser()?.role || '');
 
   loadProject(): void {
     this.projectService.getAll().subscribe({
@@ -216,6 +198,16 @@ export class ProjectDetailComponent implements OnInit {
         this.project.set(found ?? null);
       },
       error: () => {},
+    });
+  }
+
+  loadTeamUsers(): void {
+    this.userService.getAll().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.allUsers.set(res.data);
+        }
+      }
     });
   }
 
@@ -240,10 +232,11 @@ export class ProjectDetailComponent implements OnInit {
       return;
     }
     this.addingTask.set(true);
-    const { title, priority, deadline } = this.taskForm.value as {
+    const { title, priority, deadline, assignedTo } = this.taskForm.value as {
       title: string;
       priority: TaskPriority;
       deadline: string;
+      assignedTo: string;
     };
 
     this.taskService
@@ -251,11 +244,12 @@ export class ProjectDetailComponent implements OnInit {
         title,
         priority,
         deadline: deadline || undefined,
+        assignedTo: assignedTo || null,
       })
       .subscribe({
         next: (res) => {
           this.addingTask.set(false);
-          this.taskForm.reset({ priority: 'medium' });
+          this.taskForm.reset({ priority: 'medium', assignedTo: '' });
           this.showAddTask.set(false);
           this.allTasks.update((tasks) => [res.data, ...tasks]);
           this.filteredTasks.update((tasks) => [res.data, ...tasks]);
@@ -269,7 +263,7 @@ export class ProjectDetailComponent implements OnInit {
 
   cancelAddTask(): void {
     this.showAddTask.set(false);
-    this.taskForm.reset({ priority: 'medium' });
+    this.taskForm.reset({ priority: 'medium', assignedTo: '' });
   }
 
   onTaskUpdated(updatedTask: Task): void {

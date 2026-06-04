@@ -33,7 +33,7 @@ export class TaskService {
 
   create(
     projectId: string,
-    data: { title: string; priority?: TaskPriority; status?: TaskStatus; deadline?: string }
+    data: { title: string; priority?: TaskPriority; status?: TaskStatus; deadline?: string; assignedTo?: string | null }
   ): Observable<ApiResponse<Task>> {
     return this.http.post<ApiResponse<Task>>(
       `${this.apiUrl}/project/${projectId}`,
@@ -48,6 +48,7 @@ export class TaskService {
       priority: TaskPriority;
       status: TaskStatus;
       deadline: string;
+      assignedTo: string | null;
     }>
   ): Observable<ApiResponse<Task>> {
     return this.http.put<ApiResponse<Task>>(`${this.apiUrl}/${id}`, data);
@@ -77,5 +78,24 @@ export class TaskService {
     return this.http.get<ApiResponse<{ totalMs: number }>>(
       `${this.apiUrl}/${id}/timer/total`
     );
+  }
+
+  addSubtask(
+    taskId: string,
+    data: { title: string; priority?: TaskPriority; status?: TaskStatus; assignedTo?: string | null; deadline?: string }
+  ): Observable<ApiResponse<Task>> {
+    return this.http.post<ApiResponse<Task>>(`${this.apiUrl}/${taskId}/subtasks`, data);
+  }
+
+  updateSubtask(
+    taskId: string,
+    subtaskId: string,
+    data: Partial<{ title: string; priority: TaskPriority; status: TaskStatus; assignedTo: string | null; deadline: string }>
+  ): Observable<ApiResponse<Task>> {
+    return this.http.put<ApiResponse<Task>>(`${this.apiUrl}/${taskId}/subtasks/${subtaskId}`, data);
+  }
+
+  deleteSubtask(taskId: string, subtaskId: string): Observable<ApiResponse<{ message: string }>> {
+    return this.http.delete<ApiResponse<{ message: string }>>(`${this.apiUrl}/${taskId}/subtasks/${subtaskId}`);
   }
 }

@@ -31,13 +31,15 @@ export class AuthService {
   register(
     name: string,
     email: string,
-    password: string
+    password: string,
+    role: string
   ): Observable<ApiResponse<AuthResponse>> {
     return this.http
       .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/register`, {
         name,
         email,
         password,
+        role,
       })
       .pipe(
         tap((res) => {

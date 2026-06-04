@@ -1,19 +1,26 @@
 import { Router, Response } from 'express';
+import mongoose from 'mongoose';
 import Task, { TaskPriority, TaskStatus } from '../models/Task';
 import Project from '../models/Project';
+import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { createNotification } from '../utils/notify';
 
 const router = Router();
 router.use(authMiddleware);
 
-// Helper: verify project ownership
-async function verifyProjectOwnership(
+// Helper: verify project access
+async function verifyProjectAccess(
   projectId: string,
-  userId: string
+  userId: string,
+  userRole?: string
 ): Promise<boolean> {
+  if (userRole === 'admin') return true;
   const project = await Project.findById(projectId);
   if (!project) return false;
-  return project.userId.toString() === userId;
+  if (project.userId.toString() === userId) return true;
+  if (project.members && project.members.some(m => m.toString() === userId)) return true;
+  return false;
 }
 
 // GET /api/tasks/project/:projectId
@@ -21,11 +28,12 @@ router.get(
   '/project/:projectId',
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const isOwner = await verifyProjectOwnership(
+      const hasAccess = await verifyProjectAccess(
         req.params['projectId'],
-        req.userId!
+        req.userId!,
+        req.userRole
       );
-      if (!isOwner) {
+      if (!hasAccess) {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }
@@ -57,7 +65,7 @@ router.get(
         }
       }
 
-      const tasks = await Task.find(query).sort({ createdAt: -1 });
+      const tasks = await Task.find(query).populate('assignedTo', 'name email role').sort({ createdAt: -1 });
       res.json({ success: true, data: tasks });
     } catch (err) {
       console.error('Get tasks error:', err);
@@ -71,20 +79,22 @@ router.post(
   '/project/:projectId',
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const isOwner = await verifyProjectOwnership(
+      const hasAccess = await verifyProjectAccess(
         req.params['projectId'],
-        req.userId!
+        req.userId!,
+        req.userRole
       );
-      if (!isOwner) {
+      if (!hasAccess) {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }
 
-      const { title, priority, status, deadline } = req.body as {
+      const { title, priority, status, deadline, assignedTo } = req.body as {
         title?: string;
         priority?: TaskPriority;
         status?: TaskStatus;
         deadline?: string;
+        assignedTo?: string;
       };
 
       if (!title || title.trim().length === 0) {
@@ -98,9 +108,25 @@ router.post(
         priority: priority ?? 'medium',
         status: status ?? 'not_started',
         deadline: deadline ? new Date(deadline) : undefined,
+        assignedTo: assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null,
       });
 
-      res.status(201).json({ success: true, data: task });
+      const populatedTask = await task.populate('assignedTo', 'name email role');
+
+      // Notify the assigned user
+      if (assignedTo) {
+        const project = await Project.findById(req.params['projectId']);
+        const actorName = (await User.findById(req.userId))?.name || 'Someone';
+        await createNotification({
+          userId: assignedTo,
+          type: 'task_assigned',
+          title: 'New Task Assigned',
+          message: `${actorName} assigned you to task "${title}" in project "${project?.title || 'Unknown'}".`,
+          link: `/projects/${req.params['projectId']}`,
+        });
+      }
+
+      res.status(201).json({ success: true, data: populatedTask });
     } catch (err) {
       console.error('Create task error:', err);
       res.status(500).json({ success: false, error: 'Internal server error' });
@@ -117,20 +143,22 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const isOwner = await verifyProjectOwnership(
+    const hasAccess = await verifyProjectAccess(
       task.projectId.toString(),
-      req.userId!
+      req.userId!,
+      req.userRole
     );
-    if (!isOwner) {
+    if (!hasAccess) {
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
     }
 
-    const { title, priority, status, deadline } = req.body as {
+    const { title, priority, status, deadline, assignedTo } = req.body as {
       title?: string;
       priority?: TaskPriority;
       status?: TaskStatus;
       deadline?: string;
+      assignedTo?: string | null;
     };
 
     if (title !== undefined) task.title = title.trim();
@@ -138,9 +166,26 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     if (status !== undefined) task.status = status;
     if (deadline !== undefined)
       task.deadline = deadline ? new Date(deadline) : undefined;
+    const previousAssignee = task.assignedTo?.toString();
+    if (assignedTo !== undefined) task.assignedTo = assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null;
 
     await task.save();
-    res.json({ success: true, data: task });
+    const populatedTask = await task.populate('assignedTo', 'name email role');
+
+    // Notify the newly assigned user if assignee changed
+    if (assignedTo && assignedTo !== previousAssignee) {
+      const project = await Project.findById(task.projectId);
+      const actorName = (await User.findById(req.userId))?.name || 'Someone';
+      await createNotification({
+        userId: assignedTo,
+        type: 'task_assigned',
+        title: 'Task Reassigned to You',
+        message: `${actorName} assigned you to task "${task.title}" in project "${project?.title || 'Unknown'}".`,
+        link: `/projects/${task.projectId}`,
+      });
+    }
+
+    res.json({ success: true, data: populatedTask });
   } catch (err) {
     console.error('Update task error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -158,11 +203,12 @@ router.delete(
         return;
       }
 
-      const isOwner = await verifyProjectOwnership(
+      const hasAccess = await verifyProjectAccess(
         task.projectId.toString(),
-        req.userId!
+        req.userId!,
+        req.userRole
       );
-      if (!isOwner) {
+      if (!hasAccess) {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }
@@ -187,11 +233,12 @@ router.post(
         return;
       }
 
-      const isOwner = await verifyProjectOwnership(
+      const hasAccess = await verifyProjectAccess(
         task.projectId.toString(),
-        req.userId!
+        req.userId!,
+        req.userRole
       );
-      if (!isOwner) {
+      if (!hasAccess) {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }
@@ -204,8 +251,10 @@ router.post(
       }
 
       task.activeTimerStart = new Date();
+      task.activeTimerUserId = new mongoose.Types.ObjectId(req.userId);
       await task.save();
-      res.json({ success: true, data: task });
+      const populatedTask = await task.populate('assignedTo', 'name email role');
+      res.json({ success: true, data: populatedTask });
     } catch (err) {
       console.error('Start timer error:', err);
       res.status(500).json({ success: false, error: 'Internal server error' });
@@ -224,11 +273,12 @@ router.post(
         return;
       }
 
-      const isOwner = await verifyProjectOwnership(
+      const hasAccess = await verifyProjectAccess(
         task.projectId.toString(),
-        req.userId!
+        req.userId!,
+        req.userRole
       );
-      if (!isOwner) {
+      if (!hasAccess) {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }
@@ -244,14 +294,17 @@ router.post(
       const duration = end.getTime() - task.activeTimerStart.getTime();
 
       task.timeLogs.push({
+        userId: task.activeTimerUserId || new mongoose.Types.ObjectId(req.userId),
         start: task.activeTimerStart,
         end,
         duration,
       });
       task.activeTimerStart = null;
+      task.activeTimerUserId = null;
       await task.save();
 
-      res.json({ success: true, data: task });
+      const populatedTask = await task.populate('assignedTo', 'name email role');
+      res.json({ success: true, data: populatedTask });
     } catch (err) {
       console.error('Stop timer error:', err);
       res.status(500).json({ success: false, error: 'Internal server error' });
@@ -270,11 +323,12 @@ router.get(
         return;
       }
 
-      const isOwner = await verifyProjectOwnership(
+      const hasAccess = await verifyProjectAccess(
         task.projectId.toString(),
-        req.userId!
+        req.userId!,
+        req.userRole
       );
-      if (!isOwner) {
+      if (!hasAccess) {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }
@@ -291,5 +345,135 @@ router.get(
     }
   }
 );
+
+// POST /api/tasks/:id/subtasks
+router.post('/:id/subtasks', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const task = await Task.findById(req.params['id']);
+    if (!task) {
+      res.status(404).json({ success: false, error: 'Task not found' });
+      return;
+    }
+
+    const hasAccess = await verifyProjectAccess(
+      task.projectId.toString(),
+      req.userId!,
+      req.userRole
+    );
+    if (!hasAccess) {
+      res.status(403).json({ success: false, error: 'Access denied' });
+      return;
+    }
+
+    const { title, priority, status, assignedTo, deadline } = req.body;
+    if (!title) {
+      res.status(400).json({ success: false, error: 'Title is required' });
+      return;
+    }
+
+    const subtask = {
+      _id: new mongoose.Types.ObjectId(),
+      title,
+      priority: priority || 'medium',
+      status: status || 'not_started',
+      assignedTo: assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null,
+      deadline: deadline ? new Date(deadline) : undefined,
+      createdAt: new Date()
+    };
+
+    task.subtasks.push(subtask as any);
+    await task.save();
+    
+    const populatedTask = await task.populate('assignedTo', 'name email role');
+
+    // Notify subtask assignee
+    if (assignedTo) {
+      const actorName = (await User.findById(req.userId))?.name || 'Someone';
+      await createNotification({
+        userId: assignedTo,
+        type: 'subtask_assigned',
+        title: 'Subtask Assigned',
+        message: `${actorName} assigned you to subtask "${title}" under task "${task.title}".`,
+        link: `/projects/${task.projectId}`,
+      });
+    }
+
+    res.status(201).json({ success: true, data: populatedTask });
+  } catch (err) {
+    console.error('Create subtask error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// PUT /api/tasks/:id/subtasks/:subtaskId
+router.put('/:id/subtasks/:subtaskId', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const task = await Task.findById(req.params['id']);
+    if (!task) {
+      res.status(404).json({ success: false, error: 'Task not found' });
+      return;
+    }
+
+    const hasAccess = await verifyProjectAccess(
+      task.projectId.toString(),
+      req.userId!,
+      req.userRole
+    );
+    if (!hasAccess) {
+      res.status(403).json({ success: false, error: 'Access denied' });
+      return;
+    }
+
+    const subtask = task.subtasks.find(st => st._id.toString() === req.params['subtaskId']);
+    if (!subtask) {
+      res.status(404).json({ success: false, error: 'Subtask not found' });
+      return;
+    }
+
+    const { title, priority, status, assignedTo, deadline } = req.body;
+    
+    if (title !== undefined) subtask.title = title;
+    if (priority !== undefined) subtask.priority = priority;
+    if (status !== undefined) subtask.status = status;
+    if (assignedTo !== undefined) subtask.assignedTo = assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null;
+    if (deadline !== undefined) subtask.deadline = deadline ? new Date(deadline) : undefined;
+
+    await task.save();
+    const populatedTask = await task.populate('assignedTo', 'name email role');
+    res.json({ success: true, data: populatedTask });
+  } catch (err) {
+    console.error('Update subtask error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/tasks/:id/subtasks/:subtaskId
+router.delete('/:id/subtasks/:subtaskId', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const task = await Task.findById(req.params['id']);
+    if (!task) {
+      res.status(404).json({ success: false, error: 'Task not found' });
+      return;
+    }
+
+    const hasAccess = await verifyProjectAccess(
+      task.projectId.toString(),
+      req.userId!,
+      req.userRole
+    );
+    if (!hasAccess) {
+      res.status(403).json({ success: false, error: 'Access denied' });
+      return;
+    }
+
+    task.subtasks = task.subtasks.filter(st => st._id.toString() !== req.params['subtaskId']);
+    await task.save();
+
+    res.json({ success: true, data: { message: 'Subtask deleted' } });
+  } catch (err) {
+    console.error('Delete subtask error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 
 export default router;

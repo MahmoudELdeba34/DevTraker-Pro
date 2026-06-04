@@ -1,7 +1,10 @@
 import { Router, Response } from 'express';
+import mongoose from 'mongoose';
 import Project from '../models/Project';
 import Task from '../models/Task';
+import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { createNotification } from '../utils/notify';
 
 const router = Router();
 
@@ -11,7 +14,22 @@ router.use(authMiddleware);
 // GET /api/projects
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const projects = await Project.find({ userId: req.userId }).sort({
+    let query: Record<string, unknown> = {};
+    if (req.userRole !== 'admin') {
+      query = {
+        $or: [
+          { userId: req.userId },
+          { members: req.userId },
+        ],
+      };
+    }
+    
+    if (req.query.workspaceId) {
+      query.workspaceId = req.query.workspaceId;
+    } else if (req.query.workspaceId === 'null') {
+      query.workspaceId = null;
+    }
+    const projects = await Project.find(query).sort({
       createdAt: -1,
     });
     res.json({ success: true, data: projects });
@@ -24,10 +42,12 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 // POST /api/projects
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { title, description, deadline } = req.body as {
+    const { title, description, deadline, members, workspaceId } = req.body as {
       title?: string;
       description?: string;
       deadline?: string;
+      members?: string[];
+      workspaceId?: string;
     };
 
     if (!title || title.trim().length === 0) {
@@ -39,12 +59,28 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
 
     const project = await Project.create({
       userId: req.userId,
+      workspaceId: workspaceId || null,
       title: title.trim(),
       description: description?.trim(),
       deadline: deadline ? new Date(deadline) : undefined,
+      members: members || [],
     });
 
     res.status(201).json({ success: true, data: project });
+
+    // Notify invited members (fire and forget)
+    if (members && members.length > 0) {
+      const actorName = (await User.findById(req.userId))?.name || 'Someone';
+      for (const memberId of members) {
+        createNotification({
+          userId: memberId,
+          type: 'project_invited',
+          title: 'Added to Project',
+          message: `${actorName} added you to project "${title}".`,
+          link: `/projects/${project._id}`,
+        });
+      }
+    }
   } catch (err) {
     console.error('Create project error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -61,21 +97,26 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    if (project.userId.toString() !== req.userId) {
+    // Owner or admin check
+    if (project.userId.toString() !== req.userId && req.userRole !== 'admin') {
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
     }
 
-    const { title, description, deadline } = req.body as {
+    const { title, description, deadline, members, workspaceId } = req.body as {
       title?: string;
       description?: string;
       deadline?: string;
+      members?: string[];
+      workspaceId?: string | null;
     };
 
     if (title !== undefined) project.title = title.trim();
     if (description !== undefined) project.description = description.trim();
     if (deadline !== undefined)
       project.deadline = deadline ? new Date(deadline) : undefined;
+    if (members !== undefined) project.members = members.map(m => new mongoose.Types.ObjectId(m));
+    if (workspaceId !== undefined) project.workspaceId = workspaceId ? new mongoose.Types.ObjectId(workspaceId) : undefined;
 
     await project.save();
     res.json({ success: true, data: project });
@@ -97,7 +138,8 @@ router.delete(
         return;
       }
 
-      if (project.userId.toString() !== req.userId) {
+      // Owner or admin check
+      if (project.userId.toString() !== req.userId && req.userRole !== 'admin') {
         res.status(403).json({ success: false, error: 'Access denied' });
         return;
       }

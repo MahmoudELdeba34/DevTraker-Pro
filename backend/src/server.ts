@@ -6,6 +6,17 @@ import mongoose from 'mongoose';
 import authRouter from './routes/auth';
 import projectsRouter from './routes/projects';
 import tasksRouter from './routes/tasks';
+import usersRouter from './routes/users';
+import reportsRouter from './routes/reports';
+import employeesRouter from './routes/employees';
+import attendanceRouter from './routes/attendance';
+import leavesRouter from './routes/leaves';
+import permissionsRouter from './routes/permissions';
+import overtimeRouter from './routes/overtime';
+import payrollRouter from './routes/payroll';
+import workspacesRouter from './routes/workspaces';
+import whiteboardsRouter from './routes/whiteboards';
+import notificationsRouter from './routes/notifications';
 import { startReminderCron } from './jobs/reminderCron';
 
 const app = express();
@@ -26,6 +37,17 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/tasks', tasksRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/reports', reportsRouter);
+app.use('/api/employees', employeesRouter);
+app.use('/api/attendance', attendanceRouter);
+app.use('/api/leaves', leavesRouter);
+app.use('/api/permissions', permissionsRouter);
+app.use('/api/overtime', overtimeRouter);
+app.use('/api/payroll', payrollRouter);
+app.use('/api/workspaces', workspacesRouter);
+app.use('/api/whiteboards', whiteboardsRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

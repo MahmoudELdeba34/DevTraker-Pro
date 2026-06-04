@@ -1,0 +1,149 @@
+<!-- ═══════════════════════════════════════════════════════════
+     ClickUp Style Trigger Button
+     ═══════════════════════════════════════════════════════════ -->
+<button
+  class="cu-trigger-btn"
+  [class.icon-only]="iconOnly"
+  (click)="toggleMenu($event)"
+  title="Manage workspace members"
+>
+  <div class="cu-avatar-stack">
+    @for (member of displayMembers(); track member._id; let i = $index) {
+      <div class="cu-avatar" [ngClass]="avatarColor(i)">
+        {{ initials(member.name) }}
+      </div>
+    }
+    @if (overflowCount() > 0) {
+      <div class="cu-avatar cu-avatar-overflow">{{ overflowCount() }}</div>
+    }
+  </div>
+  @if (!iconOnly) {
+    <span class="cu-trigger-text">Share</span>
+  }
+</button>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ClickUp Style Modal Overlay
+     ═══════════════════════════════════════════════════════════ -->
+@if (openMenu()) {
+  <div class="cu-backdrop" (click)="openMenu.set(false); search.set('')">
+    <div class="cu-modal" (click)="$event.stopPropagation()">
+
+      <!-- ─── Header ──────────────────────────────────────── -->
+      <div class="cu-header">
+        <h2 class="cu-title">Share Workspace</h2>
+        <button class="cu-close" (click)="openMenu.set(false); search.set('')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- ─── Invite Section ─────────────────────────────── -->
+      <div class="cu-invite-section">
+        <div class="cu-invite-input-container" [class.focused]="isSearchFocused">
+          <input
+            type="text"
+            class="cu-input"
+            placeholder="Invite by name or email"
+            [ngModel]="search()"
+            (ngModelChange)="onSearchChange($event)"
+            (focus)="isSearchFocused = true"
+            (blur)="isSearchFocused = false"
+            autocomplete="off"
+          />
+          @if (saving()) {
+            <div class="cu-spinner"></div>
+          } @else {
+            <button class="cu-invite-btn" [disabled]="!search().trim()">Invite</button>
+          }
+        </div>
+
+        <!-- Dropdown for matching users (ClickUp style) -->
+        @if (search().trim().length > 0 && usersToAdd().length > 0) {
+          <div class="cu-dropdown">
+            <div class="cu-dropdown-title">Select a person to invite</div>
+            @for (user of usersToAdd(); track user._id; let i = $index) {
+              <div class="cu-dropdown-item" (click)="addMember(user, $event)">
+                <div class="cu-avatar cu-avatar-sm" [ngClass]="avatarColor(i)">{{ initials(user.name) }}</div>
+                <div class="cu-dropdown-info">
+                  <span class="cu-dropdown-name">{{ user.name }}</span>
+                  <span class="cu-dropdown-email">{{ user.email }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="cu-divider"></div>
+
+      <!-- ─── Error Message ───────────────────────────────── -->
+      @if (error()) {
+        <div class="cu-error">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- ─── Members List ────────────────────────────────── -->
+      <div class="cu-members">
+        @if (loading()) {
+          <div class="cu-skeleton-row">
+            <div class="cu-skeleton-avatar"></div>
+            <div class="cu-skeleton-text"></div>
+          </div>
+          <div class="cu-skeleton-row">
+            <div class="cu-skeleton-avatar"></div>
+            <div class="cu-skeleton-text"></div>
+          </div>
+        } @else {
+          @for (member of members(); track member._id; let i = $index) {
+            <div class="cu-member-row">
+              <div class="cu-avatar cu-avatar-md" [ngClass]="avatarColor(i)">
+                {{ initials(member.name) }}
+              </div>
+              
+              <div class="cu-member-info">
+                <div class="cu-member-name">
+                  {{ member.name }}
+                  @if (member.isOwner) {
+                    <span class="cu-owner-badge">Owner</span>
+                  }
+                </div>
+                <div class="cu-member-email">{{ member.email }}</div>
+              </div>
+
+              <!-- ClickUp Style Role Dropdown / Action -->
+              <div class="cu-member-actions">
+                <button class="cu-role-btn">
+                  {{ roleLabel(member.role, member.isOwner) }}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                @if (!member.isOwner) {
+                  <button class="cu-remove-btn" (click)="removeMember(member, $event)" title="Remove member">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- ─── Footer ──────────────────────────────────────── -->
+      <div class="cu-footer">
+        <div class="cu-footer-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Learn more about sharing
+        </div>
+      </div>
+
+    </div>
+  </div>
+}

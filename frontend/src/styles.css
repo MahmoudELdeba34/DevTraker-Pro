@@ -1,5 +1,4 @@
-/* ─── Google Fonts ─────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* ─── Base Styles & Tailwind ─────────────────────────────────────────────────────────── */
 
 @tailwind base;
 @tailwind components;
@@ -7,29 +6,56 @@
 
 /* ─── CSS Variables ─────────────────────────────────────────────────────────── */
 :root {
-  --bg-primary: #0f1117;
-  --bg-secondary: #161b27;
-  --bg-card: #1c2333;
-  --bg-card-hover: #222b3d;
-  --border: #2d3748;
-  --border-light: #374151;
-  --text-primary: #f0f4ff;
-  --text-secondary: #8b95a8;
-  --text-muted: #5a6478;
-  --accent: #6366f1;
-  --accent-hover: #5254cc;
-  --accent-light: rgba(99, 102, 241, 0.15);
-  --success: #10b981;
-  --success-light: rgba(16, 185, 129, 0.15);
-  --warning: #f59e0b;
+  /* ─── NEW DESIGN SYSTEM TOKENS ─── */
+  /* Core palette */
+  --color-bg-base:        #0A0B0F;
+  --color-bg-surface:     #111318;
+  --color-bg-elevated:    #1A1D26;
+  --color-bg-hover:       #1F2230;  
+  /* Primary Accents */
+  --color-accent-primary: #6366F1;
+  --color-accent-hover:   #818CF8;
+  --color-accent-subtle:  rgba(99, 102, 241, 0.12);
+  /* Semantic Colors */
+  --color-success:        #22C55E;
+  --color-warning:        #F59E0B;
+  --color-danger:         #EF4444;
+  --color-info:           #38BDF8;
+  /* Borders */
+  --color-border:         rgba(255, 255, 255, 0.07);
+  --color-border-strong:  rgba(255, 255, 255, 0.14);
+  /* Typography */
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  /* Spacing & Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  /* ─── LEGACY TOKENS (Mapped for backward compatibility) ─── */
+  --bg-primary: var(--color-bg-base);
+  --bg-secondary: var(--color-bg-surface);
+  --bg-card: var(--color-bg-surface);
+  --bg-card-hover: var(--color-bg-hover);
+  --border: var(--color-border);
+  --border-light: var(--color-border-strong);
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --accent: var(--color-accent-primary);
+  --accent-hover: var(--color-accent-hover);
+  --accent-light: var(--color-accent-subtle);
+  --success: var(--color-success);
+  --success-light: rgba(34, 197, 94, 0.15);
+  --warning: var(--color-warning);
   --warning-light: rgba(245, 158, 11, 0.15);
-  --danger: #ef4444;
+  --danger: var(--color-danger);
   --danger-light: rgba(239, 68, 68, 0.15);
   --sidebar-width: 240px;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --radius: var(--radius-md);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Reset & Base ─────────────────────────────────────────────────────────── */
@@ -37,12 +63,16 @@
 
 html, body {
   height: 100%;
-  font-family: 'Inter', system-ui, sans-serif;
-  background: var(--bg-primary);
+  font-family: var(--font-body);
+  background: var(--color-bg-base);
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .display-font {
+  font-family: var(--font-display);
 }
 
 /* ─── Auth Pages ────────────────────────────────────────────────────────────── */

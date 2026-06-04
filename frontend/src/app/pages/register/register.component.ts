@@ -89,6 +89,21 @@ import { AuthService } from '../../services/auth.service';
             }
           </div>
 
+          <div class="form-group">
+            <label for="role">Role</label>
+            <select
+              id="role"
+              formControlName="role"
+              class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200"
+            >
+              <option value="employee">Employee</option>
+              <option value="manager">Manager</option>
+              <option value="hr">HR Specialist</option>
+              <option value="accountant">Accountant</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+
           <button
             type="submit"
             class="btn-primary btn-full"
@@ -126,6 +141,7 @@ export class RegisterComponent implements OnInit {
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
+      role: ['employee', Validators.required],
     });
 
     if (this.authService.isLoggedIn()) {
@@ -142,13 +158,14 @@ export class RegisterComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    const { name, email, password } = this.form.value as {
+    const { name, email, password, role } = this.form.value as {
       name: string;
       email: string;
       password: string;
+      role: string;
     };
 
-    this.authService.register(name, email, password).subscribe({
+    this.authService.register(name, email, password, role).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/dashboard']);
