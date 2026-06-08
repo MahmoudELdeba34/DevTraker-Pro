@@ -48,3 +48,7 @@ export function generatePassword(length = 12): string {
   }
   return password;
 }
+
+export function isSmtpConfigured(): boolean {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}

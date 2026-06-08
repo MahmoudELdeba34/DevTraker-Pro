@@ -9,7 +9,7 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Task, TaskPriority, TaskStatus } from '../../models/types';
 
@@ -23,7 +23,7 @@ export interface FilterState {
   selector: 'app-filter-bar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="filter-bar">
       <div class="filter-group">

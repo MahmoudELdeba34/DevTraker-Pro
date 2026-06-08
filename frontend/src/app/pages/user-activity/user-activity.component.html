@@ -1,0 +1,206 @@
+<div class="page-ambient pb-12 animate-fade-up timesheet-page">
+
+  <!-- Back link -->
+  <a routerLink="/team-activity" class="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-accent transition-colors mb-3 no-print">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Team Activity
+  </a>
+
+  <!-- Profile header -->
+  @if (report(); as r) {
+    <div class="bg-bg-elevated border border-border rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent-hover text-white font-bold flex items-center justify-center text-xl shadow-glow shrink-0">
+        {{ initials(r.user.name) }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <h1 class="text-2xl font-display font-bold text-white tracking-tight truncate">{{ r.user.name }}</h1>
+          <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border" [ngClass]="roleClass(r.user.role)">{{ r.user.role }}</span>
+        </div>
+        <p class="text-sm text-text-secondary truncate">{{ r.user.email }}</p>
+        @if (r.user.lastActiveAt) {
+          <p class="text-[11px] text-text-muted font-mono mt-1">Last active {{ r.user.lastActiveAt | date:'MMM d, HH:mm' }} · Viewing <strong class="text-text-secondary">{{ r.user.currentPage || '—' }}</strong></p>
+        }
+      </div>
+      <div class="flex items-center gap-2 no-print shrink-0">
+        <button class="btn-soft" (click)="load()" [disabled]="loading()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+        <button class="btn-accent" (click)="printReport()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Report
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Range -->
+  <div class="bg-bg-elevated border border-border rounded-2xl p-4 mb-6 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between no-print">
+    <div class="flex flex-wrap items-center gap-2">
+      <button class="range-chip" [class.range-chip--active]="preset() === 'today'" (click)="applyPreset('today')">Today</button>
+      <button class="range-chip" [class.range-chip--active]="preset() === 'week'" (click)="applyPreset('week')">This Week</button>
+      <button class="range-chip" [class.range-chip--active]="preset() === 'month'" (click)="applyPreset('month')">This Month</button>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      <label class="text-text-muted font-semibold uppercase tracking-wider text-[10px]">From</label>
+      <input type="date" class="date-input" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event); customRangeChanged()" />
+      <label class="text-text-muted font-semibold uppercase tracking-wider text-[10px]">To</label>
+      <input type="date" class="date-input" [ngModel]="toDate()" (ngModelChange)="toDate.set($event); customRangeChanged()" />
+    </div>
+  </div>
+
+  <!-- Stat strip -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 stagger summary-grid">
+    <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+      <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Total Tracked</span>
+      <div class="text-2xl font-display font-extrabold text-white font-mono tabular-nums mt-2">{{ formatHm(totalHours()) }}</div>
+    </div>
+    <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+      <span class="text-[10px] uppercase font-bold text-warning tracking-[0.18em]">Overtime</span>
+      <div class="text-2xl font-display font-extrabold font-mono tabular-nums mt-2"
+           [ngClass]="overtimeHours() > 0 ? 'text-warning' : 'text-white'">{{ formatHm(overtimeHours()) }}</div>
+    </div>
+    <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+      <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Avg / Day</span>
+      <div class="text-2xl font-display font-extrabold text-white font-mono tabular-nums mt-2">{{ avgHours().toFixed(1) }}h</div>
+    </div>
+    <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+      <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Days Worked</span>
+      <div class="text-2xl font-display font-extrabold text-success font-mono tabular-nums mt-2">{{ daysWorked() }}</div>
+    </div>
+    <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+      <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Activity</span>
+      <div class="text-2xl font-display font-extrabold text-white font-mono tabular-nums mt-2">{{ tasksCount() }}<span class="text-text-muted text-base"> / {{ quickCount() }}</span></div>
+      <p class="text-[10px] text-text-muted mt-1">Tasks / Quick</p>
+    </div>
+  </div>
+
+  <!-- Print-only banner -->
+  <div class="print-only mb-6">
+    <div class="border-b-2 border-bg-base pb-3 mb-3">
+      <h1 class="text-2xl font-bold">{{ report()?.user?.name }} — Activity Report</h1>
+      <p class="text-sm text-text-muted">{{ report()?.user?.email }} · {{ report()?.user?.role }}</p>
+      <p class="text-xs text-text-muted mt-1">Period: {{ fromDate() }} → {{ toDate() }}</p>
+    </div>
+    <div class="grid grid-cols-5 gap-3 text-xs">
+      <div><strong>Total:</strong> {{ formatHm(totalHours()) }}</div>
+      <div><strong>Overtime:</strong> {{ formatHm(overtimeHours()) }}</div>
+      <div><strong>Avg/day:</strong> {{ avgHours().toFixed(1) }}h</div>
+      <div><strong>Days worked:</strong> {{ daysWorked() }}</div>
+      <div><strong>Tasks / Quick:</strong> {{ tasksCount() }} / {{ quickCount() }}</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="space-y-3">
+      @for (i of [0,1,2]; track i) {
+        <div class="h-32 rounded-xl bg-bg-elevated border border-border animate-pulse"></div>
+      }
+    </div>
+  }
+
+  <!-- Empty -->
+  @if (!loading() && dailyList().length === 0) {
+    <div class="bg-bg-elevated border border-dashed border-border rounded-2xl p-10 text-center">
+      <p class="text-sm text-text-secondary">No activity tracked in this range.</p>
+    </div>
+  }
+
+  <!-- Daily cards -->
+  @for (day of dailyList(); track day.date) {
+    <article class="bg-bg-elevated border border-border rounded-2xl mb-4 overflow-hidden day-card">
+      <header class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-border bg-bg-base/30">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-11 h-11 rounded-lg bg-accent-subtle text-accent flex flex-col items-center justify-center font-bold leading-none shrink-0">
+            <span class="text-[9px] uppercase tracking-widest">{{ day.date | date:'MMM' }}</span>
+            <span class="text-lg font-mono">{{ day.date | date:'d' }}</span>
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-sm font-bold text-white tracking-tight">{{ formatDate(day.date) }}</h2>
+            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+              @if (day.attendance?.status) {
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border" [ngClass]="attendanceStatusColor(day.attendance?.status)">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ day.attendance.status }}
+                </span>
+              }
+              @if (day.attendance?.checkIn) {
+                <span class="text-[11px] text-text-muted font-mono">
+                  In {{ day.attendance.checkIn | date:'HH:mm' }}
+                  @if (day.attendance.checkOut) { · Out {{ day.attendance.checkOut | date:'HH:mm' }} }
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 text-right">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-text-muted tracking-widest">Tracked</div>
+            <div class="text-base font-mono font-extrabold text-white tabular-nums">{{ formatHm(dayLiveTotal(day)) }}</div>
+          </div>
+          @if (dayLiveOvertime(day) > 0) {
+            <div>
+              <div class="text-[10px] uppercase font-bold text-warning tracking-widest">Overtime</div>
+              <div class="text-base font-mono font-extrabold text-warning tabular-nums">{{ formatHm(dayLiveOvertime(day)) }}</div>
+            </div>
+          }
+        </div>
+      </header>
+
+      <div class="h-1.5 w-full bg-bg-base/60 overflow-hidden no-print">
+        <div class="h-full transition-all duration-500"
+             [class.bg-accent]="dayLiveOvertime(day) === 0"
+             [class.bg-warning]="dayLiveOvertime(day) > 0"
+             [style.width.%]="dayLiveOvertime(day) > 0 ? 100 : dayProgressPct(day)"></div>
+      </div>
+
+      <div class="divide-y divide-border">
+        @if (day.taskLogs.length === 0 && day.quickSessions.length === 0) {
+          <div class="px-5 py-4 text-xs text-text-muted">No tracker entries on this day.</div>
+        }
+        @for (log of day.taskLogs; track $index) {
+          <div class="flex items-center gap-4 px-5 py-3">
+            <span class="w-1.5 h-8 rounded-full bg-accent shrink-0"></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="text-sm font-semibold text-white truncate">{{ log.taskTitle }}</span>
+                <span class="text-text-muted text-xs">·</span>
+                <span class="text-xs text-text-secondary truncate">{{ log.projectTitle }}</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-accent px-1.5 py-0.5 rounded bg-accent-subtle border border-accent/30">Task</span>
+                <span class="text-[11px] font-mono text-text-muted">{{ formatHmsTime(log.start) }} → {{ formatHmsTime(log.end) }}</span>
+              </div>
+            </div>
+            <span class="font-mono font-bold text-sm text-white tabular-nums shrink-0">{{ formatHm(log.durationMs) }}</span>
+          </div>
+        }
+        @for (q of day.quickSessions; track q._id) {
+          <div class="flex items-center gap-4 px-5 py-3">
+            <span class="w-1.5 h-8 rounded-full shrink-0" [class.bg-info]="q.endedAt" [class.bg-danger]="!q.endedAt"></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="text-sm font-semibold text-white truncate">{{ q.description || 'Quick session' }}</span>
+                @if (!q.endedAt) {
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-danger px-1.5 py-0.5 rounded bg-danger/15 border border-danger/30">Live</span>
+                }
+              </div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-info px-1.5 py-0.5 rounded bg-info/15 border border-info/30">Quick</span>
+                <span class="text-[11px] font-mono text-text-muted">{{ formatHmsTime(q.startedAt) }} → @if (q.endedAt) { {{ formatHmsTime(q.endedAt) }} } @else { now }</span>
+              </div>
+            </div>
+            <span class="font-mono font-bold text-sm text-white tabular-nums shrink-0">
+              @if (q.endedAt) { {{ formatHm(q.durationMs) }} } @else { — }
+            </span>
+          </div>
+        }
+      </div>
+    </article>
+  }
+
+  @if (error()) {
+    <div class="mt-4 p-3.5 bg-danger/10 border border-danger/25 text-danger rounded-xl text-sm">{{ error() }}</div>
+  }
+</div>

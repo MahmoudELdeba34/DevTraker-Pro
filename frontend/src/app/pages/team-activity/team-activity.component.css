@@ -1,0 +1,35 @@
+.tab-pill {
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary, #94a3b8);
+  background: transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tab-pill:hover {
+  color: #fff;
+}
+
+.tab-pill--active {
+  color: #fff;
+  background: rgba(99, 102, 241, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.4);
+}
+
+.presence-card {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.presence-card:hover {
+  transform: translateY(-2px);
+}

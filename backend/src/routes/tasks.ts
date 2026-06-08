@@ -5,11 +5,21 @@ import Project from '../models/Project';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { createNotification } from '../utils/notify';
+import { getWorkspaceIfMember, isWorkspaceParticipant } from '../utils/workspaceAccess';
+import { stopActiveTrackingForUser } from '../utils/userTracking';
+import Workspace from '../models/Workspace';
 
 const router = Router();
 router.use(authMiddleware);
 
-// Helper: verify project access
+/**
+ * Verify access to a project, chaining through workspace membership.
+ * A caller can act on a project's tasks if any of these is true:
+ *   - global admin
+ *   - the project owner (userId)
+ *   - listed in project.members
+ *   - a member of the project's parent workspace
+ */
 async function verifyProjectAccess(
   projectId: string,
   userId: string,
@@ -19,8 +29,31 @@ async function verifyProjectAccess(
   const project = await Project.findById(projectId);
   if (!project) return false;
   if (project.userId.toString() === userId) return true;
-  if (project.members && project.members.some(m => m.toString() === userId)) return true;
+  if (project.members && project.members.some((m) => m.toString() === userId)) return true;
+  if (project.workspaceId) {
+    const ws = await getWorkspaceIfMember(project.workspaceId.toString(), userId, userRole);
+    if (ws) return true;
+  }
   return false;
+}
+
+/** When a project belongs to a workspace, assignees must be workspace participants. */
+async function validateTaskAssignee(
+  projectId: string,
+  assigneeId: string | null | undefined
+): Promise<string | null> {
+  if (!assigneeId) return null;
+
+  const project = await Project.findById(projectId).select('workspaceId');
+  if (!project?.workspaceId) return null;
+
+  const ws = await Workspace.findById(project.workspaceId);
+  if (!ws) return 'Workspace not found';
+
+  if (!isWorkspaceParticipant(ws, assigneeId)) {
+    return 'Assignee must be a member of this workspace';
+  }
+  return null;
 }
 
 // GET /api/tasks/project/:projectId
@@ -89,16 +122,23 @@ router.post(
         return;
       }
 
-      const { title, priority, status, deadline, assignedTo } = req.body as {
+      const { title, priority, status, deadline, startDate, assignedTo } = req.body as {
         title?: string;
         priority?: TaskPriority;
         status?: TaskStatus;
         deadline?: string;
+        startDate?: string;
         assignedTo?: string;
       };
 
       if (!title || title.trim().length === 0) {
         res.status(400).json({ success: false, error: 'title is required' });
+        return;
+      }
+
+      const assigneeError = await validateTaskAssignee(req.params['projectId'], assignedTo);
+      if (assigneeError) {
+        res.status(400).json({ success: false, error: assigneeError });
         return;
       }
 
@@ -108,6 +148,7 @@ router.post(
         priority: priority ?? 'medium',
         status: status ?? 'not_started',
         deadline: deadline ? new Date(deadline) : undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
         assignedTo: assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null,
       });
 
@@ -134,6 +175,28 @@ router.post(
   }
 );
 
+// GET /api/tasks/my/timesheet
+router.get(
+  '/my/timesheet',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const userId = new mongoose.Types.ObjectId(req.userId);
+      const query = {
+        $or: [
+          { 'timeLogs.userId': userId },
+          { activeTimerUserId: userId }
+        ]
+      };
+
+      const tasks = await Task.find(query).populate('projectId', 'title').sort({ createdAt: -1 });
+      res.json({ success: true, data: tasks });
+    } catch (err) {
+      console.error('Get timesheet error:', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  }
+);
+
 // PUT /api/tasks/:id
 router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -153,11 +216,12 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const { title, priority, status, deadline, assignedTo } = req.body as {
+    const { title, priority, status, deadline, startDate, assignedTo } = req.body as {
       title?: string;
       priority?: TaskPriority;
       status?: TaskStatus;
-      deadline?: string;
+      deadline?: string | null;
+      startDate?: string | null;
       assignedTo?: string | null;
     };
 
@@ -166,8 +230,17 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     if (status !== undefined) task.status = status;
     if (deadline !== undefined)
       task.deadline = deadline ? new Date(deadline) : undefined;
+    if (startDate !== undefined)
+      task.startDate = startDate ? new Date(startDate) : undefined;
     const previousAssignee = task.assignedTo?.toString();
-    if (assignedTo !== undefined) task.assignedTo = assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null;
+    if (assignedTo !== undefined) {
+      const assigneeError = await validateTaskAssignee(task.projectId.toString(), assignedTo);
+      if (assigneeError) {
+        res.status(400).json({ success: false, error: assigneeError });
+        return;
+      }
+      task.assignedTo = assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null;
+    }
 
     await task.save();
     const populatedTask = await task.populate('assignedTo', 'name email role');
@@ -243,15 +316,32 @@ router.post(
         return;
       }
 
-      if (task.activeTimerStart) {
-        res
-          .status(400)
-          .json({ success: false, error: 'Timer already running' });
+      const userId = req.userId!;
+
+      if (
+        task.activeTimerStart &&
+        task.activeTimerUserId?.toString() === userId
+      ) {
+        const populatedTask = await task.populate('assignedTo', 'name email role');
+        res.json({ success: true, data: populatedTask });
         return;
       }
 
+      if (
+        task.activeTimerStart &&
+        task.activeTimerUserId?.toString() !== userId
+      ) {
+        res.status(409).json({
+          success: false,
+          error: 'Another teammate is already tracking this task',
+        });
+        return;
+      }
+
+      await stopActiveTrackingForUser(userId);
+
       task.activeTimerStart = new Date();
-      task.activeTimerUserId = new mongoose.Types.ObjectId(req.userId);
+      task.activeTimerUserId = new mongoose.Types.ObjectId(userId);
       await task.save();
       const populatedTask = await task.populate('assignedTo', 'name email role');
       res.json({ success: true, data: populatedTask });
@@ -371,6 +461,12 @@ router.post('/:id/subtasks', async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    const assigneeError = await validateTaskAssignee(task.projectId.toString(), assignedTo);
+    if (assigneeError) {
+      res.status(400).json({ success: false, error: assigneeError });
+      return;
+    }
+
     const subtask = {
       _id: new mongoose.Types.ObjectId(),
       title,
@@ -435,7 +531,14 @@ router.put('/:id/subtasks/:subtaskId', async (req: AuthRequest, res: Response): 
     if (title !== undefined) subtask.title = title;
     if (priority !== undefined) subtask.priority = priority;
     if (status !== undefined) subtask.status = status;
-    if (assignedTo !== undefined) subtask.assignedTo = assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null;
+    if (assignedTo !== undefined) {
+      const assigneeError = await validateTaskAssignee(task.projectId.toString(), assignedTo);
+      if (assigneeError) {
+        res.status(400).json({ success: false, error: assigneeError });
+        return;
+      }
+      subtask.assignedTo = assignedTo ? new mongoose.Types.ObjectId(assignedTo) : null;
+    }
     if (deadline !== undefined) subtask.deadline = deadline ? new Date(deadline) : undefined;
 
     await task.save();

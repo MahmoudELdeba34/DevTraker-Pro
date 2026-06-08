@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'not_started' | 'in_progress' | 'completed';
+export type TaskStatus = 'not_started' | 'in_progress' | 'in_review' | 'completed';
 export type ReminderThreshold = '24h' | '12h' | '1h';
 
 export interface ITimeLog {
@@ -32,6 +32,7 @@ export interface ITask extends Document {
   priority: TaskPriority;
   status: TaskStatus;
   deadline?: Date;
+  startDate?: Date;
   timeLogs: ITimeLog[];
   subtasks: ISubtask[];
   activeTimerStart?: Date | null;
@@ -68,7 +69,7 @@ const SubtaskSchema = new Schema<ISubtask>(
     title: { type: String, required: true, trim: true },
     status: {
       type: String,
-      enum: ['not_started', 'in_progress', 'completed'],
+      enum: ['not_started', 'in_progress', 'in_review', 'completed'],
       default: 'not_started',
     },
     priority: {
@@ -97,10 +98,11 @@ const TaskSchema = new Schema<ITask>(
     },
     status: {
       type: String,
-      enum: ['not_started', 'in_progress', 'completed'],
+      enum: ['not_started', 'in_progress', 'in_review', 'completed'],
       default: 'not_started',
     },
     deadline: { type: Date },
+    startDate: { type: Date },
     timeLogs: { type: [TimeLogSchema], default: [] },
     subtasks: { type: [SubtaskSchema], default: [] },
     activeTimerStart: { type: Date, default: null },

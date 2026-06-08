@@ -45,9 +45,11 @@ export class TaskService {
     id: string,
     data: Partial<{
       title: string;
+      description: string;
       priority: TaskPriority;
       status: TaskStatus;
-      deadline: string;
+      deadline: string | null;
+      startDate: string | null;
       assignedTo: string | null;
     }>
   ): Observable<ApiResponse<Task>> {
@@ -58,6 +60,10 @@ export class TaskService {
     return this.http.delete<ApiResponse<{ message: string }>>(
       `${this.apiUrl}/${id}`
     );
+  }
+
+  getMyTimesheet(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/my/timesheet`);
   }
 
   startTimer(id: string): Observable<ApiResponse<Task>> {

@@ -1,0 +1,228 @@
+<div class="page-ambient pb-12 animate-fade-up">
+
+  <app-page-header
+    eyebrow="Live Operations"
+    title="Team Activity"
+    description="See who's online right now, what page they have open, and what they're tracking time on — updated every 15 seconds."
+    badge="Admins & Managers"
+    badgeTone="accent"
+    [steps]="[
+      { label: 'Scan the live board', description: 'Online team members with active timers are pinned at the top.', tone: 'do' },
+      { label: 'Drill into anyone', description: 'Click a member to see their full activity report and history.', tone: 'do' },
+      { label: 'Print or hand off', description: 'From any profile you can print a clean PDF-friendly report.', tone: 'done' }
+    ]"
+    [tips]="[
+      { title: 'Online window', body: 'A user is online if their browser pinged us in the last 60 seconds.' },
+      { title: 'Two timer types', body: 'A purple Task chip means task-linked. A blue Quick chip is a free-form session.' },
+      { title: 'Stop any timer', body: 'Admins can force-stop a running timer — the elapsed time is saved to the employee timesheet.' }
+    ]"
+  >
+    <div header-actions class="flex items-center gap-2">
+      <button class="btn-soft" (click)="load()" [disabled]="loading()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </app-page-header>
+
+  <!-- Stat strip -->
+  @if (presence(); as p) {
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 stagger">
+      <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Online Now</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-success animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></span>
+        </div>
+        <div class="text-3xl font-display font-extrabold text-success font-mono tabular-nums">{{ p.counts.online }}</div>
+        <p class="text-xs text-text-muted mt-1">Heartbeat in last 60s</p>
+      </div>
+
+      <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Tracking</span>
+          <div class="w-7 h-7 rounded-lg bg-accent-subtle text-accent flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+        </div>
+        <div class="text-3xl font-display font-extrabold text-accent font-mono tabular-nums">{{ p.counts.tracking }}</div>
+        <p class="text-xs text-text-muted mt-1">Active timer or quick session</p>
+      </div>
+
+      <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Offline</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-text-muted/40"></span>
+        </div>
+        <div class="text-3xl font-display font-extrabold text-text-muted font-mono tabular-nums">{{ p.counts.offline }}</div>
+        <p class="text-xs text-text-muted mt-1">Idle or signed out</p>
+      </div>
+
+      <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Total Team</span>
+          <div class="w-7 h-7 rounded-lg bg-info/10 text-info flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+        </div>
+        <div class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ p.counts.total }}</div>
+        <p class="text-xs text-text-muted mt-1">All registered users</p>
+      </div>
+    </div>
+  }
+
+  @if (actionMessage()) {
+    <div class="mb-4 p-3.5 bg-success/10 border border-success/25 text-success rounded-xl text-sm">{{ actionMessage() }}</div>
+  }
+
+  <!-- Filter bar -->
+  <div class="bg-bg-elevated border border-border rounded-2xl p-3 mb-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+    <div class="flex items-center gap-1.5 p-1 bg-bg-base/60 border border-border rounded-lg">
+      <button class="tab-pill" [class.tab-pill--active]="activeTab() === 'online'" (click)="activeTab.set('online')">
+        Online
+        @if (presence(); as p) { <span class="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded bg-success/15 text-success">{{ p.counts.online }}</span> }
+      </button>
+      <button class="tab-pill" [class.tab-pill--active]="activeTab() === 'tracking'" (click)="activeTab.set('tracking')">
+        Tracking
+        @if (presence(); as p) { <span class="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent-subtle text-accent">{{ p.counts.tracking }}</span> }
+      </button>
+      <button class="tab-pill" [class.tab-pill--active]="activeTab() === 'all'" (click)="activeTab.set('all')">
+        All
+        @if (presence(); as p) { <span class="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded bg-bg-base text-text-secondary">{{ p.counts.total }}</span> }
+      </button>
+    </div>
+
+    <div class="relative flex-1 md:max-w-md">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Search by name or email…"
+        class="w-full bg-bg-base border border-border text-white text-sm rounded-lg pl-9 pr-3 py-2 outline-none focus:border-accent transition-colors"
+      />
+    </div>
+  </div>
+
+  <!-- Loading skeleton -->
+  @if (loading() && !presence()) {
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      @for (i of [0,1,2,3,4,5]; track i) {
+        <div class="h-36 rounded-2xl bg-bg-elevated border border-border animate-pulse"></div>
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && filteredUsers().length === 0) {
+    <div class="bg-bg-elevated border border-dashed border-border rounded-2xl p-10 text-center">
+      <div class="w-14 h-14 rounded-full bg-bg-base border border-border flex items-center justify-center mx-auto mb-3 text-text-muted">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <p class="text-sm text-text-secondary">No one to show here.</p>
+      <p class="text-xs text-text-muted mt-1">Try the "All" tab or clear your search.</p>
+    </div>
+  }
+
+  <!-- People grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+    @for (u of filteredUsers(); track u._id) {
+      <div class="presence-card group bg-bg-elevated border border-border rounded-2xl p-4 hover:border-accent/50 hover:shadow-glow transition-all relative overflow-hidden">
+
+        <!-- Online halo -->
+        @if (u.online) {
+          <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-success/15 blur-2xl pointer-events-none"></div>
+        }
+
+        <div class="flex items-start gap-3 mb-3 relative">
+          <div class="relative">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-accent to-accent-hover text-white font-bold flex items-center justify-center text-sm shadow-glow shrink-0">
+              {{ initials(u.name) }}
+            </div>
+            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-elevated"
+                  [class.bg-success]="u.online"
+                  [class.bg-text-muted]="!u.online"
+                  [class.animate-pulse]="u.online"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-white truncate">{{ u.name }}</h3>
+              <span class="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border" [ngClass]="roleClass(u.role)">{{ u.role }}</span>
+            </div>
+            <p class="text-[11px] text-text-muted truncate mt-0.5">{{ u.email }}</p>
+            <p class="text-[10px] mt-0.5 font-mono uppercase tracking-widest"
+               [class.text-success]="u.online"
+               [class.text-text-muted]="!u.online">{{ lastSeenLabel(u) }}</p>
+          </div>
+        </div>
+
+        <!-- Active tracker -->
+        @if (u.tracking) {
+          <div class="rounded-lg p-2.5 mb-2 border border-accent/30 bg-accent-subtle/60">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-danger animate-pulse"></span>
+              <span class="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded border"
+                    [ngClass]="u.tracking.type === 'task'
+                      ? 'bg-accent/15 text-accent border-accent/30'
+                      : 'bg-info/15 text-info border-info/30'">
+                {{ u.tracking.type === 'task' ? 'Task' : 'Quick' }}
+              </span>
+              <span class="text-[11px] font-mono font-bold text-danger tabular-nums">{{ elapsedSince(u.tracking.startedAt) }}</span>
+              <button
+                type="button"
+                class="ml-auto px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-danger bg-danger/10 border border-danger/25 hover:bg-danger hover:text-white transition-colors disabled:opacity-50"
+                [disabled]="stoppingUserId() === u._id"
+                (click)="promptStopTracking(u, $event)"
+              >
+                {{ stoppingUserId() === u._id ? 'Stopping…' : 'Stop' }}
+              </button>
+            </div>
+            <p class="text-xs font-semibold text-white truncate">{{ u.tracking.label }}</p>
+            @if (u.tracking.project) {
+              <p class="text-[10px] text-text-muted truncate">in {{ u.tracking.project.title }}</p>
+            }
+          </div>
+        } @else {
+          <div class="rounded-lg p-2.5 mb-2 border border-dashed border-border bg-bg-base/40">
+            <p class="text-[11px] text-text-muted italic">Not tracking right now.</p>
+          </div>
+        }
+
+        <!-- Viewing -->
+        <div class="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted shrink-0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="text-[10px] text-text-muted truncate font-mono">
+              @if (u.online) { Viewing <strong class="text-text-secondary">{{ prettyPath(u.currentPage) }}</strong> }
+              @else { Last seen {{ u.lastActiveAt ? (u.lastActiveAt | date:'short') : '—' }} }
+            </span>
+          </div>
+          <button
+            type="button"
+            class="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors shrink-0"
+            (click)="openUser(u)"
+          >
+            Open →
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (stopPrompt(); as dialog) {
+    <app-confirm-dialog
+      [open]="true"
+      [title]="dialog.title"
+      [message]="dialog.message"
+      [confirmLabel]="dialog.confirmLabel"
+      cancelLabel="Cancel"
+      variant="danger"
+      icon="clock"
+      (confirmed)="confirmStopTracking()"
+      (cancelled)="cancelStopTracking()"
+    />
+  }
+
+  @if (error()) {
+    <div class="mt-4 p-3.5 bg-danger/10 border border-danger/25 text-danger rounded-xl text-sm">{{ error() }}</div>
+  }
+</div>

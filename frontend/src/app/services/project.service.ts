@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Project, ApiResponse } from '../models/types';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
   private readonly apiUrl = `${environment.apiUrl}/projects`;
+  
+  public projectChanged = new Subject<void>();
 
   constructor(private http: HttpClient) {}
 
@@ -25,19 +28,25 @@ export class ProjectService {
     members?: string[];
     workspaceId?: string | null;
   }): Observable<ApiResponse<Project>> {
-    return this.http.post<ApiResponse<Project>>(this.apiUrl, data);
+    return this.http.post<ApiResponse<Project>>(this.apiUrl, data).pipe(
+      tap(() => this.projectChanged.next())
+    );
   }
 
   update(
     id: string,
     data: Partial<{ title: string; description: string; deadline: string; members: string[] }>
   ): Observable<ApiResponse<Project>> {
-    return this.http.put<ApiResponse<Project>>(`${this.apiUrl}/${id}`, data);
+    return this.http.put<ApiResponse<Project>>(`${this.apiUrl}/${id}`, data).pipe(
+      tap(() => this.projectChanged.next())
+    );
   }
 
   delete(id: string): Observable<ApiResponse<{ message: string }>> {
     return this.http.delete<ApiResponse<{ message: string }>>(
       `${this.apiUrl}/${id}`
+    ).pipe(
+      tap(() => this.projectChanged.next())
     );
   }
 }

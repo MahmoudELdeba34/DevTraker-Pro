@@ -5,147 +5,174 @@ import {
   signal,
   inject,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TaskService } from '../../services/task.service';
 import { ProjectService } from '../../services/project.service';
 import { AuthService } from '../../services/auth.service';
-import { UserService } from '../../services/user.service';
-import { Task, Project, User, TaskPriority, TaskStatus } from '../../models/types';
+import { WorkspaceService, WorkspaceMember } from '../../services/workspace.service';
+import { Task, Project, TaskPriority, TaskStatus } from '../../models/types';
 import { TaskCardComponent } from '../../components/task-card/task-card.component';
-import { FilterBarComponent } from '../../components/filter-bar/filter-bar.component';
+import { TaskDetailsModalComponent } from '../../components/task-details-modal/task-details-modal.component';
+import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/task-form-modal.component';
 
 @Component({
   selector: 'app-project-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterLink,
     TaskCardComponent,
-    FilterBarComponent,
-  ],
+    TaskDetailsModalComponent,
+    TaskFormModalComponent,
+],
   template: `
-      <!-- Main Content -->
-      <main class="main-content">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-          <a routerLink="/dashboard" class="breadcrumb-link">Projects</a>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-          <span>{{ project()?.title ?? 'Loading...' }}</span>
-        </div>
-
-        <!-- Page Header -->
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">{{ project()?.title ?? '...' }}</h1>
-            @if (project()?.description) {
-              <p class="page-subtitle">{{ project()?.description }}</p>
-            }
-            @if (project()?.deadline) {
-              <span class="meta-badge" style="margin-top:8px; display:inline-flex;">
-                📅 Due {{ formatDate(project()!.deadline!) }}
-              </span>
-            }
+      <main class="h-full flex flex-col relative z-0">
+        <!-- Header -->
+        <div class="px-8 py-6 border-b border-border bg-bg-base/50 backdrop-blur-md flex-shrink-0 z-10 sticky top-0">
+          <div class="flex items-center text-xs text-text-muted mb-2 font-medium tracking-wide uppercase">
+            <a routerLink="/dashboard" class="hover:text-white transition-colors">My Projects</a>
+            <svg class="mx-2 w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+            <span class="text-accent truncate">{{ project()?.title ?? 'Loading...' }}</span>
           </div>
-          <button class="btn-primary" (click)="showAddTask.set(true)" id="add-task-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Add Task
-          </button>
+      
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 class="text-2xl font-display font-bold text-white tracking-tight">{{ project()?.title ?? '...' }}</h1>
+              @if (project()?.description) {
+                <p class="text-sm text-text-secondary mt-1 max-w-2xl">{{ project()?.description }}</p>
+              }
+            </div>
+      
+            <div class="flex items-center gap-3">
+              <!-- Filter & View Icons -->
+              <button class="w-9 h-9 rounded-lg bg-bg-elevated border border-border flex items-center justify-center text-text-secondary hover:text-white hover:bg-bg-hover transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              </button>
+              <div class="flex -space-x-2">
+                <div class="w-8 h-8 rounded-full border-2 border-bg-base bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent relative z-10">AR</div>
+                <div class="w-8 h-8 rounded-full border-2 border-bg-base bg-info/20 flex items-center justify-center text-[10px] font-bold text-info relative z-0">JS</div>
+              </div>
+            </div>
+          </div>
         </div>
-
+      
         @if (error()) {
-          <div class="alert alert-error">{{ error() }}</div>
+          <div class="m-8 alert alert-error bg-danger/10 border border-danger/20 text-danger p-3 rounded-lg text-sm">{{ error() }}</div>
         }
-
-        <!-- Add Task Form -->
-        @if (showAddTask()) {
-          <div class="card form-card bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6">
-            <h2 class="form-title text-white">New Task</h2>
-            <form [formGroup]="taskForm" (ngSubmit)="createTask()" class="inline-form">
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="task-title">Title *</label>
-                  <input id="task-title" type="text" formControlName="title" placeholder="Task description" />
-                </div>
-                <div class="form-group">
-                  <label for="task-priority">Priority</label>
-                  <select id="task-priority" formControlName="priority">
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="task-deadline">Deadline</label>
-                  <input id="task-deadline" type="date" formControlName="deadline" />
-                </div>
-                <div class="form-group">
-                  <label for="task-assignee">Assignee</label>
-                  <select id="task-assignee" formControlName="assignedTo" class="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg focus:outline-none focus:border-purple-500 p-2.5">
-                    <option value="">Unassigned</option>
-                    <option *ngFor="let user of allUsers()" [value]="user._id">{{ user.name }} ({{ user.role }})</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions mt-4">
-                <button type="submit" class="btn-primary bg-purple-600 hover:bg-purple-500 text-white font-medium" [disabled]="addingTask()">
-                  {{ addingTask() ? 'Adding...' : 'Add Task' }}
-                </button>
-                <button type="button" class="btn-ghost" (click)="cancelAddTask()">Cancel</button>
-              </div>
-            </form>
+      
+        <!-- Add Task Modal -->
+        <app-task-form-modal
+          [open]="showAddTask()"
+          [form]="taskForm"
+          [saving]="addingTask()"
+          [members]="workspaceMembers()"
+          (submitForm)="createTask()"
+          (cancelled)="cancelAddTask()"
+        />
+      
+        <!-- Kanban Board -->
+        <div class="flex-1 overflow-x-auto overflow-y-hidden p-8 flex gap-6 hide-scrollbar relative">
+      
+          <!-- Column: To Do -->
+          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+            <div class="px-4 py-3 bg-[#39394B] flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm">To Do</h3>
+              <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar">
+              @for (task of tasksByStatus('not_started'); track task._id) {
+                <app-task-card [task]="task" [workspaceMembers]="workspaceMembers()" [canAssign]="!!project()?.workspaceId" (taskUpdated)="onTaskUpdated($event)" (taskDeleted)="onTaskDeleted($event)" (taskClicked)="selectedTask.set($event)"/>
+              }
+            </div>
+            <div class="p-3 border-t border-border mt-auto">
+              <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Task
+              </button>
+            </div>
           </div>
-        }
-
-        <!-- Filter Bar -->
-        @if (allTasks().length > 0) {
-          <app-filter-bar
-            [tasks]="allTasks()"
-            (filtered)="filteredTasks.set($event)"
+      
+          <!-- Column: In Progress -->
+          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+            <div class="px-4 py-3 bg-[#4C4488] flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm">In Progress</h3>
+              <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar">
+              @for (task of tasksByStatus('in_progress'); track task._id) {
+                <app-task-card [task]="task" [workspaceMembers]="workspaceMembers()" [canAssign]="!!project()?.workspaceId" (taskUpdated)="onTaskUpdated($event)" (taskDeleted)="onTaskDeleted($event)" (taskClicked)="selectedTask.set($event)"/>
+              }
+            </div>
+            <div class="p-3 border-t border-border mt-auto">
+              <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Task
+              </button>
+            </div>
+          </div>
+      
+          <!-- Column: In Review -->
+          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+            <div class="px-4 py-3 bg-warning flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm">In Review</h3>
+              <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar">
+              @for (task of tasksByStatus('in_review'); track task._id) {
+                <app-task-card [task]="task" [workspaceMembers]="workspaceMembers()" [canAssign]="!!project()?.workspaceId" (taskUpdated)="onTaskUpdated($event)" (taskDeleted)="onTaskDeleted($event)" (taskClicked)="selectedTask.set($event)"/>
+              }
+            </div>
+            <div class="p-3 border-t border-border mt-auto">
+              <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Task
+              </button>
+            </div>
+          </div>
+      
+          <!-- Column: Completed -->
+          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+            <div class="px-4 py-3 bg-success flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm">Completed</h3>
+              <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 hide-scrollbar">
+              @for (task of tasksByStatus('completed'); track task._id) {
+                <app-task-card [task]="task" [workspaceMembers]="workspaceMembers()" [canAssign]="!!project()?.workspaceId" (taskUpdated)="onTaskUpdated($event)" (taskDeleted)="onTaskDeleted($event)" (taskClicked)="selectedTask.set($event)"/>
+              }
+            </div>
+            <div class="p-3 border-t border-border mt-auto">
+              <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Task
+              </button>
+            </div>
+          </div>
+      
+        </div>
+      
+        @if (selectedTask()) {
+          <app-task-details-modal
+            [task]="selectedTask()!"
+            [projectName]="project()?.title"
+            [workspaceId]="project()?.workspaceId"
+            (taskUpdated)="onTaskUpdated($event)"
+            (close)="selectedTask.set(null)"
           />
         }
-
-        <!-- Tasks -->
-        @if (loading()) {
-          <div class="loading-grid">
-            <div class="skeleton-card" *ngFor="let i of [1,2,3,4]"></div>
-          </div>
-        } @else if (allTasks().length === 0) {
-          <div class="empty-state">
-            <div class="empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-              </svg>
-            </div>
-            <h3>No tasks yet</h3>
-            <p>Add your first task to start tracking progress.</p>
-            <button class="btn-primary" (click)="showAddTask.set(true)">Add Task</button>
-          </div>
-        } @else {
-          <div class="tasks-grid">
-            @for (task of filteredTasks(); track task._id) {
-              <app-task-card
-                [task]="task"
-                (taskUpdated)="onTaskUpdated($event)"
-                (taskDeleted)="onTaskDeleted($event)"
-              />
-            }
-          </div>
-          @if (filteredTasks().length === 0 && allTasks().length > 0) {
-            <div class="empty-state small">
-              <p>No tasks match the current filters.</p>
-            </div>
-          }
-        }
       </main>
-  `,
+      `,
 })
 export class ProjectDetailComponent implements OnInit {
   project = signal<Project | null>(null);
@@ -155,7 +182,8 @@ export class ProjectDetailComponent implements OnInit {
   error = signal('');
   showAddTask = signal(false);
   addingTask = signal(false);
-  allUsers = signal<User[]>([]);
+  workspaceMembers = signal<WorkspaceMember[]>([]);
+  selectedTask = signal<Task | null>(null);
 
   taskForm!: FormGroup;
   private projectId!: string;
@@ -165,7 +193,7 @@ export class ProjectDetailComponent implements OnInit {
     private taskService: TaskService,
     private projectService: ProjectService,
     private authService: AuthService,
-    private userService: UserService,
+    private workspaceService: WorkspaceService,
     private fb: FormBuilder
   ) {}
 
@@ -180,7 +208,6 @@ export class ProjectDetailComponent implements OnInit {
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
     this.loadProject();
     this.loadTasks();
-    this.loadTeamUsers();
   }
 
   userName = () => this.authService.currentUser()?.name ?? '';
@@ -196,18 +223,24 @@ export class ProjectDetailComponent implements OnInit {
       next: (res) => {
         const found = res.data.find((p) => p._id === this.projectId);
         this.project.set(found ?? null);
+        
+        // Auto-switch workspace if we navigated to a project from another workspace
+        if (found && found.workspaceId) {
+          const currentWsId = this.workspaceService.activeWorkspace()?._id;
+          if (currentWsId !== found.workspaceId) {
+            this.workspaceService.setActiveWorkspace(found.workspaceId);
+          }
+          this.loadWorkspaceMembers(found.workspaceId);
+        }
       },
       error: () => {},
     });
   }
 
-  loadTeamUsers(): void {
-    this.userService.getAll().subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.allUsers.set(res.data);
-        }
-      }
+  loadWorkspaceMembers(workspaceId: string): void {
+    this.workspaceService.getMembers(workspaceId).subscribe({
+      next: (members) => this.workspaceMembers.set(members),
+      error: () => this.workspaceMembers.set([]),
     });
   }
 
@@ -224,6 +257,10 @@ export class ProjectDetailComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  tasksByStatus(status: TaskStatus): Task[] {
+    return this.filteredTasks().filter(t => t.status === status);
   }
 
   createTask(): void {
@@ -273,6 +310,9 @@ export class ProjectDetailComponent implements OnInit {
     this.filteredTasks.update((tasks) =>
       tasks.map((t) => (t._id === updatedTask._id ? updatedTask : t))
     );
+    if (this.selectedTask()?._id === updatedTask._id) {
+      this.selectedTask.set(updatedTask);
+    }
   }
 
   onTaskDeleted(taskId: string): void {

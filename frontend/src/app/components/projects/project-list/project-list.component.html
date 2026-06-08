@@ -1,0 +1,63 @@
+<section class="projects-section">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">Projects</h2>
+      <p class="section-subtitle">Manage projects in your active workspace.</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="createProject.emit()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      New Project
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="project-card skeleton"></div>
+      }
+    </div>
+  } @else if (!projects().length) {
+    <div class="empty-state">
+      <p>No projects yet in this workspace.</p>
+      <button type="button" class="btn-primary mt-3" (click)="createProject.emit()">Create your first project</button>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      @for (project of projects(); track project._id) {
+        <a [routerLink]="['/projects', project._id]" class="project-card group">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="min-w-0">
+              <h3 class="project-name">{{ project.title }}</h3>
+              @if (project.description) {
+                <p class="project-desc">{{ project.description }}</p>
+              }
+            </div>
+            <span class="status-pill" [ngClass]="getStatus(project).class">{{ getStatus(project).label }}</span>
+          </div>
+
+          <div class="progress-row">
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="project.progressPercent"></div>
+            </div>
+            <span class="progress-label">{{ project.progressPercent }}%</span>
+          </div>
+
+          <div class="meta-row">
+            <span>{{ project.completedCount }}/{{ project.taskCount }} tasks done</span>
+            @if (project.deadline) {
+              <span>Due {{ formatDate(project.deadline) }}</span>
+            }
+          </div>
+
+          <div class="card-actions">
+            <button type="button" class="action-btn" (click)="onEdit(project, $event)">Edit</button>
+            <button type="button" class="action-btn danger" (click)="onDelete(project, $event)">Delete</button>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>

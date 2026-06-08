@@ -4,7 +4,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -18,7 +18,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
     <div class="auth-page">
       <div class="auth-card">

@@ -1,17 +1,65 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { sendEmail, generatePassword } from '../utils/email';
+import { sendEmail, generatePassword, isSmtpConfigured } from '../utils/email';
+import {
+  issueAccountSetup,
+  verifyAccountSetupToken,
+  consumeAccountSetupToken,
+} from '../utils/accountSetup';
 import { createNotification } from '../utils/notify';
+import {
+  issueTokenPair,
+  rotateRefreshToken,
+  revokeRefreshToken,
+  revokeAllUserTokens,
+} from '../utils/tokens';
 
 const router = Router();
 const SALT_ROUNDS = 10;
-const TOKEN_EXPIRY = '7d';
+
+/* ─── Rate limiters ──────────────────────────────────────────────────────────
+ * - login/register/refresh: brute-force protection
+ * - admin-create-user: lighter
+ */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 12,                          // 12 attempts per 15min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many login attempts. Try again later.' },
+});
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 6,                           // 6 registrations per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many sign-up attempts. Try again later.' },
+});
+const refreshLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 60,                          // 60 refreshes per 5min per IP (covers many tabs)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many refresh requests.' },
+});
+const setupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many setup attempts. Try again later.' },
+});
+
+// Helper: serialize a user for the client (never expose passwordHash)
+function safeUser(u: any) {
+  return { _id: u._id, name: u.name, email: u.email, role: u.role };
+}
 
 // POST /api/auth/register
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', registerLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, role } = req.body as {
       name?: string;
@@ -21,18 +69,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     };
 
     if (!name || !email || !password) {
-      res.status(400).json({
-        success: false,
-        error: 'name, email, and password are required',
-      });
+      res.status(400).json({ success: false, error: 'name, email, and password are required' });
       return;
     }
-
     if (password.length < 6) {
-      res.status(400).json({
-        success: false,
-        error: 'Password must be at least 6 characters',
-      });
+      res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
       return;
     }
 
@@ -43,24 +84,24 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    
-    // First user registered becomes admin, otherwise use provided role or default to employee
+
+    // First user becomes admin, otherwise use provided role or default to employee
     const isFirstUser = (await User.countDocuments({})) === 0;
     const validRoles = ['employee', 'manager', 'admin', 'hr', 'accountant'];
     const assignedRole = isFirstUser ? 'admin' : (role && validRoles.includes(role) ? role : 'employee');
-    
+
     const user = await User.create({ name, email, passwordHash, role: assignedRole });
 
-    const secret = process.env.JWT_SECRET!;
-    const token = jwt.sign({ userId: user._id.toString(), role: user.role }, secret, {
-      expiresIn: TOKEN_EXPIRY,
-    });
+    const { accessToken, refreshToken } = await issueTokenPair(user, req);
 
     res.status(201).json({
       success: true,
       data: {
-        token,
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+        accessToken,
+        refreshToken,
+        // Back-compat alias for older clients still reading `token`
+        token: accessToken,
+        user: safeUser(user),
       },
     });
   } catch (err) {
@@ -70,56 +111,263 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', loginLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body as {
-      email?: string;
-      password?: string;
-    };
+    const { email, password } = req.body as { email?: string; password?: string };
 
     if (!email || !password) {
-      res.status(400).json({
-        success: false,
-        error: 'email and password are required',
-      });
+      res.status(400).json({ success: false, error: 'email and password are required' });
       return;
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      res
-        .status(401)
-        .json({ success: false, error: 'Invalid email or password' });
+      res.status(401).json({ success: false, error: 'Invalid email or password' });
       return;
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      res
-        .status(401)
-        .json({ success: false, error: 'Invalid email or password' });
+      res.status(401).json({ success: false, error: 'Invalid email or password' });
       return;
     }
 
-    // Set initial session start and last active on login
     user.lastActiveAt = new Date();
     user.sessionStart = new Date();
     await user.save();
 
-    const secret = process.env.JWT_SECRET!;
-    const token = jwt.sign({ userId: user._id.toString(), role: user.role }, secret, {
-      expiresIn: TOKEN_EXPIRY,
-    });
+    const { accessToken, refreshToken } = await issueTokenPair(user, req);
 
     res.json({
       success: true,
       data: {
-        token,
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+        accessToken,
+        refreshToken,
+        token: accessToken,                // back-compat alias
+        user: safeUser(user),
       },
     });
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/refresh — exchange a valid refresh token for a new pair
+router.post('/refresh', refreshLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body as { refreshToken?: string };
+    if (!refreshToken) {
+      res.status(400).json({ success: false, error: 'refreshToken is required' });
+      return;
+    }
+
+    const rotated = await rotateRefreshToken(refreshToken, req);
+    if (!rotated) {
+      res.status(401).json({ success: false, error: 'Invalid or expired refresh token' });
+      return;
+    }
+
+    const userDoc = await User.findById(rotated.user._id);
+
+    res.json({
+      success: true,
+      data: {
+        accessToken: rotated.accessToken,
+        refreshToken: rotated.refreshToken,
+        token: rotated.accessToken,           // back-compat
+        user: userDoc ? safeUser(userDoc) : rotated.user,
+      },
+    });
+  } catch (err) {
+    console.error('Refresh error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/logout — revoke the refresh token (single device)
+router.post('/logout', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body as { refreshToken?: string };
+    if (refreshToken) await revokeRefreshToken(refreshToken);
+    res.json({ success: true, data: { message: 'Logged out' } });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/logout-all — revoke ALL refresh tokens for current user
+router.post('/logout-all', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+    await revokeAllUserTokens(req.userId);
+    res.json({ success: true, data: { message: 'Logged out from all devices' } });
+  } catch (err) {
+    console.error('Logout-all error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// GET /api/auth/me — return the currently authenticated user
+router.get('/me', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+    res.json({ success: true, data: { user: safeUser(user) } });
+  } catch (err) {
+    console.error('Me error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// PUT /api/auth/me — update profile (name)
+router.put('/me', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { name } = req.body as { name?: string };
+    if (!name || !name.trim()) {
+      res.status(400).json({ success: false, error: 'Name is required' });
+      return;
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.name = name.trim();
+    await user.save();
+
+    res.json({ success: true, data: { user: safeUser(user) } });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+});
+
+// PUT /api/auth/change-password
+router.put('/change-password', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body as {
+      currentPassword?: string;
+      newPassword?: string;
+    };
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ success: false, error: 'Current and new password are required' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      res.status(400).json({ success: false, error: 'New password must be at least 6 characters' });
+      return;
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ success: false, error: 'Current password is incorrect' });
+      return;
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await user.save();
+    await revokeAllUserTokens(req.userId!);
+
+    res.json({ success: true, data: { message: 'Password updated. Please sign in again.' } });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, error: 'Failed to change password' });
+  }
+});
+
+// ─── Account setup (no SMTP required) ───────────────────────────────────────
+
+// GET /api/auth/setup-account/validate?token=&email=
+router.get('/setup-account/validate', setupLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const token = String(req.query['token'] || '');
+    const email = String(req.query['email'] || '');
+    if (!token || !email) {
+      res.status(400).json({ success: false, error: 'token and email are required' });
+      return;
+    }
+    const verified = await verifyAccountSetupToken(email, token);
+    if (!verified) {
+      res.status(400).json({ success: false, error: 'This setup link is invalid or has expired.' });
+      return;
+    }
+    res.json({ success: true, data: { email: verified.email, name: verified.name } });
+  } catch (err) {
+    console.error('Setup validate error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/setup-account — set password via one-time link
+router.post('/setup-account', setupLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, email, password } = req.body as {
+      token?: string;
+      email?: string;
+      password?: string;
+    };
+
+    if (!token || !email || !password) {
+      res.status(400).json({ success: false, error: 'token, email, and password are required' });
+      return;
+    }
+    if (password.length < 8) {
+      res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+      return;
+    }
+
+    const verified = await verifyAccountSetupToken(email, token);
+    if (!verified) {
+      res.status(400).json({ success: false, error: 'This setup link is invalid or has expired.' });
+      return;
+    }
+
+    const consumed = await consumeAccountSetupToken(verified.userId, token);
+    if (!consumed) {
+      res.status(400).json({ success: false, error: 'This setup link is invalid or has expired.' });
+      return;
+    }
+
+    const user = await User.findById(verified.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    await user.save();
+
+    const { accessToken, refreshToken } = await issueTokenPair(user, req);
+
+    res.json({
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+        token: accessToken,
+        user: safeUser(user),
+        message: 'Account ready. Welcome!',
+      },
+    });
+  } catch (err) {
+    console.error('Setup account error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -129,23 +377,20 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 // POST /api/auth/admin/create-user — Admin creates a user and sends password via email
 router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (req.userRole !== 'admin') {
-      res.status(403).json({ success: false, error: 'Admin access required' });
+    if (req.userRole !== 'admin' && req.userRole !== 'hr') {
+      res.status(403).json({ success: false, error: 'Admin or HR access required' });
       return;
     }
 
-    const { name, email, role } = req.body as {
-      name?: string;
-      email?: string;
-      role?: string;
-    };
+    const { name, email, role } = req.body as { name?: string; email?: string; role?: string };
 
-    if (!name || !email) {
-      res.status(400).json({ success: false, error: 'name and email are required' });
+    if (!email || !email.includes('@')) {
+      res.status(400).json({ success: false, error: 'A valid email is required' });
       return;
     }
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const lower = email.toLowerCase().trim();
+    const existing = await User.findOne({ email: lower });
     if (existing) {
       res.status(400).json({ success: false, error: 'Email already in use' });
       return;
@@ -153,50 +398,63 @@ router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: 
 
     const validRoles = ['employee', 'manager', 'admin', 'hr', 'accountant'];
     const assignedRole = role && validRoles.includes(role) ? role : 'employee';
+    const displayName = (name || lower.split('@')[0] || 'User').trim();
 
     const tempPassword = generatePassword(12);
     const passwordHash = await bcrypt.hash(tempPassword, SALT_ROUNDS);
 
     const user = await User.create({
-      name,
-      email: email.toLowerCase(),
+      name: displayName,
+      email: lower,
       passwordHash,
       role: assignedRole,
     });
 
-    // Send welcome email with temporary password
-    await sendEmail(
-      email,
-      'Welcome to DevTracker Pro — Your Account is Ready',
-      `
-      <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0f172a;color:#e2e8f0;border-radius:16px;">
-        <h1 style="color:#a78bfa;margin-bottom:8px;">Welcome to DevTracker Pro!</h1>
-        <p>Hello <strong>${name}</strong>,</p>
-        <p>Your account has been created by the system administrator. Here are your login credentials:</p>
-        <div style="background:#1e293b;padding:20px;border-radius:12px;margin:20px 0;border:1px solid #334155;">
-          <p style="margin:4px 0;"><strong>Email:</strong> ${email}</p>
-          <p style="margin:4px 0;"><strong>Temporary Password:</strong> <code style="background:#334155;padding:4px 8px;border-radius:4px;color:#f472b6;">${tempPassword}</code></p>
-          <p style="margin:4px 0;"><strong>Role:</strong> ${assignedRole}</p>
-        </div>
-        <p style="color:#94a3b8;font-size:13px;">Please change your password after your first login.</p>
-      </div>
-      `
-    );
+    const setup = await issueAccountSetup(user._id.toString(), lower, tempPassword);
 
-    // Notify the new user
-    await createNotification({
+    let emailSent = false;
+    if (isSmtpConfigured()) {
+      try {
+        await sendEmail(
+          lower,
+          'Welcome to DevTracker Pro — Your Account is Ready',
+          `
+          <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0f172a;color:#e2e8f0;border-radius:16px;">
+            <h1 style="color:#a78bfa;margin-bottom:8px;">Welcome to DevTracker Pro!</h1>
+            <p>Hello <strong>${displayName}</strong>,</p>
+            <p>Your account has been created. Set your password using the button below:</p>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${setup.setupLink}" style="display:inline-block;background:#6366f1;color:white;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;">Set your password</a>
+            </div>
+            <p style="color:#94a3b8;font-size:13px;">Temporary password: <code>${tempPassword}</code></p>
+          </div>
+          `
+        );
+        emailSent = true;
+      } catch (e: any) {
+        console.error('Welcome email failed:', e?.message);
+      }
+    }
+
+    createNotification({
       userId: user._id.toString(),
       type: 'account_created',
       title: 'Welcome to DevTracker Pro!',
-      message: `Your account has been created with the role "${assignedRole}". Please check your email for login credentials.`,
+      message: `Your account has been created with the role "${assignedRole}".`,
       link: '/employee-home',
-    });
+    }).catch(() => {});
 
     res.status(201).json({
       success: true,
       data: {
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role },
-        message: 'User created and email sent successfully.',
+        user: safeUser(user),
+        emailSent,
+        tempPassword,
+        setupLink: setup.setupLink,
+        shareMessage: setup.shareMessage,
+        message: emailSent
+          ? 'User created and setup link emailed.'
+          : 'User created. Copy the setup link below and send it to the employee.',
       },
     });
   } catch (err) {
@@ -214,7 +472,6 @@ router.post('/admin/reset-password', authMiddleware, async (req: AuthRequest, re
     }
 
     const { userId } = req.body as { userId?: string };
-
     if (!userId) {
       res.status(400).json({ success: false, error: 'userId is required' });
       return;
@@ -230,8 +487,10 @@ router.post('/admin/reset-password', authMiddleware, async (req: AuthRequest, re
     user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await user.save();
 
-    // Send password reset email
-    await sendEmail(
+    // When admin resets a password, kick the user out of all sessions
+    await revokeAllUserTokens(userId);
+
+    sendEmail(
       user.email,
       'DevTracker Pro — Your Password Has Been Reset',
       `
@@ -245,15 +504,14 @@ router.post('/admin/reset-password', authMiddleware, async (req: AuthRequest, re
         <p style="color:#94a3b8;font-size:13px;">Please change your password after your next login.</p>
       </div>
       `
-    );
+    ).catch((e) => console.error('Reset email failed:', e?.message));
 
-    // Notify the user
-    await createNotification({
+    createNotification({
       userId: user._id.toString(),
       type: 'password_reset',
       title: 'Password Reset',
       message: 'Your password has been reset by an administrator. Check your email for the new password.',
-    });
+    }).catch(() => {});
 
     res.json({
       success: true,

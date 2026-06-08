@@ -1,0 +1,88 @@
+@if (open()) {
+  <div
+    class="confirm-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    (click)="onBackdrop()"
+  >
+    <div
+      class="confirm-card bg-bg-elevated border border-border rounded-2xl w-full max-w-md shadow-modal p-6"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start gap-4 mb-5">
+        <div
+          class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+          [ngClass]="iconContainerClass()"
+        >
+          @switch (icon()) {
+            @case ('clock') {
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            }
+            @case ('check') {
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            }
+            @case ('warning') {
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            }
+            @default {
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            }
+          }
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <h3 class="text-base font-bold text-white mb-1">{{ title() }}</h3>
+          @if (message()) {
+            <p class="text-sm text-text-secondary leading-relaxed">{{ message() }}</p>
+          }
+        </div>
+      </div>
+
+      @if (showTextarea()) {
+        <textarea
+          [ngModel]="inputText()"
+          (ngModelChange)="inputText.set($event)"
+          rows="3"
+          [placeholder]="inputPlaceholder()"
+          class="field resize-none mb-4 w-full"
+        ></textarea>
+      } @else if (showInput()) {
+        <input
+          type="text"
+          [ngModel]="inputText()"
+          (ngModelChange)="inputText.set($event)"
+          [placeholder]="inputPlaceholder()"
+          class="field mb-4 w-full"
+          (keydown.enter)="onConfirm()"
+        />
+      }
+
+      <div class="flex items-center justify-end gap-2.5">
+        <button type="button" class="btn-soft" (click)="onCancel()">
+          {{ cancelLabel() }}
+        </button>
+        <button
+          type="button"
+          class="btn-accent"
+          [ngClass]="confirmButtonClass()"
+          [disabled]="requiresInput() && !inputText().trim()"
+          (click)="onConfirm()"
+        >
+          {{ confirmLabel() }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

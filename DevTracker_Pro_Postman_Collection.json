@@ -1,0 +1,1657 @@
+{
+  "info": {
+    "name": "DevTracker Pro API",
+    "description": "API Documentation for DevTracker Pro. Use the {{baseUrl}} and {{token}} variables to get started.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"employee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login and get a JWT token.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin: Create User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/admin/create-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "admin",
+                "create-user"
+              ]
+            },
+            "description": "Admin creates a new user and emails temp password.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@company.com\",\n  \"role\": \"hr\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin: Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/admin/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "admin",
+                "reset-password"
+              ]
+            },
+            "description": "Admin resets a user's password.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"664abc...\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "List all users (Admin/Manager)."
+          }
+        },
+        {
+          "name": "Change User Role",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/user_id_here/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "user_id_here",
+                "role"
+              ]
+            },
+            "description": "Admin changes user role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"manager\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Heartbeat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/heartbeat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "heartbeat"
+              ]
+            },
+            "description": "Update user active timestamp.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPage\": \"/dashboard\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/active-sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "active-sessions"
+              ]
+            },
+            "description": "Get currently online users."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Workspaces",
+      "item": [
+        {
+          "name": "Get Workspaces",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "List workspaces."
+          }
+        },
+        {
+          "name": "Create Workspace",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Create a new workspace.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering Team\",\n  \"description\": \"Main eng workspace\",\n  \"members\": [\n    \"userId1\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Workspace",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/workspace_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "workspace_id_here"
+              ]
+            },
+            "description": "Update workspace (Owner).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Team\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Workspace",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/workspace_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "workspace_id_here"
+              ]
+            },
+            "description": "Delete workspace (Owner)."
+          }
+        },
+        {
+          "name": "Get Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/workspace_id_here/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "workspace_id_here",
+                "members"
+              ]
+            },
+            "description": "Get workspace members."
+          }
+        },
+        {
+          "name": "Add Member",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/workspace_id_here/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "workspace_id_here",
+                "members"
+              ]
+            },
+            "description": "Add a member.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user_id_here\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remove Member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/workspace_id_here/members/user_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "workspace_id_here",
+                "members",
+                "user_id_here"
+              ]
+            },
+            "description": "Remove a member."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Projects",
+      "item": [
+        {
+          "name": "Get Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            },
+            "description": "List projects (can filter by ?workspaceId=)."
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            },
+            "description": "Create a new project.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Website Redesign\",\n  \"deadline\": \"2024-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/project_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "project_id_here"
+              ]
+            },
+            "description": "Update project details.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/project_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "project_id_here"
+              ]
+            },
+            "description": "Delete a project."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Tasks & Timer",
+      "item": [
+        {
+          "name": "Get Project Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/project/project_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "project",
+                "project_id_here"
+              ]
+            },
+            "description": "List tasks in a project."
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/project/project_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "project",
+                "project_id_here"
+              ]
+            },
+            "description": "Create a new task.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Design mockups\",\n  \"priority\": \"high\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here"
+              ]
+            },
+            "description": "Update task status/fields.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here"
+              ]
+            },
+            "description": "Delete a task."
+          }
+        },
+        {
+          "name": "My Timesheet",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/my/timesheet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "my",
+                "timesheet"
+              ]
+            },
+            "description": "Get timesheet tasks."
+          }
+        },
+        {
+          "name": "Start Timer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here/timer/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here",
+                "timer",
+                "start"
+              ]
+            },
+            "description": "Start task timer."
+          }
+        },
+        {
+          "name": "Stop Timer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here/timer/stop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here",
+                "timer",
+                "stop"
+              ]
+            },
+            "description": "Stop task timer."
+          }
+        },
+        {
+          "name": "Total Timer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here/timer/total",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here",
+                "timer",
+                "total"
+              ]
+            },
+            "description": "Get total tracked time."
+          }
+        },
+        {
+          "name": "Add Subtask",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here/subtasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here",
+                "subtasks"
+              ]
+            },
+            "description": "Add a subtask.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Write tests\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Subtask",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here/subtasks/subtask_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here",
+                "subtasks",
+                "subtask_id_here"
+              ]
+            },
+            "description": "Update a subtask.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Subtask",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/task_id_here/subtasks/subtask_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "task_id_here",
+                "subtasks",
+                "subtask_id_here"
+              ]
+            },
+            "description": "Delete a subtask."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Attendance",
+      "item": [
+        {
+          "name": "Check-in",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": "Daily check-in."
+          }
+        },
+        {
+          "name": "Check-out",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/check-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "check-out"
+              ]
+            },
+            "description": "Daily check-out."
+          }
+        },
+        {
+          "name": "Break Start",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/break-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "break-start"
+              ]
+            },
+            "description": "Start a break."
+          }
+        },
+        {
+          "name": "Break End",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/break-end",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "break-end"
+              ]
+            },
+            "description": "End a break."
+          }
+        },
+        {
+          "name": "Today's Record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "today"
+              ]
+            },
+            "description": "Get attendance for today."
+          }
+        },
+        {
+          "name": "My History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "history"
+              ]
+            },
+            "description": "Get attendance history."
+          }
+        },
+        {
+          "name": "Admin: Today",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/admin/today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "admin",
+                "today"
+              ]
+            },
+            "description": "View all today check-ins (Admin/HR)."
+          }
+        },
+        {
+          "name": "Admin: Adjust",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/admin/adjust",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "attendance",
+                "admin",
+                "adjust"
+              ]
+            },
+            "description": "Manually adjust record (Admin/HR).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user_id\",\n  \"date\": \"2024-10-30\",\n  \"status\": \"Present\",\n  \"reason\": \"Correction\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Leaves",
+      "item": [
+        {
+          "name": "Request Leave",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leaves/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "leaves",
+                "request"
+              ]
+            },
+            "description": "Submit a leave request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leaveType\": \"annual\",\n  \"startDate\": \"2024-11-01\",\n  \"endDate\": \"2024-11-05\",\n  \"reason\": \"Vacation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "My Leaves",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leaves/my-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "leaves",
+                "my-requests"
+              ]
+            },
+            "description": "List my leave requests."
+          }
+        },
+        {
+          "name": "Leave Balances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leaves/balances",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "leaves",
+                "balances"
+              ]
+            },
+            "description": "Get current leave balance."
+          }
+        },
+        {
+          "name": "Admin: Pending Leaves",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leaves/admin/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "leaves",
+                "admin",
+                "pending"
+              ]
+            },
+            "description": "List pending leaves."
+          }
+        },
+        {
+          "name": "Admin: Approve Leave",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leaves/admin/leave_id_here/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "leaves",
+                "admin",
+                "leave_id_here",
+                "approve"
+              ]
+            },
+            "description": "Approve a leave."
+          }
+        },
+        {
+          "name": "Admin: Reject Leave",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leaves/admin/leave_id_here/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "leaves",
+                "admin",
+                "leave_id_here",
+                "reject"
+              ]
+            },
+            "description": "Reject a leave.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Understaffed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Permissions",
+      "item": [
+        {
+          "name": "Request Permission",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permissions",
+                "request"
+              ]
+            },
+            "description": "Submit an hourly permission.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"late_arrival\",\n  \"date\": \"2024-11-01\",\n  \"fromTime\": \"09:00\",\n  \"toTime\": \"10:30\",\n  \"reason\": \"Doctor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "My Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/my-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permissions",
+                "my-requests"
+              ]
+            },
+            "description": "List my permissions."
+          }
+        },
+        {
+          "name": "Admin: Pending Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/admin/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permissions",
+                "admin",
+                "pending"
+              ]
+            },
+            "description": "List pending permissions."
+          }
+        },
+        {
+          "name": "Admin: Approve Permission",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/admin/perm_id_here/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permissions",
+                "admin",
+                "perm_id_here",
+                "approve"
+              ]
+            },
+            "description": "Approve a permission."
+          }
+        },
+        {
+          "name": "Admin: Reject Permission",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/admin/perm_id_here/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permissions",
+                "admin",
+                "perm_id_here",
+                "reject"
+              ]
+            },
+            "description": "Reject a permission."
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Overtime",
+      "item": [
+        {
+          "name": "Log Overtime",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/overtime/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "overtime",
+                "request"
+              ]
+            },
+            "description": "Log overtime hours.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2024-11-01\",\n  \"startTime\": \"17:00\",\n  \"endTime\": \"20:00\",\n  \"reason\": \"Deployment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "My Overtime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/overtime/my-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "overtime",
+                "my-requests"
+              ]
+            },
+            "description": "List my overtime."
+          }
+        },
+        {
+          "name": "Admin: Pending Overtime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/overtime/admin/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "overtime",
+                "admin",
+                "pending"
+              ]
+            },
+            "description": "List pending overtime."
+          }
+        },
+        {
+          "name": "Admin: Approve Overtime",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/overtime/admin/ot_id_here/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "overtime",
+                "admin",
+                "ot_id_here",
+                "approve"
+              ]
+            },
+            "description": "Approve overtime."
+          }
+        },
+        {
+          "name": "Admin: Reject Overtime",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/overtime/admin/ot_id_here/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "overtime",
+                "admin",
+                "ot_id_here",
+                "reject"
+              ]
+            },
+            "description": "Reject overtime."
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Employees",
+      "item": [
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employees"
+              ]
+            },
+            "description": "List employees (HR/Admin)."
+          }
+        },
+        {
+          "name": "Get Employee Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employees/user_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employees",
+                "user_id_here"
+              ]
+            },
+            "description": "Get specific employee profile."
+          }
+        },
+        {
+          "name": "Update Employee Profile",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employees/user_id_here",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employees",
+                "user_id_here"
+              ]
+            },
+            "description": "Update HR profile.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleTitle\": \"Senior Eng\",\n  \"basicSalary\": 6000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Payroll",
+      "item": [
+        {
+          "name": "Run Payroll",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/run/2024-10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "run",
+                "2024-10"
+              ]
+            },
+            "description": "Generate payroll for a month."
+          }
+        },
+        {
+          "name": "Get Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs"
+              ]
+            },
+            "description": "List all payroll runs."
+          }
+        },
+        {
+          "name": "Get Payslips for Run",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/run_id_here/payslips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "run_id_here",
+                "payslips"
+              ]
+            },
+            "description": "Get payslips for a specific run."
+          }
+        },
+        {
+          "name": "Update Run Status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/run_id_here/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "run_id_here",
+                "status"
+              ]
+            },
+            "description": "Update status (e.g. approved).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "My Payslips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/my-payslips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "my-payslips"
+              ]
+            },
+            "description": "Get my payslips."
+          }
+        },
+        {
+          "name": "Add Adjustment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/adjustments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "adjustments"
+              ]
+            },
+            "description": "Add bonus/deduction.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user_id_here\",\n  \"type\": \"bonus\",\n  \"subType\": \"commission\",\n  \"amount\": 500,\n  \"payrollMonth\": \"2024-10\",\n  \"reason\": \"Sales\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List Adjustments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/adjustments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "adjustments"
+              ]
+            },
+            "description": "List adjustments for a month."
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Reports",
+      "item": [
+        {
+          "name": "Timesheet Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "summary"
+              ]
+            },
+            "description": "Get timesheet and overtime summary."
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "List latest notifications."
+          }
+        },
+        {
+          "name": "Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Get unread count."
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/notif_id_here/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "notif_id_here",
+                "read"
+              ]
+            },
+            "description": "Mark one notification as read."
+          }
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Mark all as read."
+          }
+        }
+      ]
+    }
+  ]
+}

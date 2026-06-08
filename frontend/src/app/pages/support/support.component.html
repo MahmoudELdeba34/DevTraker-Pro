@@ -1,0 +1,86 @@
+<div class="page-ambient max-w-5xl mx-auto pb-12 animate-fade-up">
+  <app-page-header
+    eyebrow="Help Center"
+    title="Support"
+    description="Find answers, contact your team, and get help with DevTracker Pro."
+    [tips]="[
+      { title: 'Request Center', body: 'Submit leave, permission, or overtime requests from one place.' },
+      { title: 'Account settings', body: 'Update your name or password from Settings in the sidebar.' },
+      { title: 'Workspace admins', body: 'Ask your workspace admin if you cannot access a project or workspace.' }
+    ]"
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <a routerLink="/request-center" class="support-card group">
+      <div class="icon-wrap accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div>
+        <h3>Request Center</h3>
+        <p>File leave, permission, or overtime requests.</p>
+      </div>
+    </a>
+
+    <a routerLink="/account" class="support-card group">
+      <div class="icon-wrap info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 9.4V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v6.09"/>
+        </svg>
+      </div>
+      <div>
+        <h3>Account &amp; Settings</h3>
+        <p>Update your profile or change your password.</p>
+      </div>
+    </a>
+
+    <a routerLink="/my-timesheet" class="support-card group">
+      <div class="icon-wrap success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div>
+        <h3>My Timesheet</h3>
+        <p>Review tracked hours, tasks, and attendance.</p>
+      </div>
+    </a>
+
+    @if (canAccessHrPortal()) {
+      <a routerLink="/admin-hr-portal" class="support-card group">
+        <div class="icon-wrap warning">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div>
+          <h3>HR Portal</h3>
+          <p>HR and managers can review team requests here.</p>
+        </div>
+      </a>
+    }
+  </div>
+
+  <div class="bg-bg-elevated border border-border rounded-2xl p-6">
+    <h2 class="text-sm font-bold text-white mb-4">Common questions</h2>
+    <div class="space-y-4">
+      <details class="faq-item">
+        <summary>How do I start tracking time on a task?</summary>
+        <p>Open a project from the sidebar, click a task card, and use the timer widget — or pick a task from the top bar timer menu.</p>
+      </details>
+      <details class="faq-item">
+        <summary>I was invited but cannot sign in</summary>
+        <p>Use the setup link your admin sent you, or ask them to resend credentials from the Members page.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Who can add me to a workspace?</summary>
+        <p>Workspace admins and HR can onboard employees or add existing teammates from the Members page.</p>
+      </details>
+    </div>
+  </div>
+</div>

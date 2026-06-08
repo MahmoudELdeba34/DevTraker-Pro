@@ -1,0 +1,479 @@
+<div class="page-ambient max-w-7xl mx-auto pb-12">
+  <!-- HEADER -->
+  <div class="flex flex-col gap-1 mb-6 animate-fade-up">
+    <div class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent font-bold">
+      <span>Workspace</span>
+      @if (activeWs(); as ws) {
+        <span class="text-text-muted">›</span>
+        <span class="text-text-secondary normal-case tracking-normal font-medium">{{ ws.name }}</span>
+      }
+    </div>
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <h1 class="text-3xl font-display font-bold text-white tracking-tight">Members</h1>
+      <div class="flex items-center gap-2">
+        @if (myWorkspaceRole(); as r) {
+          <span
+            class="text-[10px] px-2 py-1 rounded border font-bold uppercase tracking-widest"
+            [class]="roleChipClass(r === 'owner' ? 'owner' : r)"
+          >
+            You: {{ r }}
+          </span>
+        }
+        @if (activeWs()) {
+          <button
+            (click)="loadMembers(activeWs()!._id)"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold text-text-secondary hover:text-white hover:bg-bg-hover transition-colors border border-border flex items-center gap-1.5"
+            [disabled]="loading()"
+            title="Refresh"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [class.animate-spin-slow]="loading()">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+            Refresh
+          </button>
+        }
+      </div>
+    </div>
+    <p class="text-sm text-text-secondary max-w-2xl">
+      Everyone here can see projects and tasks inside <strong>{{ activeWs()?.name || 'this workspace' }}</strong>.
+      @if (canManage()) {
+        <span>Add new people by email or change someone's role at any time.</span>
+      } @else {
+        <span>Only workspace admins can add or remove members.</span>
+      }
+    </p>
+  </div>
+
+  <!-- NO WORKSPACE STATE -->
+  @if (!activeWs()) {
+    <div class="bg-bg-elevated border border-border rounded-2xl p-12 text-center animate-fade-up">
+      <div class="w-12 h-12 mx-auto rounded-full bg-accent-subtle text-accent flex items-center justify-center mb-4">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-1">No active workspace</h3>
+      <p class="text-sm text-text-muted mb-4">Create or select a workspace from the sidebar to manage members.</p>
+      <a routerLink="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors">
+        Go to dashboard
+      </a>
+    </div>
+  } @else {
+    <!-- STAT TILES -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 stagger">
+      <button (click)="setFilter('all')"
+              [class.ring-2]="filterRole() === 'all'"
+              [class.ring-accent]="filterRole() === 'all'"
+              class="stat-tile text-left rounded-2xl border border-border bg-bg-elevated p-4 transition-all">
+        <div class="text-[10px] uppercase tracking-widest text-text-muted font-bold mb-2">Total</div>
+        <div class="text-2xl font-display font-bold text-white animate-count-up">{{ stats().total }}</div>
+      </button>
+      <button (click)="setFilter('admin')"
+              [class.ring-2]="filterRole() === 'admin'"
+              [class.ring-accent]="filterRole() === 'admin'"
+              class="stat-tile text-left rounded-2xl border border-border bg-bg-elevated p-4 transition-all">
+        <div class="text-[10px] uppercase tracking-widest text-accent font-bold mb-2">Admins</div>
+        <div class="text-2xl font-display font-bold text-white animate-count-up">{{ stats().admins }}</div>
+      </button>
+      <button (click)="setFilter('member')"
+              [class.ring-2]="filterRole() === 'member'"
+              [class.ring-accent]="filterRole() === 'member'"
+              class="stat-tile text-left rounded-2xl border border-border bg-bg-elevated p-4 transition-all">
+        <div class="text-[10px] uppercase tracking-widest text-info font-bold mb-2">Members</div>
+        <div class="text-2xl font-display font-bold text-white animate-count-up">{{ stats().members }}</div>
+      </button>
+      <button (click)="setFilter('viewer')"
+              [class.ring-2]="filterRole() === 'viewer'"
+              [class.ring-accent]="filterRole() === 'viewer'"
+              class="stat-tile text-left rounded-2xl border border-border bg-bg-elevated p-4 transition-all">
+        <div class="text-[10px] uppercase tracking-widest text-warning font-bold mb-2">Viewers</div>
+        <div class="text-2xl font-display font-bold text-white animate-count-up">{{ stats().viewers }}</div>
+      </button>
+    </div>
+
+    <!-- ADD MEMBER PANEL -->
+    @if (canInvite()) {
+      <div class="bg-bg-elevated border border-border rounded-2xl p-5 mb-6 animate-fade-up">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-lg bg-accent-subtle text-accent flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h2 class="section-title text-sm font-bold text-white tracking-tight m-0">
+              @if (canOnboardEmployees()) { Onboard employee } @else { Add Member }
+            </h2>
+            <p class="text-[11px] text-text-muted mt-0.5 leading-relaxed">
+              @if (canOnboardEmployees()) {
+                Enter their work email and system role. After creation, copy the setup link and send it on WhatsApp or Slack — no email server needed.
+              } @else {
+                Add an existing teammate by their email address.
+              }
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-col lg:flex-row gap-2">
+          <div class="relative flex-1 min-w-0">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </span>
+            <input
+              type="email"
+              [ngModel]="inviteEmail()"
+              (ngModelChange)="inviteEmail.set($event)"
+              (keyup.enter)="submitInvite()"
+              placeholder="employee@company.com"
+              class="w-full bg-bg-base border border-border text-white text-sm rounded-lg pl-9 pr-3 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/60"
+            />
+          </div>
+          @if (canOnboardEmployees()) {
+            <select
+              [ngModel]="inviteGlobalRole()"
+              (ngModelChange)="inviteGlobalRole.set($event)"
+              class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-accent min-w-[140px]"
+              title="System role"
+            >
+              <option value="employee">Employee</option>
+              <option value="manager">Manager</option>
+              <option value="hr">HR</option>
+              <option value="accountant">Accountant</option>
+              <option value="admin">Admin</option>
+            </select>
+          }
+          <select
+            [ngModel]="inviteRole()"
+            (ngModelChange)="inviteRole.set($event)"
+            class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-accent min-w-[140px]"
+            title="Workspace access"
+          >
+            <option value="member">Workspace: Member</option>
+            <option value="admin">Workspace: Admin</option>
+            <option value="viewer">Workspace: Viewer</option>
+          </select>
+          <button
+            (click)="submitInvite()"
+            [disabled]="inviting() || !inviteEmail()"
+            class="btn-accent px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors shadow-[0_0_15px_rgba(99,102,241,0.25)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            {{ inviting() ? 'Sending…' : (canOnboardEmployees() ? 'Create & email' : 'Add Member') }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ADD EXISTING MEMBER -->
+    @if (canManage()) {
+      <div class="bg-bg-elevated border border-border rounded-2xl p-5 mb-6 animate-fade-up">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-lg bg-info/15 text-info flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="section-title text-sm font-bold text-white tracking-tight m-0">Add existing teammate</h2>
+            <p class="text-[11px] text-text-muted mt-0.5">Search people who already have accounts and assign them to this workspace.</p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 mb-3">
+          <input
+            type="text"
+            [ngModel]="addExistingSearch()"
+            (ngModelChange)="addExistingSearch.set($event)"
+            (keyup.enter)="searchExistingUsers()"
+            placeholder="Search by name or email…"
+            class="flex-1 min-w-0 bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-accent placeholder:text-text-muted/60"
+          />
+          <select
+            [ngModel]="addExistingRole()"
+            (ngModelChange)="addExistingRole.set($event)"
+            class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-accent min-w-[140px]"
+          >
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+            <option value="viewer">Viewer</option>
+          </select>
+          <button
+            (click)="searchExistingUsers()"
+            [disabled]="searchingUsers()"
+            class="px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-info hover:bg-info/90 transition-colors disabled:opacity-50 shrink-0"
+          >
+            {{ searchingUsers() ? 'Searching…' : 'Search' }}
+          </button>
+        </div>
+        @if (availableUsers().length) {
+          <ul class="flex flex-col gap-1.5 max-h-48 overflow-y-auto hide-scrollbar">
+            @for (u of availableUsers(); track u._id) {
+              <li class="flex items-center gap-3 px-3 py-2 rounded-lg bg-bg-base border border-border">
+                <div class="w-8 h-8 rounded-full bg-accent/15 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
+                  {{ initials(u.name) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-white truncate">{{ u.name }}</div>
+                  <div class="text-[11px] text-text-muted truncate">{{ u.email }}</div>
+                </div>
+                <button
+                  (click)="addExistingUser(u)"
+                  [disabled]="addingExistingId() === u._id"
+                  class="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-accent hover:bg-accent-hover transition-colors disabled:opacity-50 shrink-0"
+                >
+                  {{ addingExistingId() === u._id ? 'Adding…' : 'Add' }}
+                </button>
+              </li>
+            }
+          </ul>
+        } @else if (addExistingSearch() && !searchingUsers()) {
+          <p class="text-xs text-text-muted italic">No matching users found — they may already be members.</p>
+        }
+      </div>
+    }
+
+    <!-- SHARE CREDENTIALS (no SMTP needed) -->
+    @if (lastInvite(); as li) {
+      <app-credentials-banner class="block mb-6" [data]="li" (dismissed)="dismissLastInvite()" />
+    }
+
+    @if (flash(); as f) {
+      <app-flash-banner class="block mb-4" [type]="f.type" [message]="f.text" />
+    }
+
+    <!-- FILTER BAR -->
+    <div class="flex items-center gap-3 mb-3 flex-wrap">
+      <div class="relative flex-1 min-w-[220px]">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input
+          type="text"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          placeholder="Search by name, email, or role…"
+          class="w-full bg-bg-elevated border border-border text-white text-sm rounded-lg pl-9 pr-3 py-2 outline-none focus:border-accent transition-colors placeholder:text-text-muted/60"
+        />
+      </div>
+      <div class="flex items-center gap-1 bg-bg-elevated border border-border rounded-lg p-1">
+        @for (opt of [
+          {id: 'all', label: 'All'},
+          {id: 'owner', label: 'Owner'},
+          {id: 'admin', label: 'Admins'},
+          {id: 'member', label: 'Members'},
+          {id: 'viewer', label: 'Viewers'}
+        ]; track opt.id) {
+          <button
+            (click)="setFilter($any(opt.id))"
+            [class.bg-accent]="filterRole() === opt.id"
+            [class.text-white]="filterRole() === opt.id"
+            [class.text-text-secondary]="filterRole() !== opt.id"
+            class="px-3 py-1 rounded-md text-xs font-semibold transition-colors hover:text-white"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- MEMBERS TABLE -->
+    <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
+      @if (loading()) {
+        <div class="p-5 space-y-3">
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="h-14 rounded-lg bg-bg-base/60 animate-pulse border border-border/40"></div>
+          }
+        </div>
+      } @else if (filteredMembers().length === 0) {
+        <div class="py-16 text-center">
+          <div class="text-text-muted text-sm">
+            @if (members().length === 0) {
+              No members yet.
+            } @else {
+              No members match your filters.
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="overflow-x-auto hide-scrollbar">
+          <table class="hr-table w-full text-sm">
+            <thead>
+              <tr class="text-left text-[10px] uppercase tracking-widest text-text-muted border-b border-border">
+                <th class="px-5 py-3 font-bold">Member</th>
+                <th class="px-3 py-3 font-bold hidden md:table-cell">Global Role</th>
+                <th class="px-3 py-3 font-bold">Workspace Role</th>
+                <th class="px-3 py-3 font-bold hidden lg:table-cell">Joined</th>
+                <th class="px-5 py-3 font-bold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of filteredMembers(); track trackById($index, m)) {
+                <tr class="border-b border-border/60 last:border-b-0 hover:bg-bg-hover/40 transition-colors">
+                  <!-- Member -->
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-xs font-bold text-accent shrink-0">
+                        {{ initials(m.name) }}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-sm font-semibold text-white truncate">{{ m.name }}</span>
+                          @if (m.isOwner) {
+                            <span class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-warning/15 text-warning border border-warning/30 font-bold">Owner</span>
+                          }
+                          @if (m._id === myUserId()) {
+                            <span class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-accent-subtle text-accent border border-accent/30 font-bold">You</span>
+                          }
+                        </div>
+                        <div class="text-[11px] text-text-muted truncate">{{ m.email }}</div>
+                        @if (m.tracking) {
+                          <div class="flex items-center gap-1.5 mt-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-danger animate-pulse"></span>
+                            <span class="text-[10px] text-danger font-semibold truncate">
+                              Tracking: {{ m.tracking.label }}
+                            </span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Global role -->
+                  <td class="px-3 py-3 hidden md:table-cell">
+                    <span class="text-xs font-semibold capitalize" [class]="globalRoleClass(m.role)">
+                      {{ m.role }}
+                    </span>
+                  </td>
+
+                  <!-- Workspace role -->
+                  <td class="px-3 py-3">
+                    @if (!m.isOwner && canManage()) {
+                      <select
+                        [ngModel]="m.workspaceRole"
+                        (ngModelChange)="promptChangeRole(m, $event)"
+                        class="bg-bg-base border border-border text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-accent"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="member">Member</option>
+                        <option value="viewer">Viewer</option>
+                      </select>
+                    } @else {
+                      <span
+                        class="inline-block text-[10px] px-2 py-1 rounded-md border font-semibold uppercase tracking-wider"
+                        [class]="roleChipClass(m.isOwner ? 'owner' : m.workspaceRole)"
+                      >
+                        {{ m.isOwner ? 'owner' : m.workspaceRole }}
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Joined -->
+                  <td class="px-3 py-3 hidden lg:table-cell text-xs text-text-secondary">
+                    {{ formatJoinDate(m.addedAt) }}
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-5 py-3 text-right">
+                    <div class="inline-flex items-center gap-1 justify-end flex-wrap">
+                      @if (canManage() && m.tracking && m._id !== myUserId()) {
+                        <button
+                          (click)="promptStopTracking(m)"
+                          [disabled]="stoppingTimerId() === m._id"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold text-danger bg-danger/10 border border-danger/25 hover:bg-danger hover:text-white transition-colors disabled:opacity-50"
+                          title="Stop active timer"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="6" y="4" width="4" height="16"/>
+                            <rect x="14" y="4" width="4" height="16"/>
+                          </svg>
+                          <span class="hidden sm:inline">
+                            {{ stoppingTimerId() === m._id ? 'Stopping…' : 'Stop timer' }}
+                          </span>
+                        </button>
+                      }
+                      @if (canOnboardEmployees() && !m.isOwner && m._id !== myUserId()) {
+                        <button
+                          (click)="promptSendCredentials(m)"
+                          [disabled]="sendingCredentials() === m._id"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold text-text-muted hover:text-accent hover:bg-accent/10 transition-colors disabled:opacity-50"
+                          title="Generate new password and setup link"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                          </svg>
+                          <span class="hidden sm:inline">
+                            {{ sendingCredentials() === m._id ? 'Sending…' : 'Send login' }}
+                          </span>
+                        </button>
+                      }
+                      @if (!m.isOwner && (canManage() || m._id === myUserId())) {
+                        <button
+                          (click)="promptRemove(m)"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                          [title]="m._id === myUserId() ? 'Leave workspace' : 'Remove member'"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/>
+                            <path d="M10 11v6"/>
+                            <path d="M14 11v6"/>
+                          </svg>
+                          <span class="hidden sm:inline">
+                            {{ m._id === myUserId() ? 'Leave' : 'Remove' }}
+                          </span>
+                        </button>
+                      }
+                      @if (showMemberActionsDash(m)) {
+                        <span class="text-xs text-text-faint">—</span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- FOOTER COUNT -->
+    @if (!loading() && members().length > 0) {
+      <p class="mt-3 text-[11px] text-text-muted">
+        Showing {{ filteredMembers().length }} of {{ members().length }}
+        {{ members().length === 1 ? 'member' : 'members' }}
+      </p>
+    }
+  }
+
+  <!-- CONFIRMATION DIALOG -->
+  @if (confirmDialogMeta(); as dialog) {
+    <app-confirm-dialog
+      [open]="true"
+      [title]="dialog.title"
+      [message]="dialog.message"
+      [confirmLabel]="dialog.confirmLabel"
+      [variant]="dialog.variant"
+      [icon]="pending()?.kind === 'stop-tracking' ? 'clock' : 'alert'"
+      (confirmed)="confirmPending()"
+      (cancelled)="cancelPending()"
+    />
+  }
+</div>

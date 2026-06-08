@@ -16,6 +16,23 @@ export const routes: Routes = [
       import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./pages/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
+  {
+    path: 'setup-account',
+    loadComponent: () =>
+      import('./pages/setup-account/setup-account.component').then(
+        (m) => m.SetupAccountComponent
+      ),
+  },
+  {
     path: 'register',
     loadComponent: () =>
       import('./pages/register/register.component').then(
@@ -38,10 +55,38 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'account',
+        loadComponent: () =>
+          import('./pages/account/account.component').then(
+            (m) => m.AccountComponent
+          ),
+      },
+      {
+        path: 'support',
+        loadComponent: () =>
+          import('./pages/support/support.component').then(
+            (m) => m.SupportComponent
+          ),
+      },
+      {
+        path: 'my-timesheet',
+        loadComponent: () =>
+          import('./pages/my-timesheet/my-timesheet.component').then(
+            (m) => m.MyTimesheetComponent
+          ),
+      },
+      {
         path: 'projects/:id',
         loadComponent: () =>
           import('./pages/project-detail/project-detail.component').then(
             (m) => m.ProjectDetailComponent
+          ),
+      },
+      {
+        path: 'members',
+        loadComponent: () =>
+          import('./pages/members/members.component').then(
+            (m) => m.MembersComponent
           ),
       },
       {
@@ -83,24 +128,26 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'team-activity',
+        loadComponent: () =>
+          import('./pages/team-activity/team-activity.component').then(
+            (m) => m.TeamActivityComponent
+          ),
+        canActivate: [hrGuard],
+      },
+      {
+        path: 'team/users/:id',
+        loadComponent: () =>
+          import('./pages/user-activity/user-activity.component').then(
+            (m) => m.UserActivityComponent
+          ),
+        canActivate: [hrGuard],
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./pages/reports/reports.component').then(
             (m) => m.ReportsComponent
-          ),
-      },
-      {
-        path: 'whiteboards',
-        loadComponent: () =>
-          import('./pages/whiteboard/whiteboard.component').then(
-            (m) => m.WhiteboardComponent
-          ),
-      },
-      {
-        path: 'whiteboards/:id',
-        loadComponent: () =>
-          import('./pages/whiteboard/whiteboard.component').then(
-            (m) => m.WhiteboardComponent
           ),
       },
     ]

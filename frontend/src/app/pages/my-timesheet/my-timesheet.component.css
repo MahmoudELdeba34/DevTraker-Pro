@@ -1,0 +1,99 @@
+/* Range chip styling shared by Today / Week / Month buttons */
+.range-chip {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+  background: transparent;
+  border: 1px solid var(--border, #1f2937);
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.range-chip:hover {
+  color: #fff;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.range-chip--active {
+  color: #fff;
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.date-input {
+  background: var(--bg-base, #0b1120);
+  border: 1px solid var(--border, #1f2937);
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color-scheme: dark;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.date-input:focus {
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.day-card {
+  view-transition-name: none;
+}
+
+/* ─── Print-friendly stylesheet ───────────────────────────────────────── */
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* Reset page chrome — hide nav/sidebar/header from app shell */
+  body,
+  html {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Hide everything outside the report container */
+  app-shell > nav,
+  app-shell > aside,
+  app-shell .topbar,
+  app-shell header,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .timesheet-page {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .timesheet-page * {
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .summary-grid {
+    page-break-inside: avoid;
+  }
+
+  .day-card {
+    page-break-inside: avoid;
+    border: 1px solid #cbd5e1 !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Strip the ambient glow / decorative effects */
+  .page-ambient::before,
+  .page-ambient::after {
+    display: none !important;
+  }
+}

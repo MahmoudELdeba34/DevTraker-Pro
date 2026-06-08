@@ -1,0 +1,241 @@
+<div
+  class="fixed inset-0 bg-black/65 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in"
+  (click)="close()"
+>
+  <div
+    class="relative bg-bg-elevated border border-border rounded-2xl w-full max-w-2xl max-h-[88vh] flex flex-col shadow-modal overflow-hidden animate-scale-in"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- HEADER -->
+    <div
+      class="px-6 py-5 border-b border-border flex items-start justify-between gap-4"
+    >
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <span
+            class="text-[10px] font-bold text-accent uppercase tracking-widest"
+            >Workspace Members</span
+          >
+          @if (myWorkspaceRole(); as r) {
+          <span
+            class="text-[10px] px-1.5 py-0.5 rounded border font-semibold"
+            [class]="roleChipClass(r === 'owner' ? 'admin' : r)"
+          >
+            You: {{ r }}
+          </span>
+          }
+        </div>
+        <h2 class="text-lg font-bold text-white tracking-tight truncate">
+          {{ workspace.name }}
+        </h2>
+        <p class="text-xs text-text-muted mt-0.5">
+          Manage who can see projects and tasks in this workspace.
+        </p>
+      </div>
+      <button
+        class="text-text-muted hover:text-white transition-colors shrink-0"
+        (click)="close()"
+        aria-label="Close"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- INVITE FORM -->
+    @if (canInvite()) {
+    <div class="px-6 py-4 border-b border-border bg-bg-base/40">
+      <label
+        class="text-[11px] font-bold text-text-secondary uppercase tracking-wider block mb-2"
+      >
+        @if (canOnboardEmployees()) { Onboard employee } @else { Invite by email }
+      </label>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input
+          type="email"
+          [ngModel]="inviteEmail()"
+          (ngModelChange)="inviteEmail.set($event)"
+          (keyup.enter)="submitInvite()"
+          placeholder="employee@company.com"
+          class="flex-1 min-w-0 bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/60"
+        />
+        @if (canOnboardEmployees()) {
+        <select
+          [ngModel]="inviteGlobalRole()"
+          (ngModelChange)="inviteGlobalRole.set($event)"
+          class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-accent"
+        >
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+          <option value="hr">HR</option>
+          <option value="accountant">Accountant</option>
+          <option value="admin">Admin</option>
+        </select>
+        }
+        <select
+          [ngModel]="inviteRole()"
+          (ngModelChange)="inviteRole.set($event)"
+          class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-accent"
+        >
+          <option value="member">Workspace: Member</option>
+          <option value="admin">Workspace: Admin</option>
+          <option value="viewer">Workspace: Viewer</option>
+        </select>
+        <button
+          (click)="submitInvite()"
+          [disabled]="inviting() || !inviteEmail()"
+          class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors shadow-[0_0_15px_rgba(99,102,241,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ inviting() ? 'Sending…' : (canOnboardEmployees() ? 'Create & email' : 'Invite') }}
+        </button>
+      </div>
+      <p class="text-[11px] text-text-muted mt-2 leading-relaxed">
+        @if (canOnboardEmployees()) {
+        New employees receive login credentials by email. Existing users are added instantly.
+        } @else {
+        Add an existing teammate by email. Ask Admin/HR to onboard people without accounts.
+        }
+      </p>
+    </div>
+    }
+
+    <!-- FLASH -->
+    @if (flash(); as f) {
+    <app-flash-banner class="block mx-6 my-3" [type]="f.type" [message]="f.text" />
+    }
+
+    @if (lastInvite(); as li) {
+    <div class="mx-6 mb-3">
+      <app-credentials-banner [data]="li" (dismissed)="lastInvite.set(null)" />
+    </div>
+    }
+
+    <!-- MEMBERS LIST -->
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+      @if (loading()) {
+      <div class="space-y-3">
+        @for (i of [1,2,3,4]; track i) {
+        <div
+          class="h-14 rounded-lg bg-bg-base/60 animate-pulse border border-border/40"
+        ></div>
+        }
+      </div>
+      } @else if (members().length === 0) {
+      <div class="text-center py-12 text-text-muted text-sm">
+        No members yet.
+      </div>
+      } @else {
+      <ul class="flex flex-col gap-2">
+        @for (m of members(); track trackById($index, m)) {
+        <li
+          class="group flex items-center gap-3 px-3 py-2.5 rounded-lg bg-bg-base border border-border hover:border-accent/40 transition-colors animate-fade-up"
+        >
+          <div
+            class="w-9 h-9 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-xs font-bold text-accent shrink-0"
+          >
+            {{ initials(m.name) }}
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-semibold text-white truncate">{{
+                m.name
+              }}</span>
+              @if (m.isOwner) {
+              <span
+                class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-warning/15 text-warning border border-warning/30 font-bold"
+                >Owner</span
+              >
+              }
+              @if (m._id === myUserId()) {
+              <span
+                class="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-accent-subtle text-accent border border-accent/30 font-bold"
+                >You</span
+              >
+              }
+            </div>
+            <div class="text-[11px] text-text-muted truncate">{{ m.email }}</div>
+          </div>
+
+          @if (!m.isOwner && canManage()) {
+          <select
+            [ngModel]="m.workspaceRole"
+            (ngModelChange)="promptChangeRole(m, $event)"
+            class="bg-bg-elevated border border-border text-white text-xs rounded-md px-2 py-1.5 outline-none focus:border-accent"
+            [title]="'Change role'"
+          >
+            <option value="admin">Admin</option>
+            <option value="member">Member</option>
+            <option value="viewer">Viewer</option>
+          </select>
+          } @else {
+          <span
+            class="text-[10px] px-2 py-1 rounded-md border font-semibold uppercase tracking-wider"
+            [class]="roleChipClass(m.isOwner ? 'admin' : m.workspaceRole)"
+          >
+            {{ m.isOwner ? 'admin' : m.workspaceRole }}
+          </span>
+          }
+
+          @if (!m.isOwner && (canManage() || m._id === myUserId())) {
+          <button
+            (click)="promptRemove(m)"
+            class="ml-1 p-1.5 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+            [title]="m._id === myUserId() ? 'Leave workspace' : 'Remove member'"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"
+              />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
+          }
+        </li>
+        }
+      </ul>
+      }
+    </div>
+
+    <!-- FOOTER -->
+    <div class="px-6 py-3 border-t border-border flex items-center justify-between text-[11px] text-text-muted">
+      <span>{{ members().length }} {{ members().length === 1 ? 'member' : 'members' }}</span>
+      <button
+        (click)="close()"
+        class="px-3 py-1.5 rounded-md text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-xs font-semibold"
+      >
+        Done
+      </button>
+    </div>
+
+    <!-- CONFIRMATION DIALOG -->
+    @if (confirmDialogMeta(); as dialog) {
+    <app-confirm-dialog
+      [open]="true"
+      [title]="dialog.title"
+      [message]="dialog.message"
+      [confirmLabel]="dialog.confirmLabel"
+      [variant]="dialog.variant"
+      (confirmed)="confirmPending()"
+      (cancelled)="cancelPending()"
+    />
+    }
+  </div>
+</div>

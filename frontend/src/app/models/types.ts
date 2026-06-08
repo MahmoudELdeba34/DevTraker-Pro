@@ -36,14 +36,37 @@ export interface EmployeeWithProfile {
   profile: EmployeeProfile | null;
 }
 
+export type WorkspaceRole = 'admin' | 'member' | 'viewer';
+
+export interface WorkspaceMemberEntry {
+  userId: string | User;
+  role: WorkspaceRole;
+  addedAt?: string;
+  addedBy?: string | null;
+}
+
 export interface Workspace {
   _id: string;
   name: string;
   description?: string;
   ownerId: string | User;
-  members: string[] | User[];
+  // Backend now sends members as [{userId, role, addedAt}].
+  // Kept the legacy union types for back-compat with any old code paths.
+  members: WorkspaceMemberEntry[] | string[] | User[];
   createdAt: string;
   updatedAt: string;
+}
+
+// Fully-shaped member as returned by GET /workspaces/:id/members
+export interface WorkspaceMember {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;                  // global role
+  workspaceRole: WorkspaceRole;  // role within the workspace
+  isOwner: boolean;
+  addedAt?: string;
+  tracking?: PresenceTracking | null;
 }
 
 export interface Project {
@@ -65,7 +88,7 @@ export interface TimeLog {
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'not_started' | 'in_progress' | 'completed';
+export type TaskStatus = 'not_started' | 'in_progress' | 'in_review' | 'completed';
 export type ReminderThreshold = '24h' | '12h' | '1h';
 
 export interface TaskReminder {
@@ -87,9 +110,11 @@ export interface Task {
   _id: string;
   projectId: string;
   title: string;
+  description?: string;
   priority: TaskPriority;
   status: TaskStatus;
   deadline?: string;
+  startDate?: string;
   timeLogs: TimeLog[];
   subtasks: Subtask[];
   activeTimerStart?: string | null;
@@ -215,36 +240,116 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-export interface AuthResponse {
-  token: string;
-  user: User;
+/* ─── Activity / Presence reports ────────────────────────────────────── */
+
+export interface ActivityTaskLog {
+  taskId: string;
+  taskTitle: string;
+  projectId: string | null;
+  projectTitle: string;
+  start: string;
+  end: string;
+  durationMs: number;
 }
 
-export interface WhiteboardElement {
-  id: string;
-  type: 'sticky' | 'task' | 'text' | 'path';
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  text?: string;
-  color?: string;
-  taskId?: string | null;
-  points?: { x: number; y: number }[];
-}
-
-export interface WhiteboardConnection {
-  fromId: string;
-  toId: string;
-  color?: string;
-}
-
-export interface Whiteboard {
+export interface ActivityQuickSession {
   _id: string;
-  workspaceId: string;
-  title: string;
-  elements: WhiteboardElement[];
-  connections: WhiteboardConnection[];
+  description: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationMs: number;
+  taskId: string | null;
+  source: 'quick' | 'task';
+}
+
+export interface ActivityDay {
+  date: string;
+  attendance: any | null;
+  taskLogs: ActivityTaskLog[];
+  quickSessions: ActivityQuickSession[];
+  trackedMs: number;
+  attendanceMs: number;
+  overtimeMs: number;
+}
+
+export interface ActivitySummary {
+  totalTrackedMs: number;
+  totalAttendanceMs: number;
+  totalOvertimeMs: number;
+  dailyThresholdMs: number;
+  daysPresent: number;
+  daysLate: number;
+  daysAbsent: number;
+  daysWorked: number;
+  averageDailyHours: number;
+  longestDayMs: number;
+  tasksWorked: number;
+  quickSessionsCount: number;
+}
+
+export interface ActivityReport {
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    currentPage: string;
+    lastActiveAt: string | null;
+    sessionStart: string | null;
+  };
+  period: { from: string; to: string; daysInRange: number };
+  summary: ActivitySummary;
+  daily: ActivityDay[];
+}
+
+export interface PresenceTracking {
+  type: 'quick' | 'task';
+  label: string;
+  startedAt: string;
+  taskId: string | null;
+  project: { _id: string; title: string } | null;
+}
+
+export interface PresenceUser {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  online: boolean;
+  currentPage: string;
+  lastActiveAt: string | null;
+  sessionStart: string | null;
+  tracking: PresenceTracking | null;
+}
+
+export interface PresenceReport {
+  online: PresenceUser[];
+  offline: PresenceUser[];
+  counts: { online: number; offline: number; total: number; tracking: number };
+  windowMs: number;
+}
+
+export type TimeEntrySource = 'quick' | 'task';
+
+export interface TimeEntry {
+  _id: string;
+  userId: string;
+  taskId?: string | null;
+  projectId?: string | null;
+  workspaceId?: string | null;
+  description: string;
+  startedAt: string;
+  endedAt?: string | null;
+  duration: number;
+  source: TimeEntrySource;
   createdAt: string;
-  updatedAt: string;
+}
+
+export interface AuthResponse {
+  // Old field — kept as alias for back-compat
+  token: string;
+  // New explicit names
+  accessToken: string;
+  refreshToken: string;
+  user: User;
 }
