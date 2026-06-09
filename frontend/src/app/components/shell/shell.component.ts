@@ -31,8 +31,8 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
   template: `
     <div class="flex h-screen bg-bg-base text-text-primary font-body overflow-hidden" [class.flex-row-reverse]="locale.isRtl()" [attr.data-locale]="locale.locale()">
       <!-- DESKTOP SIDEBAR -->
-      <aside class="hidden md:flex flex-col w-[260px] bg-bg-base h-full flex-shrink-0 relative z-20"
-             [class.border-r]="!locale.isRtl()" [class.border-l]="locale.isRtl()" [class.border-border]="true">
+      <aside class="hidden md:flex flex-col w-[260px] glass h-full flex-shrink-0 relative z-20"
+             [class.border-r]="!locale.isRtl()" [class.border-l]="locale.isRtl()">
         <!-- Logo -->
         <div class="h-20 flex items-center px-6">
           <span class="font-display font-bold text-2xl tracking-tight text-white">
@@ -177,7 +177,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
            [class.rounded-tl-2xl]="!locale.isRtl()" [class.rounded-tr-2xl]="locale.isRtl()"
            [class.border-l]="!locale.isRtl()" [class.border-r]="locale.isRtl()" [class.border-t]="true" [class.border-border]="true">
         <!-- TOPBAR -->
-        <header class="h-20 flex items-center justify-between px-8 bg-transparent z-10 border-b border-border">
+        <header class="app-header h-20 flex items-center justify-between px-8 z-10">
           
           <!-- Global Search -->
           <div class="w-full max-w-md hidden md:block">
@@ -596,7 +596,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
       <!-- MOBILE SIDEBAR OVERLAY -->
       @if (showMobileMenu()) {
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" (click)="toggleMobileMenu()"></div>
-        <aside class="fixed inset-y-0 left-0 w-64 bg-bg-base border-r border-border z-50 flex flex-col md:hidden transform transition-transform duration-300 animate-slide-right">
+        <aside class="fixed inset-y-0 left-0 w-64 glass z-50 flex flex-col md:hidden transform transition-transform duration-300 animate-slide-right">
           <div class="h-20 flex items-center justify-between px-6 border-b border-border">
             <span class="font-display font-bold text-xl">Pro<span class="text-accent">Track</span></span>
             <button class="p-2 -mr-2 text-text-secondary" (click)="toggleMobileMenu()">
@@ -628,8 +628,8 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
 
       <!-- CREATE WORKSPACE MODAL -->
       @if (showCreateWorkspace()) {
-        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div class="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-modal animate-scale-in">
+        <div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div class="modal w-full max-w-md animate-modal">
             <div class="px-6 py-5 border-b border-border flex items-center justify-between">
               <h2 class="text-lg font-bold text-white tracking-tight">{{ locale.t('shell.newWorkspace') }}</h2>
               <button class="text-text-muted hover:text-white transition-colors" (click)="closeCreateWorkspace()">

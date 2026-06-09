@@ -1,26 +1,4 @@
-.field-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #87909e;
-}
-
-.field-input {
-  width: 100%;
-  background: #121418;
-  border: 1px solid #2a2e38;
-  color: #fff;
-  font-size: 0.875rem;
-  border-radius: 0.5rem;
-  padding: 0.625rem 1rem;
-  outline: none;
-}
-
-.field-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
+/* field-label / field-input — inherited from global styles.css */
 
 .tab-btn {
   flex: 1;
@@ -44,25 +22,7 @@
   background: rgba(99, 102, 241, 0.08);
 }
 
-.btn-primary {
-  background: #6366f1;
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.5rem 1.25rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #5558e3;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* btn-primary — inherited from global styles.css */
 
 .avatar-preview-wrap {
   position: relative;

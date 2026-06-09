@@ -16,8 +16,8 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, TimerWidgetComponent, DatePickerComponent, TranslatePipe],
   template: `
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="close.emit()" [attr.data-locale]="locale.locale()">
-      <div class="bg-bg-elevated border border-border rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-modal animate-scale-in overflow-hidden" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in" (click)="close.emit()" [attr.data-locale]="locale.locale()">
+      <div class="modal w-full max-w-4xl max-h-[90vh] flex flex-col animate-modal overflow-hidden" (click)="$event.stopPropagation()">
         
         <!-- Inner Container for padding -->
         <div class="p-8 flex flex-col gap-6 overflow-y-auto w-full">

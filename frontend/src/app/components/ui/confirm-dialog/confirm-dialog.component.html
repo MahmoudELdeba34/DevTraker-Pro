@@ -1,11 +1,11 @@
 @if (open()) {
   <div
-    class="confirm-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="confirm-backdrop modal-backdrop fixed inset-0 z-[60] flex items-center justify-center p-4"
     (click)="onBackdrop()"
     [attr.data-locale]="locale.locale()"
   >
     <div
-      class="confirm-card bg-bg-elevated border border-border rounded-2xl w-full max-w-md shadow-modal p-6"
+      class="confirm-card modal w-full max-w-md p-6 animate-modal"
       (click)="$event.stopPropagation()"
     >
       <div class="flex items-start gap-4 mb-5">

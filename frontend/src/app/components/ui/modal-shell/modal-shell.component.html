@@ -1,11 +1,11 @@
 @if (open()) {
   <div
-    class="modal-backdrop fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+    class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
     (click)="onBackdrop()"
     [attr.data-locale]="locale.locale()"
   >
     <div
-      class="modal-panel bg-bg-elevated border border-border rounded-xl w-full shadow-modal animate-scale-in flex flex-col max-h-[90vh] overflow-hidden"
+      class="modal modal-panel w-full animate-modal flex flex-col max-h-[90vh] overflow-hidden"
       [class]="panelClass()"
       (click)="$event.stopPropagation()"
     >

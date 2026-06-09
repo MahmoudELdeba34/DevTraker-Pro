@@ -21,7 +21,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">{{ 'common.brandTagline' | translate }}</p>
       </div>
 
-      <div class="auth-card w-full max-w-[440px] bg-bg-elevated border border-border rounded-xl p-8 shadow-modal relative overflow-hidden slide-up">
+      <div class="auth-card glass-card w-full max-w-[440px] p-8 shadow-modal relative overflow-hidden slide-up">
         <div class="mb-8 flex items-start gap-4">
           <div class="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center text-accent flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -13,65 +13,54 @@
 .section-title {
   font-size: 1.125rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .section-subtitle {
   font-size: 0.75rem;
-  color: #87909e;
+  color: var(--text-secondary);
   margin: 0.25rem 0 0;
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  background: #6366f1;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  background: #5558e3;
 }
 
 .project-card {
   display: block;
-  background: #1a1d26;
-  border: 1px solid #2a2e38;
-  border-radius: 1rem;
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 16px;
   padding: 1.25rem;
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition),
+    background var(--transition);
 }
 
 .project-card:hover {
-  border-color: rgba(99, 102, 241, 0.45);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.12);
+  border-color: var(--border-active);
+  box-shadow: var(--accent-glow);
+  background: var(--bg-glass-hover);
+  transform: translateY(-2px);
 }
 
 .project-card.skeleton {
   min-height: 160px;
-  animation: pulse 1.5s ease-in-out infinite;
 }
 
 .project-name {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .project-desc {
   font-size: 0.75rem;
-  color: #87909e;
+  color: var(--text-secondary);
   margin: 0.25rem 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -91,27 +80,27 @@
 }
 
 .status-completed {
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+  background: var(--success-muted);
   border-color: rgba(34, 197, 94, 0.25);
 }
 
 .status-overdue {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+  background: var(--danger-muted);
   border-color: rgba(239, 68, 68, 0.25);
 }
 
 .status-progress {
-  color: #6366f1;
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.25);
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--border-active);
 }
 
 .status-not-started {
-  color: #87909e;
-  background: rgba(135, 144, 158, 0.12);
-  border-color: rgba(135, 144, 158, 0.25);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-color: var(--border);
 }
 
 .progress-row {
@@ -124,21 +113,21 @@
 .progress-track {
   flex: 1;
   height: 0.375rem;
-  background: #121418;
+  background: var(--bg-base);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #6366f1;
+  background: var(--accent);
   border-radius: 999px;
 }
 
 .progress-label {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .meta-row {
@@ -146,7 +135,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   font-size: 0.6875rem;
-  color: #87909e;
+  color: var(--text-secondary);
   margin-bottom: 0.75rem;
 }
 
@@ -154,7 +143,7 @@
   display: flex;
   gap: 0.5rem;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition);
 }
 
 .project-card:hover .card-actions,
@@ -167,32 +156,29 @@
   font-weight: 600;
   padding: 0.375rem 0.625rem;
   border-radius: 0.375rem;
-  border: 1px solid #2a2e38;
-  background: #121418;
-  color: #87909e;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
   cursor: pointer;
+  transition: all var(--transition);
 }
 
 .action-btn:hover {
-  color: #fff;
-  border-color: rgba(99, 102, 241, 0.35);
+  color: var(--text-primary);
+  border-color: var(--border-active);
 }
 
 .action-btn.danger:hover {
-  color: #ef4444;
+  color: var(--danger);
   border-color: rgba(239, 68, 68, 0.35);
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-  border: 1px dashed #2a2e38;
-  border-radius: 1rem;
-  color: #87909e;
+  border: 1px dashed var(--border-hover);
+  border-radius: 16px;
+  color: var(--text-secondary);
   font-size: 0.875rem;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+  background: var(--bg-glass);
 }

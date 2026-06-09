@@ -28,7 +28,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">{{ 'common.brandTagline' | translate }}</p>
       </div>
 
-      <div class="auth-card w-full max-w-[440px] bg-bg-elevated border border-border rounded-xl p-8 shadow-modal relative overflow-hidden slide-up">
+      <div class="auth-card glass-card w-full max-w-[440px] p-8 shadow-modal relative overflow-hidden slide-up">
         @if (loading()) {
           <div class="py-10 text-center text-sm text-text-secondary">{{ 'setupAccount.checking' | translate }}</div>
         } @else if (invalid()) {

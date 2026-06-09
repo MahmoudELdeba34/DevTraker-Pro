@@ -37,7 +37,7 @@ import { UiPreferencesComponent } from '../../components/ui/ui-preferences/ui-pr
         <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">{{ 'common.brandTagline' | translate }}</p>
       </div>
 
-      <div class="auth-card w-full max-w-[440px] bg-bg-elevated border border-border rounded-xl p-8 shadow-modal relative overflow-hidden slide-up">
+      <div class="auth-card glass-card w-full max-w-[440px] p-8 shadow-modal relative overflow-hidden slide-up">
         <div class="mb-8">
           <h2 class="text-xl font-bold text-white mb-2 tracking-tight">{{ 'auth.login' | translate }}</h2>
           <p class="text-sm text-text-secondary">{{ 'auth.signIn' | translate }}</p>

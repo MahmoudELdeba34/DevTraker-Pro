@@ -12,6 +12,8 @@ module.exports = {
           surface:  'var(--color-bg-surface)',
           elevated: 'var(--color-bg-elevated)',
           hover:    'var(--color-bg-hover)',
+          card:     'var(--bg-card)',
+          glass:    'var(--bg-glass)',
         },
         accent: {
           DEFAULT: 'var(--color-accent-primary, #6366F1)',
@@ -22,6 +24,8 @@ module.exports = {
         border: {
           DEFAULT: 'var(--color-border)',
           strong:  'var(--color-border-strong)',
+          hover:   'var(--border-hover)',
+          active:  'var(--border-active)',
         },
         text: {
           primary:   'var(--text-primary)',
@@ -75,9 +79,12 @@ module.exports = {
         tabSwap: { from: { opacity: '0', transform: 'translateY(4px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
       },
       boxShadow: {
-        card:        '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
-        modal:       '0 25px 50px rgba(0,0,0,0.18)',
-        glow:        '0 0 20px rgba(99,102,241,0.25)',
+        sm:          'var(--shadow-sm)',
+        md:          'var(--shadow-md)',
+        lg:          'var(--shadow-lg)',
+        card:        'var(--shadow-sm)',
+        modal:       'var(--shadow-modal)',
+        glow:        'var(--accent-glow)',
         'glow-soft': '0 0 30px rgba(99,102,241,0.12)',
         'glow-lg':   '0 8px 32px rgba(99,102,241,0.28)',
       },

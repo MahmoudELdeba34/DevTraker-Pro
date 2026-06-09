@@ -77,7 +77,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <div class="flex-1 overflow-x-auto overflow-y-hidden p-8 flex gap-6 hide-scrollbar relative">
       
           <!-- Column: To Do -->
-          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+          <div class="flex flex-col min-w-[300px] max-w-[300px] glass-card h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-[#39394B] flex items-center justify-between">
               <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.todo' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
@@ -98,7 +98,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           </div>
       
           <!-- Column: In Progress -->
-          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+          <div class="flex flex-col min-w-[300px] max-w-[300px] glass-card h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-[#4C4488] flex items-center justify-between">
               <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.inProgress' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
@@ -119,7 +119,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           </div>
       
           <!-- Column: In Review -->
-          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+          <div class="flex flex-col min-w-[300px] max-w-[300px] glass-card h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-warning flex items-center justify-between">
               <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.inReview' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
@@ -140,7 +140,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           </div>
       
           <!-- Column: Completed -->
-          <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
+          <div class="flex flex-col min-w-[300px] max-w-[300px] glass-card h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-success flex items-center justify-between">
               <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.completed' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
