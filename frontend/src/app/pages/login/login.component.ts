@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  inject,
   signal,
 } from '@angular/core';
 
@@ -13,41 +14,38 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { UiPreferencesComponent } from '../../components/ui/ui-preferences/ui-preferences.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiPreferencesComponent, TranslatePipe],
   template: `
-    <div class="auth-page flex flex-col items-center justify-center min-h-screen">
+    <div class="auth-page flex flex-col items-center justify-center min-h-screen relative" [attr.data-locale]="locale.locale()">
+      <div class="absolute top-6 right-6 z-10" [class.left-6]="locale.isRtl()" [class.right-auto]="locale.isRtl()">
+        <app-ui-preferences [compact]="true" />
+      </div>
       <!-- Logo Header Outside Card -->
       <div class="text-center mb-8 fade-in">
         <h1 class="text-3xl font-display font-bold tracking-tight text-white">
           Pro<span class="text-accent">Track</span>
         </h1>
-        <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">Team Performance Tracking</p>
+        <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">{{ 'common.brandTagline' | translate }}</p>
       </div>
 
       <div class="auth-card w-full max-w-[440px] bg-bg-elevated border border-border rounded-xl p-8 shadow-modal relative overflow-hidden slide-up">
         <div class="mb-8">
-          <h2 class="text-xl font-bold text-white mb-2 tracking-tight">Welcome back</h2>
-          <p class="text-sm text-text-secondary">Please enter your details to sign in.</p>
+          <h2 class="text-xl font-bold text-white mb-2 tracking-tight">{{ 'auth.login' | translate }}</h2>
+          <p class="text-sm text-text-secondary">{{ 'auth.signIn' | translate }}</p>
         </div>
-
-        @if (error()) {
-          <div class="alert alert-error mb-6 flex items-center gap-3 p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm font-medium">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            {{ error() }}
-          </div>
-        }
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
           <div class="flex flex-col gap-2">
-            <label for="email" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Email Address</label>
+            <label for="email" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'auth.email' | translate }}</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -59,7 +57,7 @@ import { AuthService } from '../../services/auth.service';
                 id="email"
                 type="email"
                 formControlName="email"
-                placeholder="name@company.com"
+                [placeholder]="locale.t('common.nameCompanyPlaceholder')"
                 class="w-full bg-bg-base border border-border text-white text-sm rounded-lg pl-10 pr-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50"
                 [class.border-danger]="form.get('email')?.invalid && form.get('email')?.touched"
               />
@@ -68,8 +66,8 @@ import { AuthService } from '../../services/auth.service';
 
           <div class="flex flex-col gap-2">
             <div class="flex items-center justify-between">
-              <label for="password" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Password</label>
-              <a routerLink="/forgot-password" class="text-[11px] font-semibold text-warning hover:text-warning/80 transition-colors">Forgot password?</a>
+              <label for="password" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'auth.password' | translate }}</label>
+              <a routerLink="/forgot-password" class="text-[11px] font-semibold text-warning hover:text-warning/80 transition-colors">{{ 'auth.forgotPassword' | translate }}</a>
             </div>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
@@ -97,7 +95,7 @@ import { AuthService } from '../../services/auth.service';
 
           <div class="flex items-center gap-2 mt-1">
             <input type="checkbox" id="remember" class="rounded bg-bg-base border-border text-accent focus:ring-accent focus:ring-offset-bg-elevated w-4 h-4" />
-            <label for="remember" class="text-xs text-text-secondary cursor-pointer select-none">Stay signed in for 30 days</label>
+            <label for="remember" class="text-xs text-text-secondary cursor-pointer select-none">{{ 'auth.signIn' | translate }}</label>
           </div>
 
           <button
@@ -110,9 +108,9 @@ import { AuthService } from '../../services/auth.service';
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Signing in...
+              {{ 'common.signingIn' | translate }}
             } @else {
-              Login to Workspace
+              {{ 'auth.login' | translate }}
             }
           </button>
         </form>
@@ -121,15 +119,14 @@ import { AuthService } from '../../services/auth.service';
   `,
 })
 export class LoginComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
+
   form!: FormGroup;
   loading = signal(false);
-  error = signal('');
-
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -149,7 +146,6 @@ export class LoginComponent implements OnInit {
     }
 
     this.loading.set(true);
-    this.error.set('');
 
     const { email, password } = this.form.value as {
       email: string;
@@ -163,7 +159,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err: { error?: { error?: string } }) => {
         this.loading.set(false);
-        this.error.set(err.error?.error ?? 'Login failed. Please try again.');
+        this.toast.error(err.error?.error ?? this.locale.t('auth.loginFailed'));
       },
     });
   }

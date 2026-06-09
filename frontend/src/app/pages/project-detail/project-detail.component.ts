@@ -5,6 +5,7 @@ import {
   signal,
   inject,
 } from '@angular/core';
+import { ToastService } from '../../services/toast.service';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -16,6 +17,8 @@ import { Task, Project, TaskPriority, TaskStatus } from '../../models/types';
 import { TaskCardComponent } from '../../components/task-card/task-card.component';
 import { TaskDetailsModalComponent } from '../../components/task-details-modal/task-details-modal.component';
 import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/task-form-modal.component';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-project-detail',
@@ -27,15 +30,16 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
     TaskCardComponent,
     TaskDetailsModalComponent,
     TaskFormModalComponent,
+    TranslatePipe,
 ],
   template: `
-      <main class="h-full flex flex-col relative z-0">
+      <main class="h-full flex flex-col relative z-0" [attr.data-locale]="locale.locale()">
         <!-- Header -->
         <div class="px-8 py-6 border-b border-border bg-bg-base/50 backdrop-blur-md flex-shrink-0 z-10 sticky top-0">
           <div class="flex items-center text-xs text-text-muted mb-2 font-medium tracking-wide uppercase">
-            <a routerLink="/dashboard" class="hover:text-white transition-colors">My Projects</a>
+            <a routerLink="/dashboard" class="hover:text-white transition-colors">{{ 'projectDetail.breadcrumb' | translate }}</a>
             <svg class="mx-2 w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
-            <span class="text-accent truncate">{{ project()?.title ?? 'Loading...' }}</span>
+            <span class="text-accent truncate">{{ project()?.title ?? ('projectDetail.loading' | translate) }}</span>
           </div>
       
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -59,10 +63,6 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
           </div>
         </div>
       
-        @if (error()) {
-          <div class="m-8 alert alert-error bg-danger/10 border border-danger/20 text-danger p-3 rounded-lg text-sm">{{ error() }}</div>
-        }
-      
         <!-- Add Task Modal -->
         <app-task-form-modal
           [open]="showAddTask()"
@@ -79,7 +79,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
           <!-- Column: To Do -->
           <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-[#39394B] flex items-center justify-between">
-              <h3 class="font-bold text-white text-sm">To Do</h3>
+              <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.todo' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
@@ -92,7 +92,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
             <div class="p-3 border-t border-border mt-auto">
               <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Add Task
+                {{ 'projectDetail.addTask' | translate }}
               </button>
             </div>
           </div>
@@ -100,7 +100,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
           <!-- Column: In Progress -->
           <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-[#4C4488] flex items-center justify-between">
-              <h3 class="font-bold text-white text-sm">In Progress</h3>
+              <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.inProgress' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
@@ -113,7 +113,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
             <div class="p-3 border-t border-border mt-auto">
               <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Add Task
+                {{ 'projectDetail.addTask' | translate }}
               </button>
             </div>
           </div>
@@ -121,7 +121,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
           <!-- Column: In Review -->
           <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-warning flex items-center justify-between">
-              <h3 class="font-bold text-white text-sm">In Review</h3>
+              <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.inReview' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
@@ -134,7 +134,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
             <div class="p-3 border-t border-border mt-auto">
               <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Add Task
+                {{ 'projectDetail.addTask' | translate }}
               </button>
             </div>
           </div>
@@ -142,7 +142,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
           <!-- Column: Completed -->
           <div class="flex flex-col min-w-[300px] max-w-[300px] bg-bg-base rounded-xl border border-border h-full max-h-full overflow-hidden">
             <div class="px-4 py-3 bg-success flex items-center justify-between">
-              <h3 class="font-bold text-white text-sm">Completed</h3>
+              <h3 class="font-bold text-white text-sm">{{ 'projectDetail.column.completed' | translate }}</h3>
               <button class="text-white/70 hover:text-white transition-colors" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
@@ -155,7 +155,7 @@ import { TaskFormModalComponent } from '../../components/tasks/task-form-modal/t
             <div class="p-3 border-t border-border mt-auto">
               <button class="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors w-full" (click)="showAddTask.set(true)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Add Task
+                {{ 'projectDetail.addTask' | translate }}
               </button>
             </div>
           </div>
@@ -179,7 +179,6 @@ export class ProjectDetailComponent implements OnInit {
   allTasks = signal<Task[]>([]);
   filteredTasks = signal<Task[]>([]);
   loading = signal(true);
-  error = signal('');
   showAddTask = signal(false);
   addingTask = signal(false);
   workspaceMembers = signal<WorkspaceMember[]>([]);
@@ -188,14 +187,14 @@ export class ProjectDetailComponent implements OnInit {
   taskForm!: FormGroup;
   private projectId!: string;
 
-  constructor(
-    private route: ActivatedRoute,
-    private taskService: TaskService,
-    private projectService: ProjectService,
-    private authService: AuthService,
-    private workspaceService: WorkspaceService,
-    private fb: FormBuilder
-  ) {}
+  private route = inject(ActivatedRoute);
+  private taskService = inject(TaskService);
+  private projectService = inject(ProjectService);
+  private authService = inject(AuthService);
+  private workspaceService = inject(WorkspaceService);
+  private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
   ngOnInit(): void {
     this.taskForm = this.fb.group({
@@ -253,7 +252,6 @@ export class ProjectDetailComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Failed to load tasks.');
         this.loading.set(false);
       },
     });
@@ -290,10 +288,10 @@ export class ProjectDetailComponent implements OnInit {
           this.showAddTask.set(false);
           this.allTasks.update((tasks) => [res.data, ...tasks]);
           this.filteredTasks.update((tasks) => [res.data, ...tasks]);
+          this.toast.success(this.locale.t('projectDetail.toast.taskCreated'));
         },
-        error: (err: { error?: { error?: string } }) => {
+        error: () => {
           this.addingTask.set(false);
-          this.error.set(err.error?.error ?? 'Failed to create task.');
         },
       });
   }

@@ -1,13 +1,9 @@
-<div class="page-ambient max-w-5xl mx-auto pb-12 animate-fade-up">
+<div class="page-ambient max-w-5xl mx-auto pb-12 animate-fade-up" [attr.data-locale]="locale.locale()">
   <app-page-header
-    eyebrow="Help Center"
-    title="Support"
-    description="Find answers, contact your team, and get help with DevTracker Pro."
-    [tips]="[
-      { title: 'Request Center', body: 'Submit leave, permission, or overtime requests from one place.' },
-      { title: 'Account settings', body: 'Update your name or password from Settings in the sidebar.' },
-      { title: 'Workspace admins', body: 'Ask your workspace admin if you cannot access a project or workspace.' }
-    ]"
+    [eyebrow]="'support.eyebrow' | translate"
+    [title]="'support.title' | translate"
+    [description]="'support.description' | translate"
+    [tips]="headerTips()"
   />
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -19,8 +15,8 @@
         </svg>
       </div>
       <div>
-        <h3>Request Center</h3>
-        <p>File leave, permission, or overtime requests.</p>
+        <h3>{{ 'support.card.requestCenter.title' | translate }}</h3>
+        <p>{{ 'support.card.requestCenter.body' | translate }}</p>
       </div>
     </a>
 
@@ -32,8 +28,8 @@
         </svg>
       </div>
       <div>
-        <h3>Account &amp; Settings</h3>
-        <p>Update your profile or change your password.</p>
+        <h3>{{ 'support.card.account.title' | translate }}</h3>
+        <p>{{ 'support.card.account.body' | translate }}</p>
       </div>
     </a>
 
@@ -45,8 +41,8 @@
         </svg>
       </div>
       <div>
-        <h3>My Timesheet</h3>
-        <p>Review tracked hours, tasks, and attendance.</p>
+        <h3>{{ 'support.card.timesheet.title' | translate }}</h3>
+        <p>{{ 'support.card.timesheet.body' | translate }}</p>
       </div>
     </a>
 
@@ -59,27 +55,27 @@
           </svg>
         </div>
         <div>
-          <h3>HR Portal</h3>
-          <p>HR and managers can review team requests here.</p>
+          <h3>{{ 'support.card.hrPortal.title' | translate }}</h3>
+          <p>{{ 'support.card.hrPortal.body' | translate }}</p>
         </div>
       </a>
     }
   </div>
 
   <div class="bg-bg-elevated border border-border rounded-2xl p-6">
-    <h2 class="text-sm font-bold text-white mb-4">Common questions</h2>
+    <h2 class="text-sm font-bold text-white mb-4">{{ 'support.faq.title' | translate }}</h2>
     <div class="space-y-4">
       <details class="faq-item">
-        <summary>How do I start tracking time on a task?</summary>
-        <p>Open a project from the sidebar, click a task card, and use the timer widget — or pick a task from the top bar timer menu.</p>
+        <summary>{{ 'support.faq.tracking.q' | translate }}</summary>
+        <p>{{ 'support.faq.tracking.a' | translate }}</p>
       </details>
       <details class="faq-item">
-        <summary>I was invited but cannot sign in</summary>
-        <p>Use the setup link your admin sent you, or ask them to resend credentials from the Members page.</p>
+        <summary>{{ 'support.faq.signin.q' | translate }}</summary>
+        <p>{{ 'support.faq.signin.a' | translate }}</p>
       </details>
       <details class="faq-item">
-        <summary>Who can add me to a workspace?</summary>
-        <p>Workspace admins and HR can onboard employees or add existing teammates from the Members page.</p>
+        <summary>{{ 'support.faq.workspace.q' | translate }}</summary>
+        <p>{{ 'support.faq.workspace.a' | translate }}</p>
       </details>
     </div>
   </div>

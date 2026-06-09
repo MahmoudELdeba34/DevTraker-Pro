@@ -8,10 +8,13 @@ import {
   SimpleChanges,
   signal,
   computed,
+  inject,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Task, TaskPriority, TaskStatus } from '../../models/types';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface FilterState {
   status: TaskStatus | '';
@@ -23,48 +26,48 @@ export interface FilterState {
   selector: 'app-filter-bar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
-    <div class="filter-bar">
+    <div class="filter-bar" [attr.data-locale]="locale.locale()">
       <div class="filter-group">
-        <label for="filter-status">Status</label>
+        <label for="filter-status">{{ 'filterBar.status' | translate }}</label>
         <select
           id="filter-status"
           [ngModel]="filters().status"
           (ngModelChange)="updateFilter('status', $event)"
         >
-          <option value="">All statuses</option>
-          <option value="not_started">Not Started</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
+          <option value="">{{ 'filterBar.allStatuses' | translate }}</option>
+          <option value="not_started">{{ 'task.status.notStarted' | translate }}</option>
+          <option value="in_progress">{{ 'task.status.inProgress' | translate }}</option>
+          <option value="completed">{{ 'task.status.completed' | translate }}</option>
         </select>
       </div>
 
       <div class="filter-group">
-        <label for="filter-priority">Priority</label>
+        <label for="filter-priority">{{ 'filterBar.priority' | translate }}</label>
         <select
           id="filter-priority"
           [ngModel]="filters().priority"
           (ngModelChange)="updateFilter('priority', $event)"
         >
-          <option value="">All priorities</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
+          <option value="">{{ 'filterBar.allPriorities' | translate }}</option>
+          <option value="low">{{ 'task.priority.low' | translate }}</option>
+          <option value="medium">{{ 'task.priority.medium' | translate }}</option>
+          <option value="high">{{ 'task.priority.high' | translate }}</option>
         </select>
       </div>
 
       <div class="filter-group">
-        <label for="filter-deadline">Deadline</label>
+        <label for="filter-deadline">{{ 'filterBar.deadline' | translate }}</label>
         <select
           id="filter-deadline"
           [ngModel]="filters().deadline"
           (ngModelChange)="updateFilter('deadline', $event)"
         >
-          <option value="">Any deadline</option>
-          <option value="today">Due Today</option>
-          <option value="week">Due This Week</option>
-          <option value="overdue">Overdue</option>
+          <option value="">{{ 'filterBar.anyDeadline' | translate }}</option>
+          <option value="today">{{ 'filterBar.dueToday' | translate }}</option>
+          <option value="week">{{ 'filterBar.dueWeek' | translate }}</option>
+          <option value="overdue">{{ 'filterBar.overdue' | translate }}</option>
         </select>
       </div>
 
@@ -73,17 +76,19 @@ export interface FilterState {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
-          Clear filters
+          {{ 'filterBar.clear' | translate }}
         </button>
       }
 
       <div class="filter-results">
-        {{ filteredTasks().length }} of {{ tasks.length }} tasks
+        {{ 'filterBar.results' | translate:{ filtered: filteredTasks().length, total: tasks.length } }}
       </div>
     </div>
   `,
 })
 export class FilterBarComponent implements OnChanges {
+  locale = inject(LocaleService);
+
   @Input() tasks: Task[] = [];
   @Output() filtered = new EventEmitter<Task[]>();
 

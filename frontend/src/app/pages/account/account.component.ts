@@ -8,7 +8,9 @@ import {
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-import { FlashBannerComponent } from '../../components/ui/flash-banner/flash-banner.component';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type AccountTab = 'profile' | 'security';
 
@@ -16,18 +18,19 @@ type AccountTab = 'profile' | 'security';
   selector: 'app-account',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, FlashBannerComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.css'],
 })
 export class AccountComponent implements OnInit {
   private authSvc = inject(AuthService);
   private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
   activeTab = signal<AccountTab>('profile');
   loading = signal(true);
   saving = signal(false);
-  flash = signal<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   profileForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
@@ -44,6 +47,7 @@ export class AccountComponent implements OnInit {
   userRole = () => this.authSvc.currentUser()?.role ?? '';
   userEmail = () => this.authSvc.currentUser()?.email ?? '';
   userInitial = () => (this.userName() || '?').substring(0, 2).toUpperCase();
+  roleLabel = () => this.locale.roleLabel(this.userRole());
 
   ngOnInit(): void {
     this.loadProfile();
@@ -51,7 +55,6 @@ export class AccountComponent implements OnInit {
 
   setTab(tab: AccountTab): void {
     this.activeTab.set(tab);
-    this.flash.set(null);
   }
 
   loadProfile(): void {
@@ -81,16 +84,14 @@ export class AccountComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    this.flash.set(null);
     const name = this.profileForm.get('name')?.value as string;
     this.authSvc.updateProfile(name.trim()).subscribe({
       next: () => {
         this.saving.set(false);
-        this.flash.set({ type: 'ok', text: 'Profile updated successfully.' });
+        this.toast.success(this.locale.t('account.toast.profileUpdated'));
       },
-      error: (err) => {
+      error: () => {
         this.saving.set(false);
-        this.flash.set({ type: 'err', text: err?.error?.error || 'Failed to update profile.' });
       },
     });
   }
@@ -102,22 +103,20 @@ export class AccountComponent implements OnInit {
     }
     const { currentPassword, newPassword, confirmPassword } = this.passwordForm.value;
     if (newPassword !== confirmPassword) {
-      this.flash.set({ type: 'err', text: 'New passwords do not match.' });
+      this.toast.warning(this.locale.t('account.toast.passwordsMismatch'));
       return;
     }
 
     this.saving.set(true);
-    this.flash.set(null);
     this.authSvc.changePassword(currentPassword, newPassword).subscribe({
       next: () => {
         this.saving.set(false);
         this.passwordForm.reset();
-        this.flash.set({ type: 'ok', text: 'Password changed. Signing you out…' });
+        this.toast.success(this.locale.t('account.toast.passwordChanged'));
         setTimeout(() => this.authSvc.logout(), 1200);
       },
-      error: (err) => {
+      error: () => {
         this.saving.set(false);
-        this.flash.set({ type: 'err', text: err?.error?.error || 'Failed to change password.' });
       },
     });
   }

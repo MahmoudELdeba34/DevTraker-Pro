@@ -1,0 +1,90 @@
+[
+  [
+    "common.deleteProjectMessage",
+    "Delete \"{{title}}\" and all its tasks? This cannot be undone."
+  ],
+  [
+    "common.inProject",
+    "in {{projectTitle}}"
+  ],
+  [
+    "common.inTime",
+    "In {{time}}"
+  ],
+  [
+    "common.outTime",
+    "Out {{time}}"
+  ],
+  [
+    "common.reportMeta",
+    "{{email}} · {{role}}"
+  ],
+  [
+    "common.reportTitle",
+    "{{userName}} — {{reportType}}"
+  ],
+  [
+    "common.showingCount",
+    "Showing {{shown}} of {{total}} {{memberWord}}"
+  ],
+  [
+    "common.stopTimerMessage",
+    "They are tracking \"{{label}}\". The elapsed time will be saved to their timesheet."
+  ],
+  [
+    "common.stopTimerTitle",
+    "Stop {{userName}}'s timer?"
+  ],
+  [
+    "common.transitionTitle",
+    "Transition to \"{{status}}\"?"
+  ],
+  [
+    "common.tryAllTab",
+    "Try the \"All\" tab or clear your search."
+  ],
+  [
+    "dashboard.subtitle",
+    "{{workspaceName}} · {{weekStart}} - {{weekEnd}}"
+  ],
+  [
+    "forgotPassword.toast.resetLinkSent",
+    "Password reset link sent to your email."
+  ],
+  [
+    "hrPortal.empty.noPendingLeaves",
+    "No pending leave requests."
+  ],
+  [
+    "hrPortal.empty.noPendingOvertime",
+    "No pending overtime claims."
+  ],
+  [
+    "hrPortal.empty.noPendingPermissions",
+    "No pending permissions."
+  ],
+  [
+    "hrPortal.section.employeeRoster",
+    "Employee Roster"
+  ],
+  [
+    "members.footer.showing",
+    "Showing {{shown}} of {{total}} {{memberWord}}"
+  ],
+  [
+    "projectForm.delete.message",
+    "Delete \"{{title}}\" and all its tasks? This cannot be undone."
+  ],
+  [
+    "teamActivity.confirm.stopMessage",
+    "They are tracking \"{{label}}\". The elapsed time will be saved to their timesheet."
+  ],
+  [
+    "teamActivity.confirm.stopTitle",
+    "Stop {{userName}}'s timer?"
+  ],
+  [
+    "teamActivity.empty.hint",
+    "Try the \"All\" tab or clear your search."
+  ]
+]

@@ -7,17 +7,18 @@ import {
   computed,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ActivityService } from '../../services/activity.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 import { PresenceReport, PresenceUser } from '../../models/types';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
-import {
-  ConfirmDialogComponent,
-  ConfirmVariant,
-} from '../../components/ui/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogComponent } from '../../components/ui/confirm-dialog/confirm-dialog.component';
+import type { ConfirmVariant } from '../../components/ui/confirm-dialog/confirm-dialog.component';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type TabKey = 'online' | 'tracking' | 'all';
 
@@ -33,7 +34,7 @@ interface StopTrackingPrompt {
   selector: 'app-team-activity',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, PageHeaderComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, PageHeaderComponent, ConfirmDialogComponent, TranslatePipe],
   styleUrls: ['./team-activity.component.css'],
   templateUrl: './team-activity.component.html',
 })
@@ -41,17 +42,28 @@ export class TeamActivityComponent implements OnInit, OnDestroy {
   private activityService = inject(ActivityService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
+  headerSteps = computed(() => [
+    { label: this.locale.t('teamActivity.step.scan'), description: this.locale.t('teamActivity.step.scanDesc'), tone: 'do' as const },
+    { label: this.locale.t('teamActivity.step.drill'), description: this.locale.t('teamActivity.step.drillDesc'), tone: 'do' as const },
+    { label: this.locale.t('teamActivity.step.print'), description: this.locale.t('teamActivity.step.printDesc'), tone: 'done' as const },
+  ]);
+
+  headerTips = computed(() => [
+    { title: this.locale.t('common.onlineNow'), body: this.locale.t('teamActivity.tip.onlineWindow') },
+    { title: this.locale.t('teamActivity.tab.tracking'), body: this.locale.t('teamActivity.tip.timerTypes') },
+    { title: this.locale.t('common.stopTimer'), body: this.locale.t('teamActivity.tip.stopTimer') },
+  ]);
   presence = signal<PresenceReport | null>(null);
   loading = signal(true);
-  error = signal<string | null>(null);
 
   searchQuery = signal('');
   activeTab = signal<TabKey>('online');
   nowMs = signal(Date.now());
   stopPrompt = signal<StopTrackingPrompt | null>(null);
   stoppingUserId = signal<string | null>(null);
-  actionMessage = signal<string | null>(null);
 
   private pollInterval?: ReturnType<typeof setInterval>;
   private tickInterval?: ReturnType<typeof setInterval>;
@@ -92,14 +104,12 @@ export class TeamActivityComponent implements OnInit, OnDestroy {
 
   load(silent = false) {
     if (!silent) this.loading.set(true);
-    this.activityService.getPresence().subscribe({
+    this.activityService.getPresence({ silent }).subscribe({
       next: (p) => {
         this.presence.set(p);
         this.loading.set(false);
-        this.error.set(null);
       },
-      error: (e) => {
-        this.error.set(e?.error?.error || 'Failed to load team activity');
+      error: () => {
         this.loading.set(false);
       },
     });
@@ -115,9 +125,9 @@ export class TeamActivityComponent implements OnInit, OnDestroy {
     if (!u.tracking || this.stoppingUserId()) return;
     this.stopPrompt.set({
       user: u,
-      title: `Stop ${u.name}'s timer?`,
-      message: `They are tracking "${u.tracking.label}". The elapsed time will be saved to their timesheet.`,
-      confirmLabel: 'Stop timer',
+      title: this.locale.t('teamActivity.confirm.stopTitle', { userName: u.name }),
+      message: this.locale.t('teamActivity.confirm.stopMessage', { label: u.tracking.label }),
+      confirmLabel: this.locale.t('teamActivity.confirm.stopTimer'),
       variant: 'danger',
     });
   }
@@ -131,18 +141,14 @@ export class TeamActivityComponent implements OnInit, OnDestroy {
     if (!prompt) return;
     this.stopPrompt.set(null);
     this.stoppingUserId.set(prompt.user._id);
-    this.actionMessage.set(null);
     this.activityService.stopUserTracking(prompt.user._id).subscribe({
       next: (res) => {
         this.stoppingUserId.set(null);
-        this.actionMessage.set(res.message || 'Timer stopped.');
+        this.toast.success(res.message || this.locale.t('teamActivity.toast.timerStopped'));
         this.load(true);
-        setTimeout(() => this.actionMessage.set(null), 4000);
       },
-      error: (e) => {
+      error: () => {
         this.stoppingUserId.set(null);
-        this.actionMessage.set(e?.error?.error || 'Failed to stop timer.');
-        setTimeout(() => this.actionMessage.set(null), 4000);
       },
     });
   }
@@ -161,24 +167,29 @@ export class TeamActivityComponent implements OnInit, OnDestroy {
 
   /** Friendly relative time for lastActiveAt. */
   lastSeenLabel(u: PresenceUser): string {
-    if (u.online) return 'Active now';
-    if (!u.lastActiveAt) return 'Never signed in';
+    if (u.online) return this.locale.t('teamActivity.lastSeen.activeNow');
+    if (!u.lastActiveAt) return this.locale.t('teamActivity.lastSeen.never');
     const min = Math.floor((this.nowMs() - new Date(u.lastActiveAt).getTime()) / 60000);
-    if (min < 60) return `${min}m ago`;
+    if (min < 60) return this.locale.t('teamActivity.lastSeen.minutes', { min });
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr}h ago`;
+    if (hr < 24) return this.locale.t('teamActivity.lastSeen.hours', { hr });
     const days = Math.floor(hr / 24);
-    return `${days}d ago`;
+    return this.locale.t('teamActivity.lastSeen.days', { days });
   }
 
   prettyPath(path: string): string {
-    if (!path) return 'Idle';
+    if (!path) return this.locale.t('common.unknown');
     const seg = path.replace(/^\//, '').split('/')[0];
-    if (!seg) return 'Home';
+    if (!seg) return this.locale.t('nav.home');
     return seg
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
+  }
+
+  formatLastActiveAt(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
   }
 
   roleClass(role: string): string {

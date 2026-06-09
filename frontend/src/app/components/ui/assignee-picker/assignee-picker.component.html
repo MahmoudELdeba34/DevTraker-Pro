@@ -1,7 +1,7 @@
 @if (mode() === 'select') {
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-2" [attr.data-locale]="locale.locale()">
     @if (label()) {
-      <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ label() }}</label>
+      <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ labelText() }}</label>
     }
     <select
       class="w-full bg-bg-base border border-border text-white text-sm rounded-lg px-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow appearance-none"
@@ -9,16 +9,16 @@
       [ngModel]="value() || ''"
       (ngModelChange)="valueChange.emit($event || null)"
     >
-      <option value="">{{ placeholder() }}</option>
+      <option value="">{{ placeholderText() }}</option>
       @for (member of members(); track member._id) {
         <option [value]="member._id">{{ member.name }}</option>
       }
     </select>
   </div>
 } @else {
-  <div class="relative">
+  <div class="relative" [attr.data-locale]="locale.locale()">
     @if (label()) {
-      <span class="text-xs text-text-muted block mb-1">{{ label() }}</span>
+      <span class="text-xs text-text-muted block mb-1">{{ labelText() }}</span>
     }
     <button
       type="button"
@@ -33,7 +33,7 @@
         </span>
         <span class="truncate">{{ m.name }}</span>
       } @else {
-        <span>{{ placeholder() }}</span>
+        <span>{{ placeholderText() }}</span>
       }
       <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" class="ml-auto shrink-0 opacity-60"><polygon points="5 3 19 12 5 21 5 3"/></svg>
     </button>
@@ -46,7 +46,7 @@
               type="text"
               [ngModel]="search()"
               (ngModelChange)="search.set($event)"
-              placeholder="Search members…"
+              [placeholder]="'common.searchMembers' | translate"
               class="w-full bg-bg-base border border-border text-white text-xs rounded-lg px-3 py-2 outline-none focus:border-accent"
               (click)="$event.stopPropagation()"
             />
@@ -54,7 +54,7 @@
         }
         <div class="flex flex-col max-h-52 overflow-y-auto py-1">
           <button type="button" class="flex items-center gap-2 px-3 py-2 text-left hover:bg-bg-hover text-text-secondary transition-colors text-xs" (click)="pick(null)">
-            {{ placeholder() }}
+            {{ placeholderText() }}
           </button>
           @for (member of filteredMembers(); track member._id) {
             <button

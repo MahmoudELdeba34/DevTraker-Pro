@@ -1,27 +1,39 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
+  inject,
   input,
   output,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OnboardingCredentialsResult } from '../../../services/onboarding.service';
+import { LocaleService } from '../../../core/i18n/locale.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-credentials-banner',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './credentials-banner.component.html',
 })
 export class CredentialsBannerComponent {
+  locale = inject(LocaleService);
+
   data = input.required<OnboardingCredentialsResult>();
   dismissed = output<void>();
 
   passwordCopied = signal(false);
   linkCopied = signal(false);
   messageCopied = signal(false);
+
+  shareTitle = computed(() =>
+    this.locale.t('credentialsBanner.shareWith', {
+      name: this.data().invitedUser.name || this.data().invitedUser.email,
+    })
+  );
 
   dismiss(): void {
     this.dismissed.emit();

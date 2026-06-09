@@ -2,42 +2,38 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HRService } from '../../services/hr.service';
+import { ToastService } from '../../services/toast.service';
+import { PrintDocumentService } from '../../services/print-document.service';
 import { Leave, Permission, Overtime } from '../../models/types';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type TabKey = 'leaves' | 'permissions' | 'overtime';
 
 @Component({
   selector: 'app-request-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PageHeaderComponent, TranslatePipe],
   template: `
-    <div class="page-ambient pb-12 animate-fade-up">
+    <div class="page-ambient pb-12 animate-fade-up" [attr.data-locale]="locale.locale()">
 
       <app-page-header
-        eyebrow="HR Services"
-        title="Request Center"
-        description="File a leave, a permission (short hourly time-off), or claim overtime. HR receives your request immediately and you'll be notified when it's decided."
-        [steps]="[
-          { label: 'Pick a request type', description: 'Leaves, Permissions, or Overtime — pick what fits your need.', tone: 'do' },
-          { label: 'Fill the form', description: 'Add dates, times, and a reason. Attach a file if required.', tone: 'do' },
-          { label: 'HR decides', description: 'A notification arrives once HR approves or rejects — usually within 1–2 working days.', tone: 'wait' }
-        ]"
-        [tips]="[
-          { title: 'Leave vs Permission', body: 'Leave is full days off. Permission is hourly (e.g. late arrival or early leave).' },
-          { title: 'Overtime needs proof', body: 'Add a short reason and your manager will confirm the extra hours.' },
-          { title: 'Want it back?', body: 'You can cancel any pending request from the history list on the right.' }
-        ]"
+        [eyebrow]="locale.t('requestCenter.eyebrow')"
+        [title]="locale.t('requestCenter.title')"
+        [description]="locale.t('requestCenter.description')"
+        [steps]="requestCenterSteps()"
+        [tips]="requestCenterTips()"
       >
         <div header-actions class="flex items-center gap-2">
           <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-elevated border border-border">
             <span class="w-2 h-2 rounded-full bg-warning"></span>
-            <span class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Pending</span>
+            <span class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'common.pending' | translate }}</span>
             <span class="text-sm font-mono font-extrabold text-white">{{ pendingCountAll() }}</span>
           </div>
           <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-elevated border border-border">
             <span class="w-2 h-2 rounded-full bg-success"></span>
-            <span class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Approved</span>
+            <span class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'common.approved' | translate }}</span>
             <span class="text-sm font-mono font-extrabold text-white">{{ approvedCountAll() }}</span>
           </div>
         </div>
@@ -52,7 +48,7 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                [class.text-accent]="activeTab() === 'leaves'">
             <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
           </svg>
-          Leaves
+          {{ 'requestCenter.tab.leaves' | translate }}
           @if (pendingLeavesCount() > 0) {
             <span class="ml-1 px-1.5 py-0.5 rounded-full bg-warning/15 text-warning text-[10px] font-mono font-bold">{{ pendingLeavesCount() }}</span>
           }
@@ -65,7 +61,7 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                [class.text-info]="activeTab() === 'permissions'">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
-          Permissions
+          {{ 'requestCenter.tab.permissions' | translate }}
           @if (pendingPermsCount() > 0) {
             <span class="ml-1 px-1.5 py-0.5 rounded-full bg-warning/15 text-warning text-[10px] font-mono font-bold">{{ pendingPermsCount() }}</span>
           }
@@ -78,26 +74,12 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                [class.text-warning]="activeTab() === 'overtime'">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
-          Overtime
+          {{ 'requestCenter.tab.overtime' | translate }}
           @if (pendingOvertimeCount() > 0) {
             <span class="ml-1 px-1.5 py-0.5 rounded-full bg-warning/15 text-warning text-[10px] font-mono font-bold">{{ pendingOvertimeCount() }}</span>
           }
         </button>
       </div>
-
-      <!-- Feedback -->
-      @if (error()) {
-        <div class="flex items-center gap-3 p-3.5 mb-5 bg-danger/10 border border-danger/25 text-danger rounded-xl animate-fade-up">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <p class="text-sm font-medium">{{ error() }}</p>
-        </div>
-      }
-      @if (successMessage()) {
-        <div class="flex items-center gap-3 p-3.5 mb-5 bg-success/10 border border-success/25 text-success rounded-xl animate-fade-up">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-          <p class="text-sm font-medium">{{ successMessage() }}</p>
-        </div>
-      }
 
       <!-- Content -->
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 tab-panel" [attr.data-tab]="activeTab()">
@@ -128,33 +110,33 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
             @if (activeTab() === 'leaves') {
               <form [formGroup]="leaveForm" (ngSubmit)="submitLeave()" class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Leave Type</label>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.leaveType' | translate }}</label>
                   <select formControlName="leaveType" class="field">
-                    <option value="annual">Annual Leave</option>
-                    <option value="sick">Sick Leave</option>
-                    <option value="unpaid">Unpaid Leave</option>
-                    <option value="emergency">Emergency Leave</option>
+                    <option value="annual">{{ 'common.annualLeave' | translate }}</option>
+                    <option value="sick">{{ 'common.sickLeave' | translate }}</option>
+                    <option value="unpaid">{{ 'common.unpaidLeave' | translate }}</option>
+                    <option value="emergency">{{ 'common.emergencyLeave' | translate }}</option>
                   </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Start Date</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.startDate' | translate }}</label>
                     <input type="date" formControlName="startDate" class="field font-mono" />
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">End Date</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.endDate' | translate }}</label>
                     <input type="date" formControlName="endDate" class="field font-mono" />
                   </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Reason</label>
-                  <textarea formControlName="reason" rows="3" placeholder="Brief explanation..." class="field resize-none"></textarea>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.reason' | translate }}</label>
+                  <textarea formControlName="reason" rows="3" [placeholder]="'common.briefExplanation' | translate" class="field resize-none"></textarea>
                 </div>
                 <button type="submit" [disabled]="leaveForm.invalid || sending()" class="btn-accent w-full mt-2">
                   @if (sending()) {
                     <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   }
-                  Submit Leave Request
+                  {{ 'requestCenter.form.submitLeave' | translate }}
                 </button>
               </form>
             }
@@ -163,38 +145,38 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
             @if (activeTab() === 'permissions') {
               <form [formGroup]="permissionForm" (ngSubmit)="submitPermission()" class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Request Type</label>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.requestType' | translate }}</label>
                   <select formControlName="type" class="field">
-                    <option value="hourly">Hourly Permission</option>
-                    <option value="late_arrival">Waive Late Arrival</option>
-                    <option value="early_leave">Early Dismissal</option>
-                    <option value="remote">Work from Home</option>
-                    <option value="correction">Timecard Correction</option>
+                    <option value="hourly">{{ 'common.hourlyPermission' | translate }}</option>
+                    <option value="late_arrival">{{ 'common.waiveLateArrival' | translate }}</option>
+                    <option value="early_leave">{{ 'common.earlyDismissal' | translate }}</option>
+                    <option value="remote">{{ 'common.workFromHome' | translate }}</option>
+                    <option value="correction">{{ 'common.timecardCorrection' | translate }}</option>
                   </select>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Date</label>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.date' | translate }}</label>
                   <input type="date" formControlName="date" class="field font-mono" />
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">From</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.from' | translate }}</label>
                     <input type="time" formControlName="fromTime" class="field font-mono" />
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">To</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.to' | translate }}</label>
                     <input type="time" formControlName="toTime" class="field font-mono" />
                   </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Reason</label>
-                  <textarea formControlName="reason" rows="3" placeholder="Provide justification..." class="field resize-none"></textarea>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.reason' | translate }}</label>
+                  <textarea formControlName="reason" rows="3" [placeholder]="'common.provideJustification' | translate" class="field resize-none"></textarea>
                 </div>
                 <button type="submit" [disabled]="permissionForm.invalid || sending()" class="btn-accent w-full mt-2">
                   @if (sending()) {
                     <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   }
-                  Submit Permission
+                  {{ 'requestCenter.form.submitPermission' | translate }}
                 </button>
               </form>
             }
@@ -203,28 +185,28 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
             @if (activeTab() === 'overtime') {
               <form [formGroup]="overtimeForm" (ngSubmit)="submitOvertime()" class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Date Worked</label>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.dateWorked' | translate }}</label>
                   <input type="date" formControlName="date" class="field font-mono" />
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Start</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.from' | translate }}</label>
                     <input type="time" formControlName="startTime" class="field font-mono" />
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">End</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.to' | translate }}</label>
                     <input type="time" formControlName="endTime" class="field font-mono" />
                   </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Work Description</label>
-                  <textarea formControlName="reason" rows="3" placeholder="Tasks completed during overtime..." class="field resize-none"></textarea>
+                  <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.workDescription' | translate }}</label>
+                  <textarea formControlName="reason" rows="3" [placeholder]="'common.tasksCompletedOvertime' | translate" class="field resize-none"></textarea>
                 </div>
                 <button type="submit" [disabled]="overtimeForm.invalid || sending()" class="btn-accent w-full mt-2">
                   @if (sending()) {
                     <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   }
-                  Log Overtime
+                  {{ 'common.logOvertime' | translate }}
                 </button>
               </form>
             }
@@ -235,8 +217,8 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
         <div class="xl:col-span-2">
           <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 class="section-title"><span class="dot"></span>Request History</h2>
-              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ currentHistoryCount() }} entries</span>
+              <h2 class="section-title"><span class="dot"></span>{{ 'requestCenter.history.title' | translate }}</h2>
+              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.entriesCount', { count: currentHistoryCount() }) }}</span>
             </div>
 
             <!-- LEAVES HISTORY -->
@@ -245,10 +227,11 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                 <table class="hr-table">
                   <thead>
                     <tr>
-                      <th>Leave Type</th>
-                      <th>Duration</th>
-                      <th>Period</th>
-                      <th class="text-right">Status</th>
+                      <th>{{ 'requestCenter.history.leaveType' | translate }}</th>
+                      <th>{{ 'requestCenter.history.duration' | translate }}</th>
+                      <th>{{ 'requestCenter.history.period' | translate }}</th>
+                      <th class="text-right">{{ 'common.status' | translate }}</th>
+                      <th class="text-right">{{ 'common.actions' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -259,26 +242,32 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                             <div class="w-8 h-8 rounded-lg bg-accent-subtle text-accent flex items-center justify-center">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
                             </div>
-                            <span class="font-bold text-white capitalize">{{ item.leaveType }}</span>
+                            <span class="font-bold text-white">{{ leaveTypeLabel(item.leaveType) }}</span>
                           </div>
                         </td>
-                        <td><span class="font-mono text-white">{{ item.durationDays }} day{{ item.durationDays > 1 ? 's' : '' }}</span></td>
+                        <td><span class="font-mono text-white">{{ item.durationDays }} {{ (item.durationDays > 1 ? 'common.days' : 'common.day') | translate }}</span></td>
                         <td class="font-mono text-text-muted text-[11px]">{{ item.startDate | date:'MMM d' }} → {{ item.endDate | date:'MMM d, y' }}</td>
                         <td class="text-right">
                           <span class="chip" [ngClass]="statusChip(item.status)">
-                            <span class="chip-dot"></span>{{ item.status }}
+                            <span class="chip-dot"></span>{{ requestStatusLabel(item.status) }}
                           </span>
+                        </td>
+                        <td class="text-right">
+                          <button type="button" (click)="printLeave(item._id)"
+                            class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-text-secondary hover:text-accent border border-border hover:border-accent/30 rounded-lg font-bold text-[11px] transition-all">
+                            {{ 'common.print' | translate }}
+                          </button>
                         </td>
                       </tr>
                     }
                     @if (leaves().length === 0) {
-                      <tr><td colspan="4">
+                      <tr><td colspan="5">
                         <div class="flex flex-col items-center justify-center text-text-muted py-12 gap-3">
                           <div class="w-14 h-14 rounded-full bg-bg-base border border-border flex items-center justify-center">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                           </div>
-                          <p class="text-sm">No leave requests yet.</p>
-                          <span class="text-[11px] text-text-faint">Submit your first request from the panel on the left.</span>
+                          <p class="text-sm">{{ 'requestCenter.empty.noLeaves' | translate }}</p>
+                          <span class="text-[11px] text-text-faint">{{ 'requestCenter.empty.noLeavesHint' | translate }}</span>
                         </div>
                       </td></tr>
                     }
@@ -293,10 +282,11 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                 <table class="hr-table">
                   <thead>
                     <tr>
-                      <th>Type</th>
-                      <th>Date</th>
-                      <th>Interval</th>
-                      <th class="text-right">Status</th>
+                      <th>{{ 'requestCenter.history.type' | translate }}</th>
+                      <th>{{ 'requestCenter.history.date' | translate }}</th>
+                      <th>{{ 'common.interval' | translate }}</th>
+                      <th class="text-right">{{ 'common.status' | translate }}</th>
+                      <th class="text-right">{{ 'common.actions' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -307,7 +297,7 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                             <div class="w-8 h-8 rounded-lg bg-info/10 text-info flex items-center justify-center">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </div>
-                            <span class="font-bold text-white capitalize">{{ item.type.replace('_', ' ') }}</span>
+                            <span class="font-bold text-white">{{ permissionTypeLabel(item.type) }}</span>
                           </div>
                         </td>
                         <td class="font-mono text-text-muted text-[11px]">{{ item.date | date:'MMM d, y' }}</td>
@@ -317,18 +307,24 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                         </td>
                         <td class="text-right">
                           <span class="chip" [ngClass]="statusChip(item.status)">
-                            <span class="chip-dot"></span>{{ item.status }}
+                            <span class="chip-dot"></span>{{ requestStatusLabel(item.status) }}
                           </span>
+                        </td>
+                        <td class="text-right">
+                          <button type="button" (click)="printPermission(item._id)"
+                            class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-text-secondary hover:text-accent border border-border hover:border-accent/30 rounded-lg font-bold text-[11px] transition-all">
+                            {{ 'common.print' | translate }}
+                          </button>
                         </td>
                       </tr>
                     }
                     @if (permissions().length === 0) {
-                      <tr><td colspan="4">
+                      <tr><td colspan="5">
                         <div class="flex flex-col items-center justify-center text-text-muted py-12 gap-3">
                           <div class="w-14 h-14 rounded-full bg-bg-base border border-border flex items-center justify-center">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           </div>
-                          <p class="text-sm">No permissions logged.</p>
+                          <p class="text-sm">{{ 'requestCenter.empty.noPermissions' | translate }}</p>
                         </div>
                       </td></tr>
                     }
@@ -343,10 +339,11 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                 <table class="hr-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Interval</th>
-                      <th>Hours / Rate</th>
-                      <th class="text-right">Status</th>
+                      <th>{{ 'requestCenter.history.date' | translate }}</th>
+                      <th>{{ 'common.interval' | translate }}</th>
+                      <th>{{ 'requestCenter.history.hoursRate' | translate }}</th>
+                      <th class="text-right">{{ 'common.status' | translate }}</th>
+                      <th class="text-right">{{ 'common.actions' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -363,24 +360,30 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                         <td><span class="font-mono text-white text-[11px]">{{ item.startTime }} – {{ item.endTime }}</span></td>
                         <td>
                           <div class="flex flex-col gap-0.5">
-                            <span class="text-white font-bold text-xs">{{ item.durationHours }} hrs</span>
-                            <span class="text-[10px] text-warning font-mono uppercase tracking-wider">{{ item.multiplier }}× rate</span>
+                            <span class="text-white font-bold text-xs">{{ item.durationHours }} {{ 'common.hours' | translate }}</span>
+                            <span class="text-[10px] text-warning font-mono uppercase tracking-wider">{{ overtimeRateLabel(item.multiplier) }}</span>
                           </div>
                         </td>
                         <td class="text-right">
                           <span class="chip" [ngClass]="statusChip(item.status)">
-                            <span class="chip-dot"></span>{{ item.status }}
+                            <span class="chip-dot"></span>{{ requestStatusLabel(item.status) }}
                           </span>
+                        </td>
+                        <td class="text-right">
+                          <button type="button" (click)="printOvertime(item._id)"
+                            class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-text-secondary hover:text-accent border border-border hover:border-accent/30 rounded-lg font-bold text-[11px] transition-all">
+                            {{ 'common.print' | translate }}
+                          </button>
                         </td>
                       </tr>
                     }
                     @if (overtime().length === 0) {
-                      <tr><td colspan="4">
+                      <tr><td colspan="5">
                         <div class="flex flex-col items-center justify-center text-text-muted py-12 gap-3">
                           <div class="w-14 h-14 rounded-full bg-bg-base border border-border flex items-center justify-center">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                           </div>
-                          <p class="text-sm">No overtime records yet.</p>
+                          <p class="text-sm">{{ 'requestCenter.empty.noOvertime' | translate }}</p>
                         </div>
                       </td></tr>
                     }
@@ -397,11 +400,12 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
 export class RequestCenterComponent implements OnInit {
   private hrService = inject(HRService);
   private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
+  private printDocs = inject(PrintDocumentService);
+  locale = inject(LocaleService);
 
   activeTab = signal<TabKey>('leaves');
   sending = signal(false);
-  error = signal('');
-  successMessage = signal('');
 
   leaves = signal<Leave[]>([]);
   permissions = signal<Permission[]>([]);
@@ -410,6 +414,18 @@ export class RequestCenterComponent implements OnInit {
   leaveForm!: FormGroup;
   permissionForm!: FormGroup;
   overtimeForm!: FormGroup;
+
+  requestCenterSteps = () => [
+    { label: this.locale.t('requestCenter.step.pickType'), description: this.locale.t('requestCenter.step.pickTypeDesc'), tone: 'do' as const },
+    { label: this.locale.t('requestCenter.step.fillForm'), description: this.locale.t('requestCenter.step.fillFormDesc'), tone: 'do' as const },
+    { label: this.locale.t('requestCenter.step.hrDecides'), description: this.locale.t('requestCenter.step.hrDecidesDesc'), tone: 'wait' as const },
+  ];
+
+  requestCenterTips = () => [
+    { title: this.locale.t('common.leaveType'), body: this.locale.t('requestCenter.tip.leaveVsPermission') },
+    { title: this.locale.t('common.overtime'), body: this.locale.t('requestCenter.tip.overtimeProof') },
+    { title: this.locale.t('common.cancel'), body: this.locale.t('requestCenter.tip.cancelPending') },
+  ];
 
   // ─── Derived counts ───────────────────────────
   pendingLeavesCount    = computed(() => this.leaves().filter(l => l.status === 'pending').length);
@@ -430,17 +446,21 @@ export class RequestCenterComponent implements OnInit {
     }
   });
 
-  formTitle = computed(() => ({
-    leaves: 'New Leave Request',
-    permissions: 'New Permission',
-    overtime: 'Log Overtime',
-  }[this.activeTab()]));
+  formTitle = computed(() => {
+    switch (this.activeTab()) {
+      case 'leaves':      return this.locale.t('requestCenter.form.newLeave');
+      case 'permissions': return this.locale.t('requestCenter.form.newPermission');
+      case 'overtime':    return this.locale.t('requestCenter.form.logOvertime');
+    }
+  });
 
-  formSubtitle = computed(() => ({
-    leaves: 'Apply for annual, sick, unpaid, or emergency leave',
-    permissions: 'Hourly permissions, late arrivals, remote work',
-    overtime: 'Log extra hours worked beyond your schedule',
-  }[this.activeTab()]));
+  formSubtitle = computed(() => {
+    switch (this.activeTab()) {
+      case 'leaves':      return this.locale.t('requestCenter.form.newLeaveSubtitle');
+      case 'permissions': return this.locale.t('requestCenter.form.newPermissionSubtitle');
+      case 'overtime':    return this.locale.t('requestCenter.form.logOvertimeSubtitle');
+    }
+  });
 
   topAccentGradient = computed(() => {
     switch (this.activeTab()) {
@@ -491,62 +511,97 @@ export class RequestCenterComponent implements OnInit {
   loadPermissions() { this.hrService.getMyPermissions().subscribe({ next: (r) => { if (r.success) this.permissions.set(r.data); } }); }
   loadOvertime()    { this.hrService.getMyOvertime().subscribe({ next: (r) => { if (r.success) this.overtime.set(r.data); } }); }
 
+  printLeave(id: string): void { void this.printDocs.printLeave(id); }
+  printPermission(id: string): void { void this.printDocs.printPermission(id); }
+  printOvertime(id: string): void { void this.printDocs.printOvertime(id); }
+
   // ─── Submissions ───────────────────────────────
   submitLeave() {
     if (this.leaveForm.invalid) return;
-    this.flushMessages();
     this.sending.set(true);
     this.hrService.requestLeave(this.leaveForm.value).subscribe({
       next: (res) => {
         this.sending.set(false);
         if (res.success) {
-          this.successMessage.set('Leave request submitted successfully.');
+          this.toast.success(this.locale.t('requestCenter.toast.leaveSubmitted'));
           this.leaveForm.reset({ leaveType: 'annual' });
           this.loadLeaves();
-          this.autoDismiss();
         }
       },
-      error: (err) => { this.sending.set(false); this.error.set(err.error?.error || 'Failed to submit leave request.'); },
+      error: () => { this.sending.set(false); },
     });
   }
 
   submitPermission() {
     if (this.permissionForm.invalid) return;
-    this.flushMessages();
     this.sending.set(true);
     this.hrService.requestPermission(this.permissionForm.value).subscribe({
       next: (res) => {
         this.sending.set(false);
         if (res.success) {
-          this.successMessage.set('Permission request submitted successfully.');
+          this.toast.success(this.locale.t('requestCenter.toast.permissionSubmitted'));
           this.permissionForm.reset({ type: 'hourly' });
           this.loadPermissions();
-          this.autoDismiss();
         }
       },
-      error: (err) => { this.sending.set(false); this.error.set(err.error?.error || 'Failed to submit permission.'); },
+      error: () => { this.sending.set(false); },
     });
   }
 
   submitOvertime() {
     if (this.overtimeForm.invalid) return;
-    this.flushMessages();
     this.sending.set(true);
     this.hrService.requestOvertime(this.overtimeForm.value).subscribe({
       next: (res) => {
         this.sending.set(false);
         if (res.success) {
-          this.successMessage.set('Overtime logged successfully.');
+          this.toast.success(this.locale.t('requestCenter.toast.overtimeSubmitted'));
           this.overtimeForm.reset();
           this.loadOvertime();
-          this.autoDismiss();
         }
       },
-      error: (err) => { this.sending.set(false); this.error.set(err.error?.error || 'Failed to log overtime.'); },
+      error: () => { this.sending.set(false); },
     });
   }
 
   // ─── Helpers ───────────────────────────────────
+  requestStatusLabel(status: string): string {
+    const keys: Record<string, string> = {
+      pending: 'common.pending',
+      approved: 'common.approved',
+      rejected: 'common.rejected',
+    };
+    const key = keys[status];
+    return key ? this.locale.t(key) : status;
+  }
+
+  leaveTypeLabel(type: string): string {
+    const keys: Record<string, string> = {
+      annual: 'common.annualLeave',
+      sick: 'common.sickLeave',
+      unpaid: 'common.unpaidLeave',
+      emergency: 'common.emergencyLeave',
+    };
+    const key = keys[type];
+    return key ? this.locale.t(key) : type;
+  }
+
+  permissionTypeLabel(type: string): string {
+    const keys: Record<string, string> = {
+      hourly: 'common.hourlyPermission',
+      late_arrival: 'common.waiveLateArrival',
+      early_leave: 'common.earlyDismissal',
+      remote: 'common.workFromHome',
+      correction: 'common.timecardCorrection',
+    };
+    const key = keys[type];
+    return key ? this.locale.t(key) : type.replace(/_/g, ' ');
+  }
+
+  overtimeRateLabel(multiplier: number): string {
+    return `${multiplier}× ${this.locale.t('hrPortal.table.rate').toLowerCase()}`;
+  }
+
   statusChip(status: string): string {
     if (status === 'approved') return 'chip-success';
     if (status === 'rejected') return 'chip-danger';
@@ -554,8 +609,4 @@ export class RequestCenterComponent implements OnInit {
     return 'chip-muted';
   }
 
-  private flushMessages() { this.error.set(''); this.successMessage.set(''); }
-  private autoDismiss() {
-    setTimeout(() => { this.successMessage.set(''); this.error.set(''); }, 4000);
-  }
 }

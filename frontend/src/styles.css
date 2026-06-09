@@ -58,6 +58,46 @@
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* ─── Light theme ─────────────────────────────────────────────────────────── */
+html[data-theme='light'] {
+  color-scheme: light;
+  --color-bg-base: #eef1f6;
+  --color-bg-surface: #ffffff;
+  --color-bg-elevated: #ffffff;
+  --color-bg-hover: #e8ecf3;
+  --color-border: rgba(15, 23, 42, 0.09);
+  --color-border-strong: rgba(15, 23, 42, 0.16);
+  --text-primary: #0f172a;
+  --text-secondary: rgba(15, 23, 42, 0.72);
+  --text-muted: rgba(15, 23, 42, 0.52);
+  --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme='light'] .text-white {
+  color: var(--text-primary);
+}
+
+html[data-theme='light'] input.text-white,
+html[data-theme='light'] textarea.text-white {
+  color: var(--text-primary);
+}
+
+html[dir='rtl'] body {
+  font-family: 'Cairo', 'DM Sans', sans-serif;
+}
+
+html[dir='rtl'] h1,
+html[dir='rtl'] h2,
+html[dir='rtl'] h3,
+html[dir='rtl'] h4,
+html[dir='rtl'] h5,
+html[dir='rtl'] h6,
+html[dir='rtl'] .display-font,
+html[dir='rtl'] .font-display {
+  font-family: 'Cairo', 'Syne', sans-serif;
+}
+
 /* ─── Reset & Base ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

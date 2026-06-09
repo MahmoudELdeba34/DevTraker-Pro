@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  inject,
   signal,
 } from '@angular/core';
 
@@ -13,14 +14,17 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   template: `
-    <div class="auth-page">
+    <div class="auth-page" [attr.data-locale]="locale.locale()">
       <div class="auth-card">
         <div class="auth-header">
           <div class="logo-icon">
@@ -29,78 +33,68 @@ import { AuthService } from '../../services/auth.service';
               <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
             </svg>
           </div>
-          <h1>DevTracker Pro</h1>
-          <p>Create your account and start tracking</p>
+          <h1>{{ 'register.title' | translate }}</h1>
+          <p>{{ 'register.subtitle' | translate }}</p>
         </div>
-
-        @if (error()) {
-          <div class="alert alert-error">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            {{ error() }}
-          </div>
-        }
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
           <div class="form-group">
-            <label for="name">Full name</label>
+            <label for="name">{{ 'register.fullName' | translate }}</label>
             <input
               id="name"
               type="text"
               formControlName="name"
-              placeholder="John Doe"
+              [placeholder]="locale.t('common.johnDoePlaceholder')"
               [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
             />
             @if (form.get('name')?.invalid && form.get('name')?.touched) {
-              <span class="field-error">Name is required</span>
+              <span class="field-error">{{ 'register.nameRequired' | translate }}</span>
             }
           </div>
 
           <div class="form-group">
-            <label for="email">Email address</label>
+            <label for="email">{{ 'register.email' | translate }}</label>
             <input
               id="email"
               type="email"
               formControlName="email"
-              placeholder="you@example.com"
+              [placeholder]="locale.t('common.youExamplePlaceholder')"
               [class.invalid]="form.get('email')?.invalid && form.get('email')?.touched"
             />
             @if (form.get('email')?.invalid && form.get('email')?.touched) {
-              <span class="field-error">Please enter a valid email</span>
+              <span class="field-error">{{ 'register.emailInvalid' | translate }}</span>
             }
           </div>
 
           <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password">{{ 'register.password' | translate }}</label>
             <input
               id="password"
               type="password"
               formControlName="password"
-              placeholder="Min. 6 characters"
+              [placeholder]="locale.t('common.passwordMin6Placeholder')"
               [class.invalid]="form.get('password')?.invalid && form.get('password')?.touched"
             />
             @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
-              <span class="field-error">Password is required</span>
+              <span class="field-error">{{ 'register.passwordRequired' | translate }}</span>
             }
             @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
-              <span class="field-error">Password must be at least 6 characters</span>
+              <span class="field-error">{{ 'register.passwordMin6' | translate }}</span>
             }
           </div>
 
           <div class="form-group">
-            <label for="role">Role</label>
+            <label for="role">{{ 'register.role' | translate }}</label>
             <select
               id="role"
               formControlName="role"
               class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200"
             >
-              <option value="employee">Employee</option>
-              <option value="manager">Manager</option>
-              <option value="hr">HR Specialist</option>
-              <option value="accountant">Accountant</option>
-              <option value="admin">Administrator</option>
+              <option value="employee">{{ locale.roleLabel('employee') }}</option>
+              <option value="manager">{{ locale.roleLabel('manager') }}</option>
+              <option value="hr">{{ locale.t('role.global.hrSpecialist') }}</option>
+              <option value="accountant">{{ locale.roleLabel('accountant') }}</option>
+              <option value="admin">{{ locale.t('role.global.administrator') }}</option>
             </select>
           </div>
 
@@ -110,31 +104,30 @@ import { AuthService } from '../../services/auth.service';
             [disabled]="loading()"
           >
             @if (loading()) {
-              <span class="spinner"></span> Creating account...
+              <span class="spinner"></span> {{ 'register.creating' | translate }}
             } @else {
-              Create Account
+              {{ 'register.createAccount' | translate }}
             }
           </button>
         </form>
 
         <p class="auth-footer">
-          Already have an account?
-          <a routerLink="/login">Sign in</a>
+          {{ 'register.alreadyHave' | translate }}
+          <a routerLink="/login">{{ 'register.signIn' | translate }}</a>
         </p>
       </div>
     </div>
   `,
 })
 export class RegisterComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
+
   form!: FormGroup;
   loading = signal(false);
-  error = signal('');
-
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -156,7 +149,6 @@ export class RegisterComponent implements OnInit {
     }
 
     this.loading.set(true);
-    this.error.set('');
 
     const { name, email, password, role } = this.form.value as {
       name: string;
@@ -168,13 +160,12 @@ export class RegisterComponent implements OnInit {
     this.authService.register(name, email, password, role).subscribe({
       next: () => {
         this.loading.set(false);
+        this.toast.success(this.locale.t('register.toast.accountCreated'));
         this.router.navigate(['/dashboard']);
       },
       error: (err: { error?: { error?: string } }) => {
         this.loading.set(false);
-        this.error.set(
-          err.error?.error ?? 'Registration failed. Please try again.'
-        );
+        this.toast.error(err.error?.error ?? this.locale.t('register.toast.registrationFailed'));
       },
     });
   }

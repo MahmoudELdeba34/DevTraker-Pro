@@ -42,7 +42,6 @@ export class WorkspaceMembersModalComponent implements OnChanges {
   loading = signal(false);
   saving = signal(false);
   search = signal('');
-  error = signal<string | null>(null);
   openMenu = signal(false);
   allUsers = signal<User[]>([]);
 
@@ -92,15 +91,13 @@ export class WorkspaceMembersModalComponent implements OnChanges {
   loadMembers(): void {
     if (!this.spaceId) return;
     this.loading.set(true);
-    this.error.set(null);
 
     this.workspaceService.getMembers(this.spaceId).subscribe({
       next: (members) => {
         this.members.set(members);
         this.loading.set(false);
       },
-      error: (err) => {
-        this.error.set(this.messageFrom(err, 'Failed to load members'));
+      error: () => {
         this.loading.set(false);
       },
     });
@@ -133,7 +130,6 @@ export class WorkspaceMembersModalComponent implements OnChanges {
     if (this.saving()) return;
 
     this.saving.set(true);
-    this.error.set(null);
 
     this.workspaceService.addMember(this.spaceId, user._id).subscribe({
       next: () => {
@@ -155,10 +151,8 @@ export class WorkspaceMembersModalComponent implements OnChanges {
           'Member Added'
         );
       },
-      error: (err) => {
+      error: () => {
         this.saving.set(false);
-        this.error.set(this.messageFrom(err, 'Failed to add member'));
-        this.toastService.error(this.messageFrom(err, 'Failed to add member'));
       },
     });
   }
@@ -168,7 +162,6 @@ export class WorkspaceMembersModalComponent implements OnChanges {
     if (this.saving() || member.isOwner) return;
 
     this.saving.set(true);
-    this.error.set(null);
 
     this.workspaceService.removeMember(this.spaceId, member._id).subscribe({
       next: () => {
@@ -179,10 +172,8 @@ export class WorkspaceMembersModalComponent implements OnChanges {
           'Member Removed'
         );
       },
-      error: (err) => {
+      error: () => {
         this.saving.set(false);
-        this.error.set(this.messageFrom(err, 'Failed to remove member'));
-        this.toastService.error(this.messageFrom(err, 'Failed to remove member'));
       },
     });
   }
@@ -225,10 +216,6 @@ export class WorkspaceMembersModalComponent implements OnChanges {
 
   onSearchChange(value: string): void {
     this.search.set(value);
-  }
-
-  private messageFrom(err: any, fallback: string): string {
-    return err?.error?.message || err?.message || fallback;
   }
 
   trackByMemberId(_: number, member: WorkspaceMember): string {

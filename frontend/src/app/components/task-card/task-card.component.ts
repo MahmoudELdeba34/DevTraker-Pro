@@ -5,6 +5,7 @@ import {
   Input,
   Output,
   signal,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,16 +13,17 @@ import { Task, TaskStatus } from '../../models/types';
 import { TaskService } from '../../services/task.service';
 import { TimerWidgetComponent } from '../timer-widget/timer-widget.component';
 import { WorkspaceMember } from '../../services/workspace.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-task-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TimerWidgetComponent],
+  imports: [CommonModule, FormsModule, TimerWidgetComponent, TranslatePipe],
   template: `
-    <div class="bg-[#2B2B36] rounded-xl p-5 hover:border-accent/50 transition-colors border border-transparent hover:shadow-glow group cursor-grab active:cursor-grabbing flex flex-col gap-4 relative overflow-hidden" [class.opacity-60]="task.status === 'completed'" (click)="taskClicked.emit(task)">
+    <div class="bg-[#2B2B36] rounded-xl p-5 hover:border-accent/50 transition-colors border border-transparent hover:shadow-glow group cursor-grab active:cursor-grabbing flex flex-col gap-4 relative overflow-hidden" [class.opacity-60]="task.status === 'completed'" [attr.data-locale]="locale.locale()" (click)="taskClicked.emit(task)">
       
-      <!-- Top Row: Title & Flag & Actions -->
       <div class="flex justify-between items-start gap-4">
         <h4 class="text-sm font-bold text-white leading-snug" [class.line-through]="task.status === 'completed'">
           {{ task.title }}
@@ -29,7 +31,7 @@ import { WorkspaceMember } from '../../services/workspace.service';
         
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-bg-hover transition-colors relative" title="Change Status" (click)="$event.stopPropagation()">
+            <button class="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-white hover:bg-bg-hover transition-colors relative" [title]="'taskCard.changeStatus' | translate" (click)="$event.stopPropagation()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
               <select
                 class="absolute inset-0 opacity-0 cursor-pointer"
@@ -38,16 +40,16 @@ import { WorkspaceMember } from '../../services/workspace.service';
                 [disabled]="updating()"
                 (click)="$event.stopPropagation()"
               >
-                <option value="not_started">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="in_review">In Review</option>
-                <option value="completed">Completed</option>
+                <option value="not_started">{{ 'taskCard.status.todo' | translate }}</option>
+                <option value="in_progress">{{ 'taskCard.status.inProgress' | translate }}</option>
+                <option value="in_review">{{ 'taskCard.status.inReview' | translate }}</option>
+                <option value="completed">{{ 'taskCard.status.completed' | translate }}</option>
               </select>
             </button>
             <button
               class="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
               (click)="onDelete(); $event.stopPropagation()"
-              title="Delete task"
+              [title]="'taskCard.deleteTask' | translate"
               [disabled]="deleting()"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
@@ -65,10 +67,9 @@ import { WorkspaceMember } from '../../services/workspace.service';
         </div>
       </div>
 
-      <!-- Middle: Task Progress -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between text-[10px] font-bold text-text-muted">
-          <span>Task Progress</span>
+          <span>{{ 'taskDetails.progress' | translate }}</span>
           <span class="text-white">{{ getProgressPercent() }}%</span>
         </div>
         <div class="h-1.5 w-full bg-bg-base rounded-full overflow-hidden">
@@ -81,7 +82,6 @@ import { WorkspaceMember } from '../../services/workspace.service';
         </div>
       </div>
 
-      <!-- Bottom Row: Assignee & Date -->
       <div class="flex items-center justify-between mt-1">
         <div class="relative" (click)="$event.stopPropagation()">
           @if (canAssign && workspaceMembers.length) {
@@ -89,7 +89,7 @@ import { WorkspaceMember } from '../../services/workspace.service';
               type="button"
               class="flex items-center gap-1.5 rounded-full transition-colors"
               (click)="toggleAssignMenu()"
-              [title]="task.assignedTo ? task.assignedTo.name : 'Assign member'"
+              [title]="task.assignedTo ? task.assignedTo.name : ('taskDetails.assignMember' | translate)"
             >
               @if (task.assignedTo) {
                 <span class="w-6 h-6 rounded-full border-2 border-[#2B2B36] bg-accent/20 flex items-center justify-center text-[9px] font-bold text-accent">
@@ -107,14 +107,14 @@ import { WorkspaceMember } from '../../services/workspace.service';
 
             @if (showAssignMenu()) {
               <div class="absolute left-0 bottom-full mb-1 w-56 bg-bg-elevated border border-border rounded-xl shadow-xl overflow-hidden z-50">
-                <div class="px-2 py-1.5 border-b border-border text-[10px] font-bold uppercase tracking-widest text-text-muted">Assign to</div>
+                <div class="px-2 py-1.5 border-b border-border text-[10px] font-bold uppercase tracking-widest text-text-muted">{{ 'common.assignUser' | translate }}</div>
                 <div class="flex flex-col max-h-44 overflow-y-auto py-1">
                   <button
                     type="button"
                     class="flex items-center gap-2 px-3 py-2 text-left hover:bg-bg-hover text-text-secondary text-xs"
                     (click)="assignMember(null)"
                   >
-                    Unassigned
+                    {{ 'common.unassigned' | translate }}
                   </button>
                   @for (member of workspaceMembers; track member._id) {
                     <button
@@ -158,6 +158,8 @@ import { WorkspaceMember } from '../../services/workspace.service';
   `,
 })
 export class TaskCardComponent {
+  locale = inject(LocaleService);
+
   @Input({ required: true }) task!: Task;
   @Input() workspaceMembers: WorkspaceMember[] = [];
   @Input() canAssign = true;
@@ -254,6 +256,6 @@ export class TaskCardComponent {
         day: 'numeric',
       });
     }
-    return 'No due date';
+    return this.locale.t('common.setDueDate');
   }
 }

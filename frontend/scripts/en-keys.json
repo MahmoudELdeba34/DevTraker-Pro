@@ -1,0 +1,4570 @@
+[
+  {
+    "key": "nav.dashboard",
+    "val": "Dashboard"
+  },
+  {
+    "key": "nav.projects",
+    "val": "My Projects"
+  },
+  {
+    "key": "nav.members",
+    "val": "Members"
+  },
+  {
+    "key": "nav.timesheet",
+    "val": "My Timesheet"
+  },
+  {
+    "key": "nav.requests",
+    "val": "Request Center"
+  },
+  {
+    "key": "nav.hrPortal",
+    "val": "HR Portal"
+  },
+  {
+    "key": "nav.teamActivity",
+    "val": "Team Activity"
+  },
+  {
+    "key": "nav.payroll",
+    "val": "Payroll"
+  },
+  {
+    "key": "nav.reports",
+    "val": "Reports"
+  },
+  {
+    "key": "nav.account",
+    "val": "Account"
+  },
+  {
+    "key": "nav.home",
+    "val": "Home"
+  },
+  {
+    "key": "nav.settings",
+    "val": "Settings"
+  },
+  {
+    "key": "nav.support",
+    "val": "Support"
+  },
+  {
+    "key": "shell.teamWorkspace",
+    "val": "Team Workspace"
+  },
+  {
+    "key": "shell.yourWorkspaces",
+    "val": "Your Workspaces"
+  },
+  {
+    "key": "shell.manageMembers",
+    "val": "Manage Members"
+  },
+  {
+    "key": "shell.addWorkspace",
+    "val": "Add Workspace"
+  },
+  {
+    "key": "shell.newProject",
+    "val": "New Project"
+  },
+  {
+    "key": "shell.noProjects",
+    "val": "No projects found"
+  },
+  {
+    "key": "shell.globalSearch",
+    "val": "Global search…"
+  },
+  {
+    "key": "shell.startTimer",
+    "val": "Start Timer"
+  },
+  {
+    "key": "shell.timeTracking",
+    "val": "Time Tracking"
+  },
+  {
+    "key": "shell.dailyGoal",
+    "val": "Daily Goal (7H)"
+  },
+  {
+    "key": "shell.stop",
+    "val": "Stop"
+  },
+  {
+    "key": "shell.recent",
+    "val": "Recent"
+  },
+  {
+    "key": "shell.viewTimesheet",
+    "val": "View Timesheet"
+  },
+  {
+    "key": "shell.notifications",
+    "val": "Notifications"
+  },
+  {
+    "key": "shell.markAllRead",
+    "val": "Mark all read"
+  },
+  {
+    "key": "shell.noNotifications",
+    "val": "No new notifications"
+  },
+  {
+    "key": "shell.logout",
+    "val": "Log out"
+  },
+  {
+    "key": "shell.profile",
+    "val": "My profile"
+  },
+  {
+    "key": "shell.whatWorkingOn",
+    "val": "What are you working on?"
+  },
+  {
+    "key": "shell.quickSession",
+    "val": "Quick session"
+  },
+  {
+    "key": "shell.live",
+    "val": "Live"
+  },
+  {
+    "key": "shell.loading",
+    "val": "Loading…"
+  },
+  {
+    "key": "shell.brand",
+    "val": "ProTrack"
+  },
+  {
+    "key": "shell.brandTagline",
+    "val": "Team Performance Tracking"
+  },
+  {
+    "key": "shell.title.support",
+    "val": "Support"
+  },
+  {
+    "key": "shell.title.settings",
+    "val": "Settings"
+  },
+  {
+    "key": "shell.title.back",
+    "val": "Back"
+  },
+  {
+    "key": "shell.title.startTracking",
+    "val": "Start tracking now"
+  },
+  {
+    "key": "shell.chip.task",
+    "val": "Task"
+  },
+  {
+    "key": "shell.tapToSwitch",
+    "val": "Tap a task to switch"
+  },
+  {
+    "key": "shell.noRecentTasks",
+    "val": "No recent tasks."
+  },
+  {
+    "key": "shell.recentTasks",
+    "val": "Recent Tasks"
+  },
+  {
+    "key": "shell.whatWorkingOnPlaceholder",
+    "val": "e.g. Reviewing API docs…"
+  },
+  {
+    "key": "shell.start",
+    "val": "Start"
+  },
+  {
+    "key": "shell.skipTaskPicker",
+    "val": "Skip the task picker — tracks against the current workspace."
+  },
+  {
+    "key": "shell.pickProject",
+    "val": "Pick a Project"
+  },
+  {
+    "key": "shell.noProjectsInWorkspace",
+    "val": "No projects in this workspace yet."
+  },
+  {
+    "key": "shell.createOne",
+    "val": "Create one →"
+  },
+  {
+    "key": "shell.noTasksInProject",
+    "val": "This project has no tasks yet."
+  },
+  {
+    "key": "shell.openProject",
+    "val": "Open project →"
+  },
+  {
+    "key": "shell.tasks",
+    "val": "Tasks"
+  },
+  {
+    "key": "shell.newWorkspace",
+    "val": "New Workspace"
+  },
+  {
+    "key": "shell.createWorkspace",
+    "val": "Create Workspace"
+  },
+  {
+    "key": "shell.cancel",
+    "val": "Cancel"
+  },
+  {
+    "key": "shell.workspaceName",
+    "val": "Name"
+  },
+  {
+    "key": "shell.workspaceDescription",
+    "val": "Description"
+  },
+  {
+    "key": "shell.workspaceNamePlaceholder",
+    "val": "E.g., Engineering Team"
+  },
+  {
+    "key": "shell.workspaceOptional",
+    "val": "Optional"
+  },
+  {
+    "key": "shell.creatingWorkspace",
+    "val": "Creating..."
+  },
+  {
+    "key": "prefs.language",
+    "val": "Language"
+  },
+  {
+    "key": "prefs.theme",
+    "val": "Theme"
+  },
+  {
+    "key": "prefs.arabic",
+    "val": "Arabic"
+  },
+  {
+    "key": "prefs.english",
+    "val": "English"
+  },
+  {
+    "key": "prefs.light",
+    "val": "Light mode"
+  },
+  {
+    "key": "prefs.dark",
+    "val": "Dark mode"
+  },
+  {
+    "key": "toast.themeLight",
+    "val": "Light mode enabled"
+  },
+  {
+    "key": "toast.themeDark",
+    "val": "Dark mode enabled"
+  },
+  {
+    "key": "toast.langAr",
+    "val": "Language switched to Arabic"
+  },
+  {
+    "key": "toast.langEn",
+    "val": "Language switched to English"
+  },
+  {
+    "key": "auth.login",
+    "val": "Sign in"
+  },
+  {
+    "key": "auth.email",
+    "val": "Email"
+  },
+  {
+    "key": "auth.password",
+    "val": "Password"
+  },
+  {
+    "key": "auth.signIn",
+    "val": "Sign in to your account"
+  },
+  {
+    "key": "auth.forgotPassword",
+    "val": "Forgot password?"
+  },
+  {
+    "key": "auth.loginFailed",
+    "val": "Login failed. Please try again."
+  },
+  {
+    "key": "common.cancel",
+    "val": "Cancel"
+  },
+  {
+    "key": "common.confirm",
+    "val": "Confirm"
+  },
+  {
+    "key": "common.close",
+    "val": "Close"
+  },
+  {
+    "key": "common.save",
+    "val": "Save"
+  },
+  {
+    "key": "common.edit",
+    "val": "Edit"
+  },
+  {
+    "key": "common.delete",
+    "val": "Delete"
+  },
+  {
+    "key": "common.refresh",
+    "val": "Refresh"
+  },
+  {
+    "key": "common.loading",
+    "val": "Loading…"
+  },
+  {
+    "key": "common.saving",
+    "val": "Saving…"
+  },
+  {
+    "key": "common.sending",
+    "val": "Sending…"
+  },
+  {
+    "key": "common.stopping",
+    "val": "Stopping…"
+  },
+  {
+    "key": "common.approve",
+    "val": "Approve"
+  },
+  {
+    "key": "common.reject",
+    "val": "Reject"
+  },
+  {
+    "key": "common.add",
+    "val": "Add"
+  },
+  {
+    "key": "common.done",
+    "val": "Done"
+  },
+  {
+    "key": "common.dismiss",
+    "val": "Dismiss"
+  },
+  {
+    "key": "common.copied",
+    "val": "Copied!"
+  },
+  {
+    "key": "common.title",
+    "val": "Title"
+  },
+  {
+    "key": "common.description",
+    "val": "Description"
+  },
+  {
+    "key": "common.deadline",
+    "val": "Deadline"
+  },
+  {
+    "key": "common.priority",
+    "val": "Priority"
+  },
+  {
+    "key": "common.assignee",
+    "val": "Assignee"
+  },
+  {
+    "key": "common.unassigned",
+    "val": "Unassigned"
+  },
+  {
+    "key": "common.searchMembers",
+    "val": "Search members…"
+  },
+  {
+    "key": "common.saveChanges",
+    "val": "Save changes"
+  },
+  {
+    "key": "common.printReport",
+    "val": "Print Report"
+  },
+  {
+    "key": "common.today",
+    "val": "Today"
+  },
+  {
+    "key": "common.thisWeek",
+    "val": "This Week"
+  },
+  {
+    "key": "common.thisMonth",
+    "val": "This Month"
+  },
+  {
+    "key": "common.from",
+    "val": "From"
+  },
+  {
+    "key": "common.to",
+    "val": "To"
+  },
+  {
+    "key": "common.yes",
+    "val": "Yes"
+  },
+  {
+    "key": "common.no",
+    "val": "No"
+  },
+  {
+    "key": "common.task",
+    "val": "Task"
+  },
+  {
+    "key": "common.quick",
+    "val": "Quick"
+  },
+  {
+    "key": "common.live",
+    "val": "Live"
+  },
+  {
+    "key": "common.overtime",
+    "val": "Overtime"
+  },
+  {
+    "key": "common.tracked",
+    "val": "Tracked"
+  },
+  {
+    "key": "common.stop",
+    "val": "Stop"
+  },
+  {
+    "key": "common.back",
+    "val": "Back"
+  },
+  {
+    "key": "common.create",
+    "val": "Create"
+  },
+  {
+    "key": "common.optional",
+    "val": "Optional"
+  },
+  {
+    "key": "common.name",
+    "val": "Name"
+  },
+  {
+    "key": "common.email",
+    "val": "Email"
+  },
+  {
+    "key": "common.status",
+    "val": "Status"
+  },
+  {
+    "key": "common.actions",
+    "val": "Actions"
+  },
+  {
+    "key": "common.type",
+    "val": "Type"
+  },
+  {
+    "key": "common.date",
+    "val": "Date"
+  },
+  {
+    "key": "common.reason",
+    "val": "Reason"
+  },
+  {
+    "key": "common.hours",
+    "val": "Hours"
+  },
+  {
+    "key": "common.days",
+    "val": "days"
+  },
+  {
+    "key": "common.day",
+    "val": "day"
+  },
+  {
+    "key": "common.employee",
+    "val": "Employee"
+  },
+  {
+    "key": "common.manager",
+    "val": "Manager"
+  },
+  {
+    "key": "common.hr",
+    "val": "HR"
+  },
+  {
+    "key": "common.accountant",
+    "val": "Accountant"
+  },
+  {
+    "key": "common.admin",
+    "val": "Admin"
+  },
+  {
+    "key": "common.online",
+    "val": "Online"
+  },
+  {
+    "key": "common.offline",
+    "val": "Offline"
+  },
+  {
+    "key": "common.owner",
+    "val": "Owner"
+  },
+  {
+    "key": "common.you",
+    "val": "You"
+  },
+  {
+    "key": "common.member",
+    "val": "Member"
+  },
+  {
+    "key": "common.viewer",
+    "val": "Viewer"
+  },
+  {
+    "key": "common.choose",
+    "val": "— choose —"
+  },
+  {
+    "key": "common.search",
+    "val": "Search"
+  },
+  {
+    "key": "common.noResults",
+    "val": "No results"
+  },
+  {
+    "key": "common.submitting",
+    "val": "Submitting…"
+  },
+  {
+    "key": "common.creating",
+    "val": "Creating…"
+  },
+  {
+    "key": "common.updating",
+    "val": "Updating…"
+  },
+  {
+    "key": "common.signingIn",
+    "val": "Signing in…"
+  },
+  {
+    "key": "common.goToDashboard",
+    "val": "Go to dashboard"
+  },
+  {
+    "key": "common.open",
+    "val": "Open"
+  },
+  {
+    "key": "common.view",
+    "val": "View"
+  },
+  {
+    "key": "common.update",
+    "val": "Update"
+  },
+  {
+    "key": "common.remove",
+    "val": "Remove"
+  },
+  {
+    "key": "common.leave",
+    "val": "Leave"
+  },
+  {
+    "key": "common.send",
+    "val": "Send"
+  },
+  {
+    "key": "common.copy",
+    "val": "Copy"
+  },
+  {
+    "key": "common.tasks",
+    "val": "Tasks"
+  },
+  {
+    "key": "common.projects",
+    "val": "Projects"
+  },
+  {
+    "key": "common.progress",
+    "val": "Progress"
+  },
+  {
+    "key": "common.completed",
+    "val": "Completed"
+  },
+  {
+    "key": "common.notStarted",
+    "val": "Not Started"
+  },
+  {
+    "key": "common.inProgress",
+    "val": "In Progress"
+  },
+  {
+    "key": "common.inReview",
+    "val": "In Review"
+  },
+  {
+    "key": "common.low",
+    "val": "Low"
+  },
+  {
+    "key": "common.medium",
+    "val": "Medium"
+  },
+  {
+    "key": "common.high",
+    "val": "High"
+  },
+  {
+    "key": "common.required",
+    "val": "*"
+  },
+  {
+    "key": "common.all",
+    "val": "All"
+  },
+  {
+    "key": "common.pending",
+    "val": "Pending"
+  },
+  {
+    "key": "common.approved",
+    "val": "Approved"
+  },
+  {
+    "key": "common.rejected",
+    "val": "Rejected"
+  },
+  {
+    "key": "common.workspace",
+    "val": "Workspace"
+  },
+  {
+    "key": "common.thisWorkspace",
+    "val": "this workspace"
+  },
+  {
+    "key": "common.noWorkspace",
+    "val": "No workspace"
+  },
+  {
+    "key": "common.searchByNameEmail",
+    "val": "Search by name or email…"
+  },
+  {
+    "key": "common.searchByNameEmailRole",
+    "val": "Search by name, email, or role…"
+  },
+  {
+    "key": "common.yesRemove",
+    "val": "Yes, remove"
+  },
+  {
+    "key": "common.provideReason",
+    "val": "Provide a reason…"
+  },
+  {
+    "key": "common.invite",
+    "val": "Invite"
+  },
+  {
+    "key": "common.share",
+    "val": "Share"
+  },
+  {
+    "key": "common.members",
+    "val": "members"
+  },
+  {
+    "key": "common.showingCount",
+    "val": "Showing {{shown}} of {{total}} {{memberWord}}"
+  },
+  {
+    "key": "common.devTrackerPro",
+    "val": "DevTracker Pro"
+  },
+  {
+    "key": "common.brandName",
+    "val": "ProTrack"
+  },
+  {
+    "key": "common.brandTagline",
+    "val": "Team Performance Tracking"
+  },
+  {
+    "key": "common.stillOnClock",
+    "val": "still on clock"
+  },
+  {
+    "key": "common.inTime",
+    "val": "In {{time}}"
+  },
+  {
+    "key": "common.outTime",
+    "val": "Out {{time}}"
+  },
+  {
+    "key": "common.attendanceClockTerminal",
+    "val": "Attendance was logged via the clock terminal."
+  },
+  {
+    "key": "common.noTrackerEntries",
+    "val": "No tracker entries on this day."
+  },
+  {
+    "key": "common.totalTracked",
+    "val": "Total Tracked"
+  },
+  {
+    "key": "common.daysWorked",
+    "val": "Days Worked"
+  },
+  {
+    "key": "common.avgPerDay",
+    "val": "Avg / Day"
+  },
+  {
+    "key": "common.acrossAllDays",
+    "val": "Across all days in range"
+  },
+  {
+    "key": "common.anythingPast7h",
+    "val": "Anything past 7h/day"
+  },
+  {
+    "key": "common.daysWithTrackedTime",
+    "val": "Days with tracked time"
+  },
+  {
+    "key": "common.period",
+    "val": "Period"
+  },
+  {
+    "key": "common.unknown",
+    "val": "Unknown"
+  },
+  {
+    "key": "common.notConfigured",
+    "val": "not configured"
+  },
+  {
+    "key": "common.noDept",
+    "val": "No dept"
+  },
+  {
+    "key": "common.inProject",
+    "val": "in {{projectTitle}}"
+  },
+  {
+    "key": "common.lastSeen",
+    "val": "Last seen {{time}}"
+  },
+  {
+    "key": "common.viewingPage",
+    "val": "Viewing {{page}}"
+  },
+  {
+    "key": "common.notTracking",
+    "val": "Not tracking right now."
+  },
+  {
+    "key": "common.neverSignedIn",
+    "val": "Never signed in"
+  },
+  {
+    "key": "common.activeNow",
+    "val": "Active now"
+  },
+  {
+    "key": "common.timeAgo",
+    "val": "{{value}} ago"
+  },
+  {
+    "key": "common.timeAgoMinutes",
+    "val": "{{min}}m ago"
+  },
+  {
+    "key": "common.timeAgoHours",
+    "val": "{{hr}}h ago"
+  },
+  {
+    "key": "common.timeAgoDays",
+    "val": "{{days}}d ago"
+  },
+  {
+    "key": "common.peopleCount",
+    "val": "{{count}} people"
+  },
+  {
+    "key": "common.waitingCount",
+    "val": "{{count}} waiting"
+  },
+  {
+    "key": "common.entriesCount",
+    "val": "{{count}} entries"
+  },
+  {
+    "key": "common.noActiveWorkspace",
+    "val": "No active workspace"
+  },
+  {
+    "key": "common.noActiveWorkspaceHint",
+    "val": "Create or select a workspace from the sidebar to manage members."
+  },
+  {
+    "key": "common.adminPanel",
+    "val": "Admin Panel"
+  },
+  {
+    "key": "common.backToDashboard",
+    "val": "Back to Dashboard"
+  },
+  {
+    "key": "common.reportsTimesheets",
+    "val": "Reports & Timesheets"
+  },
+  {
+    "key": "common.resetFilters",
+    "val": "Reset Filters"
+  },
+  {
+    "key": "common.startDate",
+    "val": "Start Date"
+  },
+  {
+    "key": "common.endDate",
+    "val": "End Date"
+  },
+  {
+    "key": "common.loadingReport",
+    "val": "Loading report..."
+  },
+  {
+    "key": "common.failedLoadReport",
+    "val": "Failed to load report summary data."
+  },
+  {
+    "key": "common.clearFilters",
+    "val": "Clear filters"
+  },
+  {
+    "key": "common.filterResults",
+    "val": "{{filtered}} of {{total}} tasks"
+  },
+  {
+    "key": "common.allStatuses",
+    "val": "All statuses"
+  },
+  {
+    "key": "common.allPriorities",
+    "val": "All priorities"
+  },
+  {
+    "key": "common.anyDeadline",
+    "val": "Any deadline"
+  },
+  {
+    "key": "common.dueToday",
+    "val": "Due Today"
+  },
+  {
+    "key": "common.dueThisWeek",
+    "val": "Due This Week"
+  },
+  {
+    "key": "common.overdue",
+    "val": "Overdue"
+  },
+  {
+    "key": "common.heartbeat60s",
+    "val": "Heartbeat in last 60s"
+  },
+  {
+    "key": "common.activeTimerOrQuick",
+    "val": "Active timer or quick session"
+  },
+  {
+    "key": "common.idleOrSignedOut",
+    "val": "Idle or signed out"
+  },
+  {
+    "key": "common.allRegisteredUsers",
+    "val": "All registered users"
+  },
+  {
+    "key": "common.totalTeam",
+    "val": "Total Team"
+  },
+  {
+    "key": "common.tracking",
+    "val": "Tracking"
+  },
+  {
+    "key": "common.onlineNow",
+    "val": "Online Now"
+  },
+  {
+    "key": "common.noOneToShow",
+    "val": "No one to show here."
+  },
+  {
+    "key": "common.tryAllTab",
+    "val": "Try the \"All\" tab or clear your search."
+  },
+  {
+    "key": "common.backToTeamActivity",
+    "val": "Back to Team Activity"
+  },
+  {
+    "key": "common.activityReport",
+    "val": "Activity Report"
+  },
+  {
+    "key": "common.timesheetReport",
+    "val": "Timesheet Report"
+  },
+  {
+    "key": "common.reportTitle",
+    "val": "{{userName}} — {{reportType}}"
+  },
+  {
+    "key": "common.reportMeta",
+    "val": "{{email}} · {{role}}"
+  },
+  {
+    "key": "common.reportPeriod",
+    "val": "Period: {{from}} → {{to}}"
+  },
+  {
+    "key": "common.noActivityInRange",
+    "val": "No activity tracked in this range."
+  },
+  {
+    "key": "common.nothingTrackedInRange",
+    "val": "Nothing tracked in this range yet."
+  },
+  {
+    "key": "common.startTimerHint",
+    "val": "Start a timer from any task or use the Quick Session input in the top bar."
+  },
+  {
+    "key": "common.systemRole",
+    "val": "System Role"
+  },
+  {
+    "key": "common.workspaceAccess",
+    "val": "Workspace access"
+  },
+  {
+    "key": "common.globalRole",
+    "val": "Global Role"
+  },
+  {
+    "key": "common.workspaceRole",
+    "val": "Workspace Role"
+  },
+  {
+    "key": "common.joined",
+    "val": "Joined"
+  },
+  {
+    "key": "common.department",
+    "val": "Department"
+  },
+  {
+    "key": "common.departmentTitle",
+    "val": "Department · Title"
+  },
+  {
+    "key": "common.salary",
+    "val": "Salary"
+  },
+  {
+    "key": "common.roleTitle",
+    "val": "Title"
+  },
+  {
+    "key": "common.basicSalary",
+    "val": "Basic Salary"
+  },
+  {
+    "key": "common.salaryType",
+    "val": "Type"
+  },
+  {
+    "key": "common.daysPerWeek",
+    "val": "Days / Wk"
+  },
+  {
+    "key": "common.hrsPerDay",
+    "val": "Hrs / Day"
+  },
+  {
+    "key": "common.annualLeaveDays",
+    "val": "Annual Leave (days)"
+  },
+  {
+    "key": "common.employmentStatus",
+    "val": "Employment Status"
+  },
+  {
+    "key": "common.applyCorrection",
+    "val": "Apply Correction"
+  },
+  {
+    "key": "common.calculating",
+    "val": "Calculating…"
+  },
+  {
+    "key": "common.runPayroll",
+    "val": "Run Payroll"
+  },
+  {
+    "key": "common.saveAdjustment",
+    "val": "Save Adjustment"
+  },
+  {
+    "key": "common.confirmTransition",
+    "val": "Confirm transition"
+  },
+  {
+    "key": "common.transitionTitle",
+    "val": "Transition to \"{{status}}\"?"
+  },
+  {
+    "key": "common.transitionMessage",
+    "val": "This change will be recorded in the run's audit log."
+  },
+  {
+    "key": "common.noRunSelected",
+    "val": "No Run Selected"
+  },
+  {
+    "key": "common.noRunSelectedHint",
+    "val": "Pick a payroll run from the left, or generate a new month, to inspect individual payslips and adjust lifecycle."
+  },
+  {
+    "key": "common.monthLabel",
+    "val": "Month:"
+  },
+  {
+    "key": "common.calculatedAt",
+    "val": "Calculated {{date}}"
+  },
+  {
+    "key": "common.previousRuns",
+    "val": "Previous Runs"
+  },
+  {
+    "key": "common.generateRun",
+    "val": "Generate Run"
+  },
+  {
+    "key": "common.payrollMonth",
+    "val": "Payroll Month"
+  },
+  {
+    "key": "common.addAdjustment",
+    "val": "Add Adjustment"
+  },
+  {
+    "key": "common.adjustmentsHistory",
+    "val": "Adjustments History"
+  },
+  {
+    "key": "common.noPayrollRuns",
+    "val": "No payroll runs yet."
+  },
+  {
+    "key": "common.noPayslips",
+    "val": "No payslips in this run."
+  },
+  {
+    "key": "common.noAdjustmentsPeriod",
+    "val": "No adjustments for this period."
+  },
+  {
+    "key": "common.daysWorkedAbsent",
+    "val": "Days W/A"
+  },
+  {
+    "key": "common.late",
+    "val": "Late"
+  },
+  {
+    "key": "common.performanceBonus",
+    "val": "Performance Bonus"
+  },
+  {
+    "key": "common.allowance",
+    "val": "Allowance"
+  },
+  {
+    "key": "common.commission",
+    "val": "Commission"
+  },
+  {
+    "key": "common.manual",
+    "val": "Manual"
+  },
+  {
+    "key": "common.disciplinaryPenalty",
+    "val": "Disciplinary Penalty"
+  },
+  {
+    "key": "common.manualDeduction",
+    "val": "Manual Deduction"
+  },
+  {
+    "key": "common.calculatedDraft",
+    "val": "Calculated (Draft)"
+  },
+  {
+    "key": "common.underReview",
+    "val": "Under Review"
+  },
+  {
+    "key": "common.paid",
+    "val": "Paid"
+  },
+  {
+    "key": "common.locked",
+    "val": "Locked"
+  },
+  {
+    "key": "common.hrCenter",
+    "val": "HR Center"
+  },
+  {
+    "key": "common.clockTerminal",
+    "val": "Clock Terminal"
+  },
+  {
+    "key": "common.payrollWorkspace",
+    "val": "Payroll Workspace"
+  },
+  {
+    "key": "common.rejectLeave",
+    "val": "Reject Leave"
+  },
+  {
+    "key": "common.explainRejection",
+    "val": "Explain why this leave is being rejected…"
+  },
+  {
+    "key": "common.rejectPermissionTitle",
+    "val": "Reject this permission?"
+  },
+  {
+    "key": "common.rejectPermissionMessage",
+    "val": "This action cannot be undone."
+  },
+  {
+    "key": "common.rejectOvertimeMessage",
+    "val": "The hours will not count toward payroll."
+  },
+  {
+    "key": "common.approveLeaveMessage",
+    "val": "The employee will be notified and the leave balance updated."
+  },
+  {
+    "key": "common.approvePermissionMessage",
+    "val": "The employee will be notified immediately."
+  },
+  {
+    "key": "common.approveOvertimeMessage",
+    "val": "Overtime hours will be added to the next payroll calculation."
+  },
+  {
+    "key": "common.rejectLeaveMessage",
+    "val": "Please provide a reason. The employee will see your explanation."
+  },
+  {
+    "key": "common.sendCredentials",
+    "val": "Send credentials"
+  },
+  {
+    "key": "common.sendLogin",
+    "val": "Send login"
+  },
+  {
+    "key": "common.createAndEmail",
+    "val": "Create & email"
+  },
+  {
+    "key": "common.onboardEmployee",
+    "val": "Onboard employee"
+  },
+  {
+    "key": "common.addMember",
+    "val": "Add Member"
+  },
+  {
+    "key": "common.addExistingTeammate",
+    "val": "Add existing teammate"
+  },
+  {
+    "key": "common.addExistingHint",
+    "val": "Search people who already have accounts and assign them to this workspace."
+  },
+  {
+    "key": "common.searchNameOrEmail",
+    "val": "Search by name or email…"
+  },
+  {
+    "key": "common.noMatchingUsers",
+    "val": "No matching users found — they may already be members."
+  },
+  {
+    "key": "common.inviteByEmail",
+    "val": "Invite by email"
+  },
+  {
+    "key": "common.onboardNewHint",
+    "val": "New employees receive login credentials by email. Existing users are added instantly."
+  },
+  {
+    "key": "common.inviteExistingHint",
+    "val": "Add an existing teammate by email. Ask Admin/HR to onboard people without accounts."
+  },
+  {
+    "key": "common.onboardFormHint",
+    "val": "Enter their work email and system role. After creation, copy the setup link and send it on WhatsApp or Slack — no email server needed."
+  },
+  {
+    "key": "common.inviteExistingFormHint",
+    "val": "Add an existing teammate by their email address."
+  },
+  {
+    "key": "common.employeeEmailPlaceholder",
+    "val": "employee@company.com"
+  },
+  {
+    "key": "common.workspaceMember",
+    "val": "Workspace: Member"
+  },
+  {
+    "key": "common.workspaceAdmin",
+    "val": "Workspace: Admin"
+  },
+  {
+    "key": "common.workspaceViewer",
+    "val": "Workspace: Viewer"
+  },
+  {
+    "key": "common.admins",
+    "val": "Admins"
+  },
+  {
+    "key": "common.viewers",
+    "val": "Viewers"
+  },
+  {
+    "key": "common.stopTimer",
+    "val": "Stop timer"
+  },
+  {
+    "key": "common.stopTimerTitle",
+    "val": "Stop {{userName}}'s timer?"
+  },
+  {
+    "key": "common.stopTimerMessage",
+    "val": "They are tracking \"{{label}}\". The elapsed time will be saved to their timesheet."
+  },
+  {
+    "key": "common.leaveWorkspaceTitle",
+    "val": "Leave workspace?"
+  },
+  {
+    "key": "common.removeMemberTitle",
+    "val": "Remove member?"
+  },
+  {
+    "key": "common.leaveWorkspaceMessage",
+    "val": "You'll lose access to projects and tasks in {{workspaceName}}."
+  },
+  {
+    "key": "common.removeMemberMessage",
+    "val": "{{name}} will lose access to projects and tasks in this workspace."
+  },
+  {
+    "key": "common.changeRoleTitle",
+    "val": "Change role?"
+  },
+  {
+    "key": "common.changeRoleMessage",
+    "val": "{{name}} will become {{newRole}} in this workspace."
+  },
+  {
+    "key": "common.sendCredentialsTitle",
+    "val": "Send new login credentials?"
+  },
+  {
+    "key": "common.sendCredentialsMessage",
+    "val": "{{name}} will get a new temporary password and setup link. Their current sessions will be signed out."
+  },
+  {
+    "key": "common.updateRole",
+    "val": "Update role"
+  },
+  {
+    "key": "common.noMembersYet",
+    "val": "No members yet."
+  },
+  {
+    "key": "common.noMembersMatchFilters",
+    "val": "No members match your filters."
+  },
+  {
+    "key": "common.noMembersInWorkspace",
+    "val": "No members found in this workspace."
+  },
+  {
+    "key": "common.loadingMembers",
+    "val": "Loading members…"
+  },
+  {
+    "key": "common.noSubtasks",
+    "val": "No subtasks yet."
+  },
+  {
+    "key": "common.checklists",
+    "val": "Checklists ({{count}})"
+  },
+  {
+    "key": "common.tasksDone",
+    "val": "{{completed}}/{{total}} tasks done"
+  },
+  {
+    "key": "common.dueDate",
+    "val": "Due {{date}}"
+  },
+  {
+    "key": "common.projectLabel",
+    "val": "Project: {{title}}"
+  },
+  {
+    "key": "common.regularHoursMax",
+    "val": "Regular Hours (max 7h/day)"
+  },
+  {
+    "key": "common.regularHoursLegend",
+    "val": "Regular Hours (<= 7h)"
+  },
+  {
+    "key": "common.overtimeHoursLegend",
+    "val": "Overtime Hours (> 7h)"
+  },
+  {
+    "key": "common.regShort",
+    "val": "Reg:"
+  },
+  {
+    "key": "common.otShort",
+    "val": "OT:"
+  },
+  {
+    "key": "common.totalShort",
+    "val": "Total:"
+  },
+  {
+    "key": "common.avgDayShort",
+    "val": "Avg/day:"
+  },
+  {
+    "key": "common.daysWorkedShort",
+    "val": "Days worked:"
+  },
+  {
+    "key": "common.tasksWorked",
+    "val": "Tasks worked: {{count}}"
+  },
+  {
+    "key": "common.tasksQuickSessions",
+    "val": "Tasks / quick sessions"
+  },
+  {
+    "key": "common.tasksQuick",
+    "val": "Tasks / Quick"
+  },
+  {
+    "key": "common.workloadSummary",
+    "val": "Workload Summary"
+  },
+  {
+    "key": "common.totalLoggedTime",
+    "val": "Total Logged Time"
+  },
+  {
+    "key": "common.overtimeTime",
+    "val": "Overtime Time"
+  },
+  {
+    "key": "common.dailyWorkloadChart",
+    "val": "Daily Workload Chart"
+  },
+  {
+    "key": "common.timesheetBreakdown",
+    "val": "Timesheet Breakdown"
+  },
+  {
+    "key": "common.noTimesheetData",
+    "val": "No timesheet data available to plot."
+  },
+  {
+    "key": "common.noLogsInPeriod",
+    "val": "No logs recorded in this period."
+  },
+  {
+    "key": "common.regularPopover",
+    "val": "Regular: {{hours}}h"
+  },
+  {
+    "key": "common.overtimePopover",
+    "val": "Overtime: {{hours}}h"
+  },
+  {
+    "key": "common.totalPopover",
+    "val": "Total: {{hours}}h"
+  },
+  {
+    "key": "common.notPunchedIn",
+    "val": "Not punched in"
+  },
+  {
+    "key": "common.onBreak",
+    "val": "On Break"
+  },
+  {
+    "key": "common.onTheClock",
+    "val": "On the clock"
+  },
+  {
+    "key": "common.shiftComplete",
+    "val": "Shift complete"
+  },
+  {
+    "key": "common.shiftCompleted",
+    "val": "Shift Completed"
+  },
+  {
+    "key": "common.shiftCompleteTitle",
+    "val": "Shift Complete"
+  },
+  {
+    "key": "common.notCheckedIn",
+    "val": "Not Checked In"
+  },
+  {
+    "key": "common.checkedInStatus",
+    "val": "Checked In · {{status}}"
+  },
+  {
+    "key": "common.pausedOnBreak",
+    "val": "Paused — On Break"
+  },
+  {
+    "key": "common.currentTime",
+    "val": "Current Time"
+  },
+  {
+    "key": "common.activeShift",
+    "val": "Active Shift"
+  },
+  {
+    "key": "common.punchIn",
+    "val": "Punch In"
+  },
+  {
+    "key": "common.punchOut",
+    "val": "Punch Out"
+  },
+  {
+    "key": "common.startBreak",
+    "val": "Start Break"
+  },
+  {
+    "key": "common.endBreak",
+    "val": "End Break"
+  },
+  {
+    "key": "common.readyStartDay",
+    "val": "Ready to start your day?"
+  },
+  {
+    "key": "common.tapPunchInHint",
+    "val": "Tap Punch In on the clock console below to begin your shift."
+  },
+  {
+    "key": "common.lateArrivals",
+    "val": "Late Arrivals"
+  },
+  {
+    "key": "common.minsPastStartMonth",
+    "val": "mins past start, this month"
+  },
+  {
+    "key": "common.leaveBalance",
+    "val": "Leave Balance"
+  },
+  {
+    "key": "common.daysAvailable",
+    "val": "days available"
+  },
+  {
+    "key": "common.daysPresent",
+    "val": "Days Present"
+  },
+  {
+    "key": "common.attendanceLog",
+    "val": "Attendance Log"
+  },
+  {
+    "key": "common.lateToleranceTip",
+    "val": "Punching in after your scheduled start counts as late minutes."
+  },
+  {
+    "key": "common.breaksPausedTip",
+    "val": "Break time is subtracted from your worked hours."
+  },
+  {
+    "key": "common.needTimeOffTip",
+    "val": "Open Request Center to file a leave, permission, or overtime request."
+  },
+  {
+    "key": "common.lateArrivalsTitle",
+    "val": "Minutes you arrived after your scheduled start time, this month."
+  },
+  {
+    "key": "common.keepWorking",
+    "val": "Keep Working"
+  },
+  {
+    "key": "common.yesPunchOut",
+    "val": "Yes, Punch Out"
+  },
+  {
+    "key": "common.punchOutTitle",
+    "val": "Punch Out for the day?"
+  },
+  {
+    "key": "common.punchOutMessage",
+    "val": "You're about to end today's shift. You won't be able to punch in again until tomorrow."
+  },
+  {
+    "key": "common.workedMinutes",
+    "val": "Worked {{duration}}"
+  },
+  {
+    "key": "common.noAttendanceLogs",
+    "val": "No attendance logs yet."
+  },
+  {
+    "key": "common.noAttendanceToday",
+    "val": "No attendance logs today yet."
+  },
+  {
+    "key": "common.selectEmployeeRoster",
+    "val": "Select an employee from the roster to edit their HR profile details."
+  },
+  {
+    "key": "common.setStart",
+    "val": "Set start"
+  },
+  {
+    "key": "common.setDueDate",
+    "val": "Set due date"
+  },
+  {
+    "key": "common.addDescription",
+    "val": "Add description"
+  },
+  {
+    "key": "common.addItem",
+    "val": "Add item"
+  },
+  {
+    "key": "common.assignMember",
+    "val": "Assign member…"
+  },
+  {
+    "key": "common.assignUser",
+    "val": "Assign User"
+  },
+  {
+    "key": "common.toggleComplete",
+    "val": "Toggle Complete"
+  },
+  {
+    "key": "common.clickStartStopTimer",
+    "val": "Click to start/stop timer"
+  },
+  {
+    "key": "common.startTrackingNow",
+    "val": "Start tracking now"
+  },
+  {
+    "key": "common.projectName",
+    "val": "Project name"
+  },
+  {
+    "key": "common.optionalDescription",
+    "val": "Optional description"
+  },
+  {
+    "key": "common.taskDescription",
+    "val": "Task description"
+  },
+  {
+    "key": "common.briefExplanation",
+    "val": "Brief explanation..."
+  },
+  {
+    "key": "common.provideJustification",
+    "val": "Provide justification..."
+  },
+  {
+    "key": "common.tasksCompletedOvertime",
+    "val": "Tasks completed during overtime..."
+  },
+  {
+    "key": "common.whyAdjustmentNeeded",
+    "val": "Why is this adjustment needed?"
+  },
+  {
+    "key": "common.explanationDetails",
+    "val": "Explanation details…"
+  },
+  {
+    "key": "common.fullName",
+    "val": "Full name"
+  },
+  {
+    "key": "common.emailCannotChange",
+    "val": "Email cannot be changed here. Contact your admin."
+  },
+  {
+    "key": "common.changePasswordIntro",
+    "val": "Change your password. You'll be signed out on all devices."
+  },
+  {
+    "key": "common.currentPassword",
+    "val": "Current password"
+  },
+  {
+    "key": "common.newPassword",
+    "val": "New password"
+  },
+  {
+    "key": "common.confirmNewPassword",
+    "val": "Confirm new password"
+  },
+  {
+    "key": "common.updatePassword",
+    "val": "Update password"
+  },
+  {
+    "key": "common.passwordsDoNotMatch",
+    "val": "Passwords do not match"
+  },
+  {
+    "key": "common.passwordsMustMatch",
+    "val": "Passwords must match"
+  },
+  {
+    "key": "common.passwordMin8",
+    "val": "Password must be at least 8 characters"
+  },
+  {
+    "key": "common.passwordMin6",
+    "val": "Password must be at least 6 characters"
+  },
+  {
+    "key": "common.passwordRequired",
+    "val": "Password is required"
+  },
+  {
+    "key": "common.nameRequired",
+    "val": "Name is required"
+  },
+  {
+    "key": "common.validEmailRequired",
+    "val": "Please enter a valid email"
+  },
+  {
+    "key": "common.validEmailAddress",
+    "val": "Please enter a valid email address"
+  },
+  {
+    "key": "common.emailAddress",
+    "val": "Email Address"
+  },
+  {
+    "key": "common.emailAddressLabel",
+    "val": "Email address"
+  },
+  {
+    "key": "common.role",
+    "val": "Role"
+  },
+  {
+    "key": "common.alreadyHaveAccount",
+    "val": "Already have an account?"
+  },
+  {
+    "key": "common.signInLink",
+    "val": "Sign in"
+  },
+  {
+    "key": "common.createAccount",
+    "val": "Create Account"
+  },
+  {
+    "key": "common.creatingAccount",
+    "val": "Creating account..."
+  },
+  {
+    "key": "common.createAccountSubtitle",
+    "val": "Create your account and start tracking"
+  },
+  {
+    "key": "common.backToLogin",
+    "val": "Back to login"
+  },
+  {
+    "key": "common.setNewPassword",
+    "val": "Set new password"
+  },
+  {
+    "key": "common.setNewPasswordHint",
+    "val": "Please enter a unique password to secure your team account."
+  },
+  {
+    "key": "common.newPasswordLabel",
+    "val": "New Password"
+  },
+  {
+    "key": "common.confirmPasswordLabel",
+    "val": "Confirm Password"
+  },
+  {
+    "key": "common.passwordMin8Placeholder",
+    "val": "Min. 8 characters"
+  },
+  {
+    "key": "common.passwordMin6Placeholder",
+    "val": "Min. 6 characters"
+  },
+  {
+    "key": "common.repeatPassword",
+    "val": "Repeat your password"
+  },
+  {
+    "key": "common.repeatPasswordShort",
+    "val": "Repeat password"
+  },
+  {
+    "key": "common.resetPassword",
+    "val": "Reset password"
+  },
+  {
+    "key": "common.resetting",
+    "val": "Resetting..."
+  },
+  {
+    "key": "common.activateAccount",
+    "val": "Activate your account"
+  },
+  {
+    "key": "common.activateWelcome",
+    "val": "Welcome, {{name}}. Choose a password to finish setup."
+  },
+  {
+    "key": "common.activateAndSignIn",
+    "val": "Activate & sign in"
+  },
+  {
+    "key": "common.checkingInvite",
+    "val": "Checking your invite link…"
+  },
+  {
+    "key": "common.linkExpired",
+    "val": "Link expired or invalid"
+  },
+  {
+    "key": "common.linkExpiredHint",
+    "val": "Ask your admin to send you a new setup link."
+  },
+  {
+    "key": "common.goToLogin",
+    "val": "Go to login"
+  },
+  {
+    "key": "common.confirmPasswordField",
+    "val": "Confirm password"
+  },
+  {
+    "key": "common.johnDoePlaceholder",
+    "val": "John Doe"
+  },
+  {
+    "key": "common.youExamplePlaceholder",
+    "val": "you@example.com"
+  },
+  {
+    "key": "common.nameCompanyPlaceholder",
+    "val": "name@company.com"
+  },
+  {
+    "key": "common.hrSpecialist",
+    "val": "HR Specialist"
+  },
+  {
+    "key": "common.administrator",
+    "val": "Administrator"
+  },
+  {
+    "key": "common.profile",
+    "val": "Profile"
+  },
+  {
+    "key": "common.security",
+    "val": "Security"
+  },
+  {
+    "key": "common.settings",
+    "val": "Settings"
+  },
+  {
+    "key": "common.manageProfileSecurity",
+    "val": "Manage your profile and account security."
+  },
+  {
+    "key": "common.myProjects",
+    "val": "My Projects"
+  },
+  {
+    "key": "common.loadingProject",
+    "val": "Loading..."
+  },
+  {
+    "key": "common.addTask",
+    "val": "Add Task"
+  },
+  {
+    "key": "common.kanbanToDo",
+    "val": "To Do"
+  },
+  {
+    "key": "common.kanbanInProgress",
+    "val": "In Progress"
+  },
+  {
+    "key": "common.kanbanInReview",
+    "val": "In Review"
+  },
+  {
+    "key": "common.kanbanCompleted",
+    "val": "Completed"
+  },
+  {
+    "key": "common.projectFallback",
+    "val": "Project"
+  },
+  {
+    "key": "common.trackTime",
+    "val": "Track Time"
+  },
+  {
+    "key": "common.taskStatus",
+    "val": "Task Status"
+  },
+  {
+    "key": "common.unassignedOption",
+    "val": "Unassigned"
+  },
+  {
+    "key": "common.noActiveTask",
+    "val": "No active task"
+  },
+  {
+    "key": "common.currentlyTracking",
+    "val": "CURRENTLY TRACKING"
+  },
+  {
+    "key": "common.notTrackingBanner",
+    "val": "NOT TRACKING"
+  },
+  {
+    "key": "common.timeTrackingOverview",
+    "val": "Time Tracking Overview"
+  },
+  {
+    "key": "common.taskCompletion",
+    "val": "Task Completion"
+  },
+  {
+    "key": "common.chartMon",
+    "val": "Mon"
+  },
+  {
+    "key": "common.chartTue",
+    "val": "Tue"
+  },
+  {
+    "key": "common.chartWed",
+    "val": "Wed"
+  },
+  {
+    "key": "common.chartThu",
+    "val": "Thu"
+  },
+  {
+    "key": "common.chartFri",
+    "val": "Fri"
+  },
+  {
+    "key": "common.chartSat",
+    "val": "Sat"
+  },
+  {
+    "key": "common.chartSun",
+    "val": "Sun"
+  },
+  {
+    "key": "common.actualHours",
+    "val": "Actual Hours"
+  },
+  {
+    "key": "common.expectedHours",
+    "val": "Expected Hours"
+  },
+  {
+    "key": "common.chartCompleted",
+    "val": "Completed"
+  },
+  {
+    "key": "common.chartInProgressPending",
+    "val": "In Progress / Pending"
+  },
+  {
+    "key": "common.deleteProjectTitle",
+    "val": "Delete project?"
+  },
+  {
+    "key": "common.deleteProjectMessage",
+    "val": "Delete \"{{title}}\" and all its tasks? This cannot be undone."
+  },
+  {
+    "key": "common.deleteProjectConfirm",
+    "val": "Delete project"
+  },
+  {
+    "key": "common.createProject",
+    "val": "Create project"
+  },
+  {
+    "key": "common.createYourFirstProject",
+    "val": "Create your first project"
+  },
+  {
+    "key": "common.noProjectsYet",
+    "val": "No projects yet in this workspace."
+  },
+  {
+    "key": "common.manageProjectsSubtitle",
+    "val": "Manage projects in your active workspace."
+  },
+  {
+    "key": "common.projectsSection",
+    "val": "Projects"
+  },
+  {
+    "key": "common.newProject",
+    "val": "New Project"
+  },
+  {
+    "key": "common.startDateLabel",
+    "val": "Start date"
+  },
+  {
+    "key": "common.dueDateLabel",
+    "val": "Due date"
+  },
+  {
+    "key": "common.duration",
+    "val": "Duration"
+  },
+  {
+    "key": "common.break",
+    "val": "Break"
+  },
+  {
+    "key": "common.checkIn",
+    "val": "Check In"
+  },
+  {
+    "key": "common.checkOut",
+    "val": "Check Out"
+  },
+  {
+    "key": "common.interval",
+    "val": "Interval"
+  },
+  {
+    "key": "common.hoursRate",
+    "val": "Hours / Rate"
+  },
+  {
+    "key": "common.periodCol",
+    "val": "Period"
+  },
+  {
+    "key": "common.category",
+    "val": "Category"
+  },
+  {
+    "key": "common.amount",
+    "val": "Amount"
+  },
+  {
+    "key": "common.month",
+    "val": "Month"
+  },
+  {
+    "key": "common.staff",
+    "val": "Staff"
+  },
+  {
+    "key": "common.lifecycle",
+    "val": "Lifecycle"
+  },
+  {
+    "key": "common.basic",
+    "val": "Basic"
+  },
+  {
+    "key": "common.adjustments",
+    "val": "Adjustments"
+  },
+  {
+    "key": "common.netPayable",
+    "val": "Net Payable"
+  },
+  {
+    "key": "common.basicPayroll",
+    "val": "Basic Payroll"
+  },
+  {
+    "key": "common.bonuses",
+    "val": "Bonuses"
+  },
+  {
+    "key": "common.deductions",
+    "val": "Deductions"
+  },
+  {
+    "key": "common.decision",
+    "val": "Decision"
+  },
+  {
+    "key": "common.draft",
+    "val": "draft"
+  },
+  {
+    "key": "common.active",
+    "val": "Active"
+  },
+  {
+    "key": "common.suspended",
+    "val": "Suspended"
+  },
+  {
+    "key": "common.resigned",
+    "val": "Resigned"
+  },
+  {
+    "key": "common.monthly",
+    "val": "Monthly"
+  },
+  {
+    "key": "common.daily",
+    "val": "Daily"
+  },
+  {
+    "key": "common.hourly",
+    "val": "Hourly"
+  },
+  {
+    "key": "common.bonus",
+    "val": "Bonus"
+  },
+  {
+    "key": "common.deduction",
+    "val": "Deduction"
+  },
+  {
+    "key": "common.net",
+    "val": "Net"
+  },
+  {
+    "key": "common.annualLeave",
+    "val": "Annual Leave"
+  },
+  {
+    "key": "common.sickLeave",
+    "val": "Sick Leave"
+  },
+  {
+    "key": "common.unpaidLeave",
+    "val": "Unpaid Leave"
+  },
+  {
+    "key": "common.emergencyLeave",
+    "val": "Emergency Leave"
+  },
+  {
+    "key": "common.leaveType",
+    "val": "Leave Type"
+  },
+  {
+    "key": "common.hourlyPermission",
+    "val": "Hourly Permission"
+  },
+  {
+    "key": "common.waiveLateArrival",
+    "val": "Waive Late Arrival"
+  },
+  {
+    "key": "common.earlyDismissal",
+    "val": "Early Dismissal"
+  },
+  {
+    "key": "common.workFromHome",
+    "val": "Work from Home"
+  },
+  {
+    "key": "common.timecardCorrection",
+    "val": "Timecard Correction"
+  },
+  {
+    "key": "common.requestType",
+    "val": "Request Type"
+  },
+  {
+    "key": "common.dateWorked",
+    "val": "Date Worked"
+  },
+  {
+    "key": "common.workDescription",
+    "val": "Work Description"
+  },
+  {
+    "key": "common.logOvertime",
+    "val": "Log Overtime"
+  },
+  {
+    "key": "common.requestHistory",
+    "val": "Request History"
+  },
+  {
+    "key": "common.searching",
+    "val": "Searching…"
+  },
+  {
+    "key": "common.adding",
+    "val": "Adding…"
+  },
+  {
+    "key": "common.searchUsers",
+    "val": "Search users..."
+  },
+  {
+    "key": "common.changeStatus",
+    "val": "Change Status"
+  },
+  {
+    "key": "common.deleteTask",
+    "val": "Delete task"
+  },
+  {
+    "key": "common.manageWorkspaceMembers",
+    "val": "Manage workspace members"
+  },
+  {
+    "key": "common.changeRole",
+    "val": "Change role"
+  },
+  {
+    "key": "common.leaveWorkspace",
+    "val": "Leave workspace"
+  },
+  {
+    "key": "common.removeMember",
+    "val": "Remove member"
+  },
+  {
+    "key": "common.generateSetupLink",
+    "val": "Generate new password and setup link"
+  },
+  {
+    "key": "common.shareWith",
+    "val": "Share with {{name}}"
+  },
+  {
+    "key": "common.setupLinkRecommended",
+    "val": "Setup link (recommended)"
+  },
+  {
+    "key": "common.copySetupLink",
+    "val": "Copy setup link"
+  },
+  {
+    "key": "common.copyFullMessage",
+    "val": "Copy full message"
+  },
+  {
+    "key": "common.copyTempPassword",
+    "val": "Copy temp password"
+  },
+  {
+    "key": "common.smtpAlsoSent",
+    "val": "An email was also sent because SMTP is configured."
+  },
+  {
+    "key": "common.copySetupInstructions",
+    "val": "Copy the setup link and send it on WhatsApp, Slack, or any chat. The employee opens it, sets a password, and signs in automatically."
+  },
+  {
+    "key": "common.inWorkspace",
+    "val": "In workspace: {{name}}"
+  },
+  {
+    "key": "common.youRole",
+    "val": "You: {{role}}"
+  },
+  {
+    "key": "common.trackingLabel",
+    "val": "Tracking: {{label}}"
+  },
+  {
+    "key": "common.learnMoreSharing",
+    "val": "Learn more about sharing"
+  },
+  {
+    "key": "common.selectPersonToInvite",
+    "val": "Select a person to invite"
+  },
+  {
+    "key": "common.inviteByNameOrEmail",
+    "val": "Invite by name or email"
+  },
+  {
+    "key": "common.shareWorkspace",
+    "val": "Share Workspace"
+  },
+  {
+    "key": "dashboard.title",
+    "val": "Dashboard"
+  },
+  {
+    "key": "dashboard.subtitle",
+    "val": "{{workspaceName}} · {{weekStart}} - {{weekEnd}}"
+  },
+  {
+    "key": "dashboard.newProject",
+    "val": "New Project"
+  },
+  {
+    "key": "dashboard.projects",
+    "val": "Projects"
+  },
+  {
+    "key": "dashboard.tasks",
+    "val": "Tasks"
+  },
+  {
+    "key": "dashboard.completed",
+    "val": "Completed"
+  },
+  {
+    "key": "dashboard.progress",
+    "val": "Progress"
+  },
+  {
+    "key": "dashboard.currentlyTracking",
+    "val": "CURRENTLY TRACKING"
+  },
+  {
+    "key": "dashboard.notTracking",
+    "val": "NOT TRACKING"
+  },
+  {
+    "key": "dashboard.noActiveTask",
+    "val": "No active task"
+  },
+  {
+    "key": "dashboard.timeTrackingOverview",
+    "val": "Time Tracking Overview"
+  },
+  {
+    "key": "dashboard.taskCompletion",
+    "val": "Task Completion"
+  },
+  {
+    "key": "dashboard.toast.projectUpdated",
+    "val": "Project updated."
+  },
+  {
+    "key": "dashboard.toast.projectCreated",
+    "val": "Project created."
+  },
+  {
+    "key": "dashboard.toast.projectDeleted",
+    "val": "Project deleted."
+  },
+  {
+    "key": "account.title",
+    "val": "Settings"
+  },
+  {
+    "key": "account.subtitle",
+    "val": "Manage your profile and account security."
+  },
+  {
+    "key": "account.tab.profile",
+    "val": "Profile"
+  },
+  {
+    "key": "account.tab.security",
+    "val": "Security"
+  },
+  {
+    "key": "account.fullName",
+    "val": "Full name"
+  },
+  {
+    "key": "account.emailHint",
+    "val": "Email cannot be changed here. Contact your admin."
+  },
+  {
+    "key": "account.saveChanges",
+    "val": "Save changes"
+  },
+  {
+    "key": "account.saving",
+    "val": "Saving…"
+  },
+  {
+    "key": "account.changePasswordIntro",
+    "val": "Change your password. You'll be signed out on all devices."
+  },
+  {
+    "key": "account.currentPassword",
+    "val": "Current password"
+  },
+  {
+    "key": "account.newPassword",
+    "val": "New password"
+  },
+  {
+    "key": "account.confirmNewPassword",
+    "val": "Confirm new password"
+  },
+  {
+    "key": "account.updatePassword",
+    "val": "Update password"
+  },
+  {
+    "key": "account.updating",
+    "val": "Updating…"
+  },
+  {
+    "key": "account.toast.profileUpdated",
+    "val": "Profile updated successfully."
+  },
+  {
+    "key": "account.toast.passwordsMismatch",
+    "val": "New passwords do not match."
+  },
+  {
+    "key": "account.toast.passwordChanged",
+    "val": "Password changed. Signing you out…"
+  },
+  {
+    "key": "support.eyebrow",
+    "val": "Help Center"
+  },
+  {
+    "key": "support.title",
+    "val": "Support"
+  },
+  {
+    "key": "support.description",
+    "val": "Find answers, contact your team, and get help with DevTracker Pro."
+  },
+  {
+    "key": "support.tip.requestCenter",
+    "val": "Submit leave, permission, or overtime requests from one place."
+  },
+  {
+    "key": "support.tip.account",
+    "val": "Update your name or password from Settings in the sidebar."
+  },
+  {
+    "key": "support.tip.workspaceAdmins",
+    "val": "Ask your workspace admin if you cannot access a project or workspace."
+  },
+  {
+    "key": "support.card.requestCenter.title",
+    "val": "Request Center"
+  },
+  {
+    "key": "support.card.requestCenter.body",
+    "val": "File leave, permission, or overtime requests."
+  },
+  {
+    "key": "support.card.account.title",
+    "val": "Account & Settings"
+  },
+  {
+    "key": "support.card.account.body",
+    "val": "Update your profile or change your password."
+  },
+  {
+    "key": "support.card.timesheet.title",
+    "val": "My Timesheet"
+  },
+  {
+    "key": "support.card.timesheet.body",
+    "val": "Review tracked hours, tasks, and attendance."
+  },
+  {
+    "key": "support.card.hrPortal.title",
+    "val": "HR Portal"
+  },
+  {
+    "key": "support.card.hrPortal.body",
+    "val": "HR and managers can review team requests here."
+  },
+  {
+    "key": "support.faq.title",
+    "val": "Common questions"
+  },
+  {
+    "key": "support.faq.tracking.q",
+    "val": "How do I start tracking time on a task?"
+  },
+  {
+    "key": "support.faq.tracking.a",
+    "val": "Open a project from the sidebar, click a task card, and use the timer widget — or pick a task from the top bar timer menu."
+  },
+  {
+    "key": "support.faq.signin.q",
+    "val": "I was invited but cannot sign in"
+  },
+  {
+    "key": "support.faq.signin.a",
+    "val": "Use the setup link your admin sent you, or ask them to resend credentials from the Members page."
+  },
+  {
+    "key": "support.faq.workspace.q",
+    "val": "Who can add me to a workspace?"
+  },
+  {
+    "key": "support.faq.workspace.a",
+    "val": "Workspace admins and HR can onboard employees or add existing teammates from the Members page."
+  },
+  {
+    "key": "members.title",
+    "val": "Members"
+  },
+  {
+    "key": "members.youRole",
+    "val": "You: {{role}}"
+  },
+  {
+    "key": "members.refreshTitle",
+    "val": "Refresh"
+  },
+  {
+    "key": "members.description",
+    "val": "Everyone here can see projects and tasks inside {{workspaceName}}."
+  },
+  {
+    "key": "members.canManageExtra",
+    "val": "Add new people by email or change someone's role at any time."
+  },
+  {
+    "key": "members.viewOnlyExtra",
+    "val": "Only workspace admins can add or remove members."
+  },
+  {
+    "key": "members.stat.total",
+    "val": "Total"
+  },
+  {
+    "key": "members.stat.admins",
+    "val": "Admins"
+  },
+  {
+    "key": "members.stat.members",
+    "val": "Members"
+  },
+  {
+    "key": "members.stat.viewers",
+    "val": "Viewers"
+  },
+  {
+    "key": "members.onboard.title",
+    "val": "Onboard employee / Add Member"
+  },
+  {
+    "key": "members.onboard.hintOnboard",
+    "val": "Enter their work email and system role. After creation, copy the setup link and send it on WhatsApp or Slack — no email server needed."
+  },
+  {
+    "key": "members.onboard.hintInvite",
+    "val": "Add an existing teammate by their email address."
+  },
+  {
+    "key": "members.placeholder.email",
+    "val": "employee@company.com"
+  },
+  {
+    "key": "members.select.systemRole",
+    "val": "System role"
+  },
+  {
+    "key": "members.select.workspaceAccess",
+    "val": "Workspace access"
+  },
+  {
+    "key": "members.btn.sending",
+    "val": "Sending…"
+  },
+  {
+    "key": "members.btn.createAndEmail",
+    "val": "Create & email"
+  },
+  {
+    "key": "members.btn.addMember",
+    "val": "Add Member"
+  },
+  {
+    "key": "members.addExisting.title",
+    "val": "Add existing teammate"
+  },
+  {
+    "key": "members.addExisting.hint",
+    "val": "Search people who already have accounts and assign them to this workspace."
+  },
+  {
+    "key": "members.addExisting.searchPlaceholder",
+    "val": "Search by name or email…"
+  },
+  {
+    "key": "members.addExisting.searching",
+    "val": "Searching…"
+  },
+  {
+    "key": "members.addExisting.adding",
+    "val": "Adding…"
+  },
+  {
+    "key": "members.addExisting.noMatch",
+    "val": "No matching users found — they may already be members."
+  },
+  {
+    "key": "members.filter.searchPlaceholder",
+    "val": "Search by name, email, or role…"
+  },
+  {
+    "key": "members.filter.owner",
+    "val": "Owner"
+  },
+  {
+    "key": "members.table.member",
+    "val": "Member"
+  },
+  {
+    "key": "members.table.globalRole",
+    "val": "Global Role"
+  },
+  {
+    "key": "members.table.workspaceRole",
+    "val": "Workspace Role"
+  },
+  {
+    "key": "members.table.joined",
+    "val": "Joined"
+  },
+  {
+    "key": "members.table.actions",
+    "val": "Actions"
+  },
+  {
+    "key": "members.badge.owner",
+    "val": "Owner"
+  },
+  {
+    "key": "members.badge.you",
+    "val": "You"
+  },
+  {
+    "key": "members.tracking",
+    "val": "Tracking: {{label}}"
+  },
+  {
+    "key": "members.btn.stopTimer",
+    "val": "Stop timer"
+  },
+  {
+    "key": "members.btn.stopTimerLoading",
+    "val": "Stopping…"
+  },
+  {
+    "key": "members.btn.sendLogin",
+    "val": "Send login"
+  },
+  {
+    "key": "members.btn.sendLoginLoading",
+    "val": "Sending…"
+  },
+  {
+    "key": "members.btn.leave",
+    "val": "Leave"
+  },
+  {
+    "key": "members.btn.remove",
+    "val": "Remove"
+  },
+  {
+    "key": "members.empty.none",
+    "val": "No members yet."
+  },
+  {
+    "key": "members.empty.noMatch",
+    "val": "No members match your filters."
+  },
+  {
+    "key": "members.footer.showing",
+    "val": "Showing {{shown}} of {{total}} {{memberWord}}"
+  },
+  {
+    "key": "members.confirm.leaveTitle",
+    "val": "Leave workspace?"
+  },
+  {
+    "key": "members.confirm.removeTitle",
+    "val": "Remove member?"
+  },
+  {
+    "key": "members.confirm.leaveMessage",
+    "val": "You'll lose access to projects and tasks in {{workspaceName}}."
+  },
+  {
+    "key": "members.confirm.removeMessage",
+    "val": "{{name}} will lose access to projects and tasks in this workspace."
+  },
+  {
+    "key": "members.confirm.sendCredentialsTitle",
+    "val": "Send new login credentials?"
+  },
+  {
+    "key": "members.confirm.sendCredentialsMessage",
+    "val": "{{name}} will get a new temporary password and setup link. Their current sessions will be signed out."
+  },
+  {
+    "key": "members.confirm.stopTimerTitle",
+    "val": "Stop {{name}}'s timer?"
+  },
+  {
+    "key": "members.confirm.stopTimerMessage",
+    "val": "They are tracking \"{{label}}\". The elapsed time will be saved to their timesheet."
+  },
+  {
+    "key": "members.confirm.changeRoleTitle",
+    "val": "Change role?"
+  },
+  {
+    "key": "members.confirm.changeRoleMessage",
+    "val": "{{name}} will become {{newRole}} in this workspace."
+  },
+  {
+    "key": "members.confirm.yesRemove",
+    "val": "Yes, remove"
+  },
+  {
+    "key": "members.confirm.sendCredentials",
+    "val": "Send credentials"
+  },
+  {
+    "key": "members.confirm.stopTimer",
+    "val": "Stop timer"
+  },
+  {
+    "key": "members.confirm.updateRole",
+    "val": "Update role"
+  },
+  {
+    "key": "members.toast.invalidEmail",
+    "val": "Enter a valid email"
+  },
+  {
+    "key": "members.toast.alreadyMember",
+    "val": "This user is already a member"
+  },
+  {
+    "key": "members.toast.accountEmailed",
+    "val": "Account created — credentials emailed to {{email}}"
+  },
+  {
+    "key": "members.toast.accountCopyLink",
+    "val": "Account created — copy the setup link below and send it to {{email}}"
+  },
+  {
+    "key": "members.toast.addedToWorkspace",
+    "val": "Added {{name}} to the workspace"
+  },
+  {
+    "key": "members.toast.userAdded",
+    "val": "{{name}} added to {{workspaceName}}"
+  },
+  {
+    "key": "members.toast.roleUpdated",
+    "val": "{{name}}'s role updated"
+  },
+  {
+    "key": "members.toast.credentialsEmailed",
+    "val": "New credentials emailed to {{email}}"
+  },
+  {
+    "key": "members.toast.credentialsReady",
+    "val": "New credentials ready — copy the setup link below for {{name}}"
+  },
+  {
+    "key": "members.toast.memberRemoved",
+    "val": "{{name}} removed"
+  },
+  {
+    "key": "members.toast.timerStopped",
+    "val": "{{name}}'s timer stopped"
+  },
+  {
+    "key": "timesheet.eyebrow",
+    "val": "Time & Activity"
+  },
+  {
+    "key": "timesheet.title",
+    "val": "My Timesheet"
+  },
+  {
+    "key": "timesheet.description",
+    "val": "Every minute you tracked — tasks, quick sessions, and attendance — rolled up by day. Overtime kicks in after 7 hours per day."
+  },
+  {
+    "key": "timesheet.step.pickRange",
+    "val": "Pick a range"
+  },
+  {
+    "key": "timesheet.step.pickRangeDesc",
+    "val": "Today, this week, this month, or a custom date range."
+  },
+  {
+    "key": "timesheet.step.reviewDays",
+    "val": "Review your days"
+  },
+  {
+    "key": "timesheet.step.reviewDaysDesc",
+    "val": "See total tracked time, attendance, and detailed entries per day."
+  },
+  {
+    "key": "timesheet.step.printExport",
+    "val": "Print or export"
+  },
+  {
+    "key": "timesheet.step.printExportDesc",
+    "val": "Print a clean PDF-friendly report for HR, your manager, or your records."
+  },
+  {
+    "key": "timesheet.tip.overtime",
+    "val": "Anything over 7h tracked per day is overtime — shown in amber on each daily card."
+  },
+  {
+    "key": "timesheet.tip.sources",
+    "val": "Time logged on tasks and Quick Sessions from the top bar both count."
+  },
+  {
+    "key": "timesheet.tip.live",
+    "val": "Any running timer keeps ticking on the page so totals stay current."
+  },
+  {
+    "key": "timesheet.empty.title",
+    "val": "Nothing tracked in this range yet."
+  },
+  {
+    "key": "timesheet.empty.hint",
+    "val": "Start a timer from any task or use the Quick Session input in the top bar."
+  },
+  {
+    "key": "timesheet.print.reportTitle",
+    "val": "{{userName}} — Timesheet Report"
+  },
+  {
+    "key": "timesheet.entry.noEntries",
+    "val": "No tracker entries on this day."
+  },
+  {
+    "key": "timesheet.entry.attendanceOnly",
+    "val": "Attendance was logged via the clock terminal."
+  },
+  {
+    "key": "timesheet.badge.task",
+    "val": "Task"
+  },
+  {
+    "key": "timesheet.badge.quick",
+    "val": "Quick"
+  },
+  {
+    "key": "timesheet.badge.live",
+    "val": "Live"
+  },
+  {
+    "key": "timesheet.toast.timerStopped",
+    "val": "Timer stopped."
+  },
+  {
+    "key": "timesheet.toast.sessionStopped",
+    "val": "Session stopped."
+  },
+  {
+    "key": "teamActivity.eyebrow",
+    "val": "Live Operations"
+  },
+  {
+    "key": "teamActivity.title",
+    "val": "Team Activity"
+  },
+  {
+    "key": "teamActivity.description",
+    "val": "See who's online right now, what page they have open, and what they're tracking time on — updated every 15 seconds."
+  },
+  {
+    "key": "teamActivity.badge",
+    "val": "Admins & Managers"
+  },
+  {
+    "key": "teamActivity.step.scan",
+    "val": "Scan the live board"
+  },
+  {
+    "key": "teamActivity.step.scanDesc",
+    "val": "Online team members with active timers are pinned at the top."
+  },
+  {
+    "key": "teamActivity.step.drill",
+    "val": "Drill into anyone"
+  },
+  {
+    "key": "teamActivity.step.drillDesc",
+    "val": "Click a member to see their full activity report and history."
+  },
+  {
+    "key": "teamActivity.step.print",
+    "val": "Print or hand off"
+  },
+  {
+    "key": "teamActivity.step.printDesc",
+    "val": "From any profile you can print a clean PDF-friendly report."
+  },
+  {
+    "key": "teamActivity.tip.onlineWindow",
+    "val": "A user is online if their browser pinged us in the last 60 seconds."
+  },
+  {
+    "key": "teamActivity.tip.timerTypes",
+    "val": "A purple Task chip means task-linked. A blue Quick chip is a free-form session."
+  },
+  {
+    "key": "teamActivity.tip.stopTimer",
+    "val": "Admins can force-stop a running timer — the elapsed time is saved to the employee timesheet."
+  },
+  {
+    "key": "teamActivity.tab.online",
+    "val": "Online"
+  },
+  {
+    "key": "teamActivity.tab.tracking",
+    "val": "Tracking"
+  },
+  {
+    "key": "teamActivity.tab.all",
+    "val": "All"
+  },
+  {
+    "key": "teamActivity.stat.onlineNow",
+    "val": "Online Now"
+  },
+  {
+    "key": "teamActivity.stat.tracking",
+    "val": "Tracking"
+  },
+  {
+    "key": "teamActivity.stat.offline",
+    "val": "Offline"
+  },
+  {
+    "key": "teamActivity.stat.totalTeam",
+    "val": "Total Team"
+  },
+  {
+    "key": "teamActivity.empty.title",
+    "val": "No one to show here."
+  },
+  {
+    "key": "teamActivity.empty.hint",
+    "val": "Try the \"All\" tab or clear your search."
+  },
+  {
+    "key": "teamActivity.notTracking",
+    "val": "Not tracking right now."
+  },
+  {
+    "key": "teamActivity.viewingPage",
+    "val": "Viewing {{page}}"
+  },
+  {
+    "key": "teamActivity.lastSeen",
+    "val": "Last seen {{time}}"
+  },
+  {
+    "key": "teamActivity.badge.task",
+    "val": "Task"
+  },
+  {
+    "key": "teamActivity.badge.quick",
+    "val": "Quick"
+  },
+  {
+    "key": "teamActivity.inProject",
+    "val": "in {{projectTitle}}"
+  },
+  {
+    "key": "teamActivity.confirm.stopTitle",
+    "val": "Stop {{userName}}'s timer?"
+  },
+  {
+    "key": "teamActivity.confirm.stopMessage",
+    "val": "They are tracking \"{{label}}\". The elapsed time will be saved to their timesheet."
+  },
+  {
+    "key": "teamActivity.confirm.stopTimer",
+    "val": "Stop timer"
+  },
+  {
+    "key": "teamActivity.toast.timerStopped",
+    "val": "Timer stopped."
+  },
+  {
+    "key": "teamActivity.lastSeen.activeNow",
+    "val": "Active now"
+  },
+  {
+    "key": "teamActivity.lastSeen.never",
+    "val": "Never signed in"
+  },
+  {
+    "key": "teamActivity.lastSeen.minutes",
+    "val": "{{min}}m ago"
+  },
+  {
+    "key": "teamActivity.lastSeen.hours",
+    "val": "{{hr}}h ago"
+  },
+  {
+    "key": "teamActivity.lastSeen.days",
+    "val": "{{days}}d ago"
+  },
+  {
+    "key": "userActivity.backLink",
+    "val": "Back to Team Activity"
+  },
+  {
+    "key": "userActivity.print.reportTitle",
+    "val": "{{userName}} — Activity Report"
+  },
+  {
+    "key": "userActivity.print.period",
+    "val": "Period: {{from}} → {{to}}"
+  },
+  {
+    "key": "userActivity.empty",
+    "val": "No activity tracked in this range."
+  },
+  {
+    "key": "userActivity.stat.avgPerDay",
+    "val": "Avg / Day"
+  },
+  {
+    "key": "userActivity.tasksQuickLabel",
+    "val": "Tasks / Quick"
+  },
+  {
+    "key": "hrPortal.eyebrow",
+    "val": "HR Operations"
+  },
+  {
+    "key": "hrPortal.title",
+    "val": "HR Control Center"
+  },
+  {
+    "key": "hrPortal.description",
+    "val": "Approve time-off requests, adjust attendance, manage the employee roster, and hand-off finalized hours to Payroll."
+  },
+  {
+    "key": "hrPortal.badge",
+    "val": "Admin view"
+  },
+  {
+    "key": "hrPortal.step.clearQueue",
+    "val": "Clear the approval queue"
+  },
+  {
+    "key": "hrPortal.step.clearQueueDesc",
+    "val": "Review pending leaves, permissions, and overtime first."
+  },
+  {
+    "key": "hrPortal.step.auditAttendance",
+    "val": "Audit attendance"
+  },
+  {
+    "key": "hrPortal.step.auditAttendanceDesc",
+    "val": "Fix punch errors and confirm late/early statuses."
+  },
+  {
+    "key": "hrPortal.step.roster",
+    "val": "Keep the roster fresh"
+  },
+  {
+    "key": "hrPortal.step.rosterDesc",
+    "val": "Add new hires, update contracts, and maintain salaries."
+  },
+  {
+    "key": "hrPortal.step.payroll",
+    "val": "Hand off to Payroll"
+  },
+  {
+    "key": "hrPortal.step.payrollDesc",
+    "val": "Once the month is closed, jump to the Payroll workspace."
+  },
+  {
+    "key": "hrPortal.tip.rejectionReason",
+    "val": "You will be prompted to explain a rejection so the employee understands."
+  },
+  {
+    "key": "hrPortal.tip.statsClickable",
+    "val": "Tap a pending count to jump straight into that approval queue."
+  },
+  {
+    "key": "hrPortal.tip.salariesSensitive",
+    "val": "Only admins/accountants see compensation. Other HR users see roles only."
+  },
+  {
+    "key": "hrPortal.stat.totalStaff",
+    "val": "Total Staff"
+  },
+  {
+    "key": "hrPortal.stat.presentToday",
+    "val": "Present Today"
+  },
+  {
+    "key": "hrPortal.stat.pendingRequests",
+    "val": "Pending Requests"
+  },
+  {
+    "key": "hrPortal.stat.onBreak",
+    "val": "On Break"
+  },
+  {
+    "key": "hrPortal.tab.todayAttendance",
+    "val": "Today's Attendance"
+  },
+  {
+    "key": "hrPortal.tab.employeeRegistry",
+    "val": "Employee Registry"
+  },
+  {
+    "key": "hrPortal.tab.leaves",
+    "val": "Leaves"
+  },
+  {
+    "key": "hrPortal.tab.permissions",
+    "val": "Permissions"
+  },
+  {
+    "key": "hrPortal.tab.overtime",
+    "val": "Overtime"
+  },
+  {
+    "key": "hrPortal.section.todayAttendance",
+    "val": "Today's Attendance"
+  },
+  {
+    "key": "hrPortal.section.adjustTimesheet",
+    "val": "Adjust Timesheet"
+  },
+  {
+    "key": "hrPortal.section.employeeRoster",
+    "val": "Employee Roster"
+  },
+  {
+    "key": "hrPortal.section.editProfile",
+    "val": "Edit Profile"
+  },
+  {
+    "key": "hrPortal.section.pendingLeaves",
+    "val": "Pending Leave Requests"
+  },
+  {
+    "key": "hrPortal.section.pendingPermissions",
+    "val": "Pending Permissions"
+  },
+  {
+    "key": "hrPortal.section.pendingOvertime",
+    "val": "Pending Overtime Logs"
+  },
+  {
+    "key": "hrPortal.table.employee",
+    "val": "Employee"
+  },
+  {
+    "key": "hrPortal.table.checkIn",
+    "val": "Check In"
+  },
+  {
+    "key": "hrPortal.table.checkOut",
+    "val": "Check Out"
+  },
+  {
+    "key": "hrPortal.table.duration",
+    "val": "Duration"
+  },
+  {
+    "key": "hrPortal.table.break",
+    "val": "Break"
+  },
+  {
+    "key": "hrPortal.table.name",
+    "val": "Name"
+  },
+  {
+    "key": "hrPortal.table.deptTitle",
+    "val": "Department · Title"
+  },
+  {
+    "key": "hrPortal.table.role",
+    "val": "Role"
+  },
+  {
+    "key": "hrPortal.table.salary",
+    "val": "Salary"
+  },
+  {
+    "key": "hrPortal.table.action",
+    "val": "Action"
+  },
+  {
+    "key": "hrPortal.table.type",
+    "val": "Type"
+  },
+  {
+    "key": "hrPortal.table.period",
+    "val": "Period"
+  },
+  {
+    "key": "hrPortal.table.days",
+    "val": "Days"
+  },
+  {
+    "key": "hrPortal.table.reason",
+    "val": "Reason"
+  },
+  {
+    "key": "hrPortal.table.date",
+    "val": "Date"
+  },
+  {
+    "key": "hrPortal.table.interval",
+    "val": "Interval"
+  },
+  {
+    "key": "hrPortal.table.hours",
+    "val": "Hours"
+  },
+  {
+    "key": "hrPortal.table.rate",
+    "val": "Rate"
+  },
+  {
+    "key": "hrPortal.empty.noAttendanceToday",
+    "val": "No attendance logs today yet."
+  },
+  {
+    "key": "hrPortal.empty.noPendingLeaves",
+    "val": "No pending leave requests."
+  },
+  {
+    "key": "hrPortal.empty.noPendingPermissions",
+    "val": "No pending permissions."
+  },
+  {
+    "key": "hrPortal.empty.noPendingOvertime",
+    "val": "No pending overtime claims."
+  },
+  {
+    "key": "hrPortal.form.employeeRequired",
+    "val": "Employee *"
+  },
+  {
+    "key": "hrPortal.form.dateRequired",
+    "val": "Date *"
+  },
+  {
+    "key": "hrPortal.form.statusRequired",
+    "val": "Status *"
+  },
+  {
+    "key": "hrPortal.form.reasonRequired",
+    "val": "Reason *"
+  },
+  {
+    "key": "hrPortal.form.applyCorrection",
+    "val": "Apply Correction"
+  },
+  {
+    "key": "hrPortal.form.selectRosterHint",
+    "val": "Select an employee from the roster to edit their HR profile details."
+  },
+  {
+    "key": "hrPortal.form.notConfigured",
+    "val": "not configured"
+  },
+  {
+    "key": "hrPortal.form.noDept",
+    "val": "No dept"
+  },
+  {
+    "key": "hrPortal.confirm.approveLeaveTitle",
+    "val": "Approve this leave request?"
+  },
+  {
+    "key": "hrPortal.confirm.rejectLeaveTitle",
+    "val": "Reject this leave request?"
+  },
+  {
+    "key": "hrPortal.confirm.approvePermissionTitle",
+    "val": "Approve this permission?"
+  },
+  {
+    "key": "hrPortal.confirm.rejectPermissionTitle",
+    "val": "Reject this permission?"
+  },
+  {
+    "key": "hrPortal.confirm.approveOvertimeTitle",
+    "val": "Approve this overtime claim?"
+  },
+  {
+    "key": "hrPortal.confirm.rejectOvertimeTitle",
+    "val": "Reject this overtime claim?"
+  },
+  {
+    "key": "hrPortal.toast.timesheetUpdated",
+    "val": "Timesheet updated successfully."
+  },
+  {
+    "key": "hrPortal.toast.profileUpdated",
+    "val": "Profile updated successfully."
+  },
+  {
+    "key": "hrPortal.toast.leaveApproved",
+    "val": "Leave approved."
+  },
+  {
+    "key": "hrPortal.toast.leaveRejected",
+    "val": "Leave rejected."
+  },
+  {
+    "key": "hrPortal.toast.permissionApproved",
+    "val": "Permission approved."
+  },
+  {
+    "key": "hrPortal.toast.permissionRejected",
+    "val": "Permission rejected."
+  },
+  {
+    "key": "hrPortal.toast.overtimeApproved",
+    "val": "Overtime approved."
+  },
+  {
+    "key": "hrPortal.toast.overtimeRejected",
+    "val": "Overtime rejected."
+  },
+  {
+    "key": "payroll.eyebrow",
+    "val": "Finance · Payroll"
+  },
+  {
+    "key": "payroll.title",
+    "val": "Payroll Workspace"
+  },
+  {
+    "key": "payroll.description",
+    "val": "Run a month's payroll through a clear lifecycle: add adjustments → calculate → review → approve → mark paid → lock."
+  },
+  {
+    "key": "payroll.badge",
+    "val": "Accountants only"
+  },
+  {
+    "key": "payroll.step.adjustments",
+    "val": "Add adjustments"
+  },
+  {
+    "key": "payroll.step.adjustmentsDesc",
+    "val": "Record bonuses and deductions for the month before calculating."
+  },
+  {
+    "key": "payroll.step.calculate",
+    "val": "Calculate"
+  },
+  {
+    "key": "payroll.step.calculateDesc",
+    "val": "The system aggregates worked hours, leaves, late minutes, and adjustments."
+  },
+  {
+    "key": "payroll.step.review",
+    "val": "Review & approve"
+  },
+  {
+    "key": "payroll.step.reviewDesc",
+    "val": "Inspect every payslip line. Approve when numbers look right."
+  },
+  {
+    "key": "payroll.step.lock",
+    "val": "Mark paid → Lock"
+  },
+  {
+    "key": "payroll.step.lockDesc",
+    "val": "After transfers are done, lock the run to freeze the records permanently."
+  },
+  {
+    "key": "payroll.tip.order",
+    "val": "Adjustments added after Calculate need a recalculation to be included."
+  },
+  {
+    "key": "payroll.tip.lockOneWay",
+    "val": "A locked run cannot be edited. Use it once payments are fully reconciled."
+  },
+  {
+    "key": "payroll.tip.hrContext",
+    "val": "Jump to the HR Control Center for attendance and leave context."
+  },
+  {
+    "key": "payroll.tab.runs",
+    "val": "Payroll Runs"
+  },
+  {
+    "key": "payroll.tab.adjustments",
+    "val": "Bonuses & Deductions"
+  },
+  {
+    "key": "payroll.toast.runGenerated",
+    "val": "Payroll run generated for {{month}}."
+  },
+  {
+    "key": "payroll.toast.runTransitioned",
+    "val": "Run transitioned to {{status}}."
+  },
+  {
+    "key": "payroll.toast.adjustmentSaved",
+    "val": "Salary adjustment recorded successfully."
+  },
+  {
+    "key": "requestCenter.eyebrow",
+    "val": "HR Services"
+  },
+  {
+    "key": "requestCenter.title",
+    "val": "Request Center"
+  },
+  {
+    "key": "requestCenter.description",
+    "val": "File a leave, a permission (short hourly time-off), or claim overtime. HR receives your request immediately and you'll be notified when it's decided."
+  },
+  {
+    "key": "requestCenter.step.pickType",
+    "val": "Pick a request type"
+  },
+  {
+    "key": "requestCenter.step.pickTypeDesc",
+    "val": "Leaves, Permissions, or Overtime — pick what fits your need."
+  },
+  {
+    "key": "requestCenter.step.fillForm",
+    "val": "Fill the form"
+  },
+  {
+    "key": "requestCenter.step.fillFormDesc",
+    "val": "Add dates, times, and a reason. Attach a file if required."
+  },
+  {
+    "key": "requestCenter.step.hrDecides",
+    "val": "HR decides"
+  },
+  {
+    "key": "requestCenter.step.hrDecidesDesc",
+    "val": "A notification arrives once HR approves or rejects — usually within 1–2 working days."
+  },
+  {
+    "key": "requestCenter.tip.leaveVsPermission",
+    "val": "Leave is full days off. Permission is hourly (e.g. late arrival or early leave)."
+  },
+  {
+    "key": "requestCenter.tip.overtimeProof",
+    "val": "Add a short reason and your manager will confirm the extra hours."
+  },
+  {
+    "key": "requestCenter.tip.cancelPending",
+    "val": "You can cancel any pending request from the history list on the right."
+  },
+  {
+    "key": "requestCenter.tab.leaves",
+    "val": "Leaves"
+  },
+  {
+    "key": "requestCenter.tab.permissions",
+    "val": "Permissions"
+  },
+  {
+    "key": "requestCenter.tab.overtime",
+    "val": "Overtime"
+  },
+  {
+    "key": "requestCenter.form.newLeave",
+    "val": "New Leave Request"
+  },
+  {
+    "key": "requestCenter.form.newLeaveSubtitle",
+    "val": "Apply for annual, sick, unpaid, or emergency leave"
+  },
+  {
+    "key": "requestCenter.form.newPermission",
+    "val": "New Permission"
+  },
+  {
+    "key": "requestCenter.form.newPermissionSubtitle",
+    "val": "Hourly permissions, late arrivals, remote work"
+  },
+  {
+    "key": "requestCenter.form.logOvertime",
+    "val": "Log Overtime"
+  },
+  {
+    "key": "requestCenter.form.logOvertimeSubtitle",
+    "val": "Log extra hours worked beyond your schedule"
+  },
+  {
+    "key": "requestCenter.form.startDate",
+    "val": "Start Date"
+  },
+  {
+    "key": "requestCenter.form.endDate",
+    "val": "End Date"
+  },
+  {
+    "key": "requestCenter.form.submitLeave",
+    "val": "Submit Leave Request"
+  },
+  {
+    "key": "requestCenter.form.submitPermission",
+    "val": "Submit Permission"
+  },
+  {
+    "key": "requestCenter.history.title",
+    "val": "Request History"
+  },
+  {
+    "key": "requestCenter.history.leaveType",
+    "val": "Leave Type"
+  },
+  {
+    "key": "requestCenter.history.duration",
+    "val": "Duration"
+  },
+  {
+    "key": "requestCenter.history.period",
+    "val": "Period"
+  },
+  {
+    "key": "requestCenter.history.type",
+    "val": "Type"
+  },
+  {
+    "key": "requestCenter.history.date",
+    "val": "Date"
+  },
+  {
+    "key": "requestCenter.history.hoursRate",
+    "val": "Hours / Rate"
+  },
+  {
+    "key": "requestCenter.empty.noLeaves",
+    "val": "No leave requests yet."
+  },
+  {
+    "key": "requestCenter.empty.noLeavesHint",
+    "val": "Submit your first request from the panel on the left."
+  },
+  {
+    "key": "requestCenter.empty.noPermissions",
+    "val": "No permissions logged."
+  },
+  {
+    "key": "requestCenter.empty.noOvertime",
+    "val": "No overtime records yet."
+  },
+  {
+    "key": "requestCenter.toast.leaveSubmitted",
+    "val": "Leave request submitted successfully."
+  },
+  {
+    "key": "requestCenter.toast.permissionSubmitted",
+    "val": "Permission request submitted successfully."
+  },
+  {
+    "key": "requestCenter.toast.overtimeSubmitted",
+    "val": "Overtime logged successfully."
+  },
+  {
+    "key": "reports.title",
+    "val": "Reports"
+  },
+  {
+    "key": "reports.subtitle",
+    "val": "Monitor working hours, project contributions, and overtime tracking."
+  },
+  {
+    "key": "reports.filter.employee",
+    "val": "Employee"
+  },
+  {
+    "key": "reports.filter.employeeOption",
+    "val": "{{name}} ({{role}})"
+  },
+  {
+    "key": "reports.loading",
+    "val": "Loading report..."
+  },
+  {
+    "key": "reports.error.loadFailed",
+    "val": "Failed to load report summary data."
+  },
+  {
+    "key": "projectDetail.breadcrumb",
+    "val": "My Projects"
+  },
+  {
+    "key": "projectDetail.loading",
+    "val": "Loading..."
+  },
+  {
+    "key": "projectDetail.column.todo",
+    "val": "To Do"
+  },
+  {
+    "key": "projectDetail.column.inProgress",
+    "val": "In Progress"
+  },
+  {
+    "key": "projectDetail.column.inReview",
+    "val": "In Review"
+  },
+  {
+    "key": "projectDetail.column.completed",
+    "val": "Completed"
+  },
+  {
+    "key": "projectDetail.addTask",
+    "val": "Add Task"
+  },
+  {
+    "key": "projectDetail.toast.taskCreated",
+    "val": "Task created."
+  },
+  {
+    "key": "employeeHome.eyebrow",
+    "val": "Clock Terminal"
+  },
+  {
+    "key": "employeeHome.title",
+    "val": "My Workday"
+  },
+  {
+    "key": "employeeHome.description",
+    "val": "Punch in when you arrive, take breaks as needed, and punch out at the end of your shift. Your hours sync to your timesheet automatically."
+  },
+  {
+    "key": "employeeHome.step.punchIn",
+    "val": "Punch In"
+  },
+  {
+    "key": "employeeHome.step.punchInDesc",
+    "val": "Start your shift the moment you arrive."
+  },
+  {
+    "key": "employeeHome.step.workBreak",
+    "val": "Work & Break"
+  },
+  {
+    "key": "employeeHome.step.workBreakDesc",
+    "val": "Track focused time. Pause cleanly for any break."
+  },
+  {
+    "key": "employeeHome.step.punchOut",
+    "val": "Punch Out"
+  },
+  {
+    "key": "employeeHome.step.punchOutDesc",
+    "val": "End your shift. Your hours are logged automatically."
+  },
+  {
+    "key": "employeeHome.badge.onBreak",
+    "val": "On Break"
+  },
+  {
+    "key": "employeeHome.badge.onClock",
+    "val": "On the clock"
+  },
+  {
+    "key": "employeeHome.badge.shiftComplete",
+    "val": "Shift complete"
+  },
+  {
+    "key": "employeeHome.badge.notPunchedIn",
+    "val": "Not punched in"
+  },
+  {
+    "key": "employeeHome.idle.title",
+    "val": "Ready to start your day?"
+  },
+  {
+    "key": "employeeHome.idle.hint",
+    "val": "Tap Punch In on the clock console below to begin your shift."
+  },
+  {
+    "key": "employeeHome.status.notCheckedIn",
+    "val": "Not Checked In"
+  },
+  {
+    "key": "employeeHome.status.shiftCompleted",
+    "val": "Shift Completed"
+  },
+  {
+    "key": "employeeHome.status.onBreak",
+    "val": "On Break"
+  },
+  {
+    "key": "employeeHome.status.checkedIn",
+    "val": "Checked In · {{status}}"
+  },
+  {
+    "key": "employeeHome.shift.complete",
+    "val": "Shift Complete"
+  },
+  {
+    "key": "employeeHome.shift.worked",
+    "val": "Worked {{duration}}"
+  },
+  {
+    "key": "employeeHome.pausedOnBreak",
+    "val": "Paused — On Break"
+  },
+  {
+    "key": "employeeHome.toast.checkedIn",
+    "val": "Checked in successfully."
+  },
+  {
+    "key": "employeeHome.toast.punchedOut",
+    "val": "Punched out — have a great rest of your day."
+  },
+  {
+    "key": "employeeHome.toast.breakStarted",
+    "val": "Break started."
+  },
+  {
+    "key": "employeeHome.toast.breakEnded",
+    "val": "Break ended — welcome back."
+  },
+  {
+    "key": "register.title",
+    "val": "DevTracker Pro"
+  },
+  {
+    "key": "register.subtitle",
+    "val": "Create your account and start tracking"
+  },
+  {
+    "key": "register.fullName",
+    "val": "Full name"
+  },
+  {
+    "key": "register.email",
+    "val": "Email address"
+  },
+  {
+    "key": "register.password",
+    "val": "Password"
+  },
+  {
+    "key": "register.role",
+    "val": "Role"
+  },
+  {
+    "key": "register.createAccount",
+    "val": "Create Account"
+  },
+  {
+    "key": "register.creating",
+    "val": "Creating account..."
+  },
+  {
+    "key": "register.alreadyHave",
+    "val": "Already have an account?"
+  },
+  {
+    "key": "register.signIn",
+    "val": "Sign in"
+  },
+  {
+    "key": "register.nameRequired",
+    "val": "Name is required"
+  },
+  {
+    "key": "register.emailInvalid",
+    "val": "Please enter a valid email"
+  },
+  {
+    "key": "register.passwordRequired",
+    "val": "Password is required"
+  },
+  {
+    "key": "register.passwordMin6",
+    "val": "Password must be at least 6 characters"
+  },
+  {
+    "key": "register.toast.accountCreated",
+    "val": "Account created successfully."
+  },
+  {
+    "key": "register.toast.registrationFailed",
+    "val": "Registration failed. Please try again."
+  },
+  {
+    "key": "forgotPassword.title",
+    "val": "Forgot password?"
+  },
+  {
+    "key": "forgotPassword.hint",
+    "val": "Enter your email address and we'll send you a link to reset your password."
+  },
+  {
+    "key": "forgotPassword.checkEmail",
+    "val": "Check your email for the reset link."
+  },
+  {
+    "key": "forgotPassword.sendLink",
+    "val": "Send reset link"
+  },
+  {
+    "key": "forgotPassword.sending",
+    "val": "Sending..."
+  },
+  {
+    "key": "forgotPassword.backToLogin",
+    "val": "Back to login"
+  },
+  {
+    "key": "forgotPassword.toast.resetLinkSent",
+    "val": "Password reset link sent to your email."
+  },
+  {
+    "key": "resetPassword.title",
+    "val": "Set new password"
+  },
+  {
+    "key": "resetPassword.hint",
+    "val": "Please enter a unique password to secure your team account."
+  },
+  {
+    "key": "resetPassword.newPassword",
+    "val": "New Password"
+  },
+  {
+    "key": "resetPassword.confirmPassword",
+    "val": "Confirm Password"
+  },
+  {
+    "key": "resetPassword.resetBtn",
+    "val": "Reset password"
+  },
+  {
+    "key": "resetPassword.resetting",
+    "val": "Resetting..."
+  },
+  {
+    "key": "resetPassword.passwordMin8",
+    "val": "Password must be at least 8 characters"
+  },
+  {
+    "key": "resetPassword.passwordsMustMatch",
+    "val": "Passwords must match"
+  },
+  {
+    "key": "resetPassword.toast.success",
+    "val": "Password reset successfully. Redirecting…"
+  },
+  {
+    "key": "setupAccount.activate",
+    "val": "Activate your account"
+  },
+  {
+    "key": "setupAccount.welcome",
+    "val": "Welcome, {{name}}. Choose a password to finish setup."
+  },
+  {
+    "key": "setupAccount.checking",
+    "val": "Checking your invite link…"
+  },
+  {
+    "key": "setupAccount.expired",
+    "val": "Link expired or invalid"
+  },
+  {
+    "key": "setupAccount.expiredHint",
+    "val": "Ask your admin to send you a new setup link."
+  },
+  {
+    "key": "setupAccount.activateBtn",
+    "val": "Activate & sign in"
+  },
+  {
+    "key": "setupAccount.saving",
+    "val": "Saving…"
+  },
+  {
+    "key": "setupAccount.passwordsMismatch",
+    "val": "Passwords do not match"
+  },
+  {
+    "key": "setupAccount.toast.activated",
+    "val": "Account activated successfully."
+  },
+  {
+    "key": "setupAccount.toast.activateFailed",
+    "val": "Could not activate account."
+  },
+  {
+    "key": "adminDashboard.title",
+    "val": "Admin Control Center"
+  },
+  {
+    "key": "adminDashboard.badge",
+    "val": "System Admin"
+  },
+  {
+    "key": "adminDashboard.subtitle",
+    "val": "Manage system configurations, user privileges, and monitor live developer activity."
+  },
+  {
+    "key": "adminDashboard.liveDevelopers",
+    "val": "Live Developers"
+  },
+  {
+    "key": "adminDashboard.heartbeat",
+    "val": "Heartbeat (15s)"
+  },
+  {
+    "key": "adminDashboard.noActiveDevs",
+    "val": "No developers currently active."
+  },
+  {
+    "key": "adminDashboard.systemUsers",
+    "val": "System Users & Privileges"
+  },
+  {
+    "key": "adminDashboard.table.name",
+    "val": "Name"
+  },
+  {
+    "key": "adminDashboard.table.email",
+    "val": "Email"
+  },
+  {
+    "key": "adminDashboard.table.role",
+    "val": "Role"
+  },
+  {
+    "key": "adminDashboard.table.status",
+    "val": "Status"
+  },
+  {
+    "key": "adminDashboard.table.actions",
+    "val": "Actions"
+  },
+  {
+    "key": "adminDashboard.status.online",
+    "val": "Online"
+  },
+  {
+    "key": "adminDashboard.status.offline",
+    "val": "Offline"
+  },
+  {
+    "key": "adminDashboard.viewTimesheet",
+    "val": "View Timesheet"
+  },
+  {
+    "key": "adminDashboard.viewingPage",
+    "val": "Viewing:"
+  },
+  {
+    "key": "adminDashboard.activeDuration",
+    "val": "Active: {{duration}}"
+  },
+  {
+    "key": "adminDashboard.pingedAt",
+    "val": "Pinged: {{time}}"
+  },
+  {
+    "key": "adminDashboard.noUsersMatch",
+    "val": "No users match your query."
+  },
+  {
+    "key": "adminDashboard.confirm.changeRole",
+    "val": "Change role?"
+  },
+  {
+    "key": "adminDashboard.confirm.changeRoleMessage",
+    "val": "{{userName}} will become {{newRole}}."
+  },
+  {
+    "key": "adminDashboard.toast.roleChangeFailed",
+    "val": "Failed to update user role."
+  },
+  {
+    "key": "taskCard.changeStatus",
+    "val": "Change Status"
+  },
+  {
+    "key": "taskCard.deleteTask",
+    "val": "Delete task"
+  },
+  {
+    "key": "taskCard.status.todo",
+    "val": "To Do"
+  },
+  {
+    "key": "taskCard.status.inProgress",
+    "val": "In Progress"
+  },
+  {
+    "key": "taskCard.status.inReview",
+    "val": "In Review"
+  },
+  {
+    "key": "taskCard.status.completed",
+    "val": "Completed"
+  },
+  {
+    "key": "taskDetails.taskStatus",
+    "val": "Task Status"
+  },
+  {
+    "key": "taskDetails.assignee",
+    "val": "Assignee"
+  },
+  {
+    "key": "taskDetails.startDate",
+    "val": "Start date"
+  },
+  {
+    "key": "taskDetails.dueDate",
+    "val": "Due date"
+  },
+  {
+    "key": "taskDetails.progress",
+    "val": "Progress"
+  },
+  {
+    "key": "taskDetails.priority",
+    "val": "Priority"
+  },
+  {
+    "key": "taskDetails.trackTime",
+    "val": "Track Time"
+  },
+  {
+    "key": "taskDetails.addDescription",
+    "val": "Add description"
+  },
+  {
+    "key": "taskDetails.checklists",
+    "val": "Checklists ({{count}})"
+  },
+  {
+    "key": "taskDetails.unassigned",
+    "val": "Unassigned"
+  },
+  {
+    "key": "taskDetails.assignMember",
+    "val": "Assign member…"
+  },
+  {
+    "key": "taskDetails.noSubtasks",
+    "val": "No subtasks yet."
+  },
+  {
+    "key": "taskDetails.addItem",
+    "val": "Add item"
+  },
+  {
+    "key": "taskDetails.projectFallback",
+    "val": "Project"
+  },
+  {
+    "key": "taskDetails.toggleComplete",
+    "val": "Toggle Complete"
+  },
+  {
+    "key": "taskForm.new",
+    "val": "New Task"
+  },
+  {
+    "key": "taskForm.title",
+    "val": "Title"
+  },
+  {
+    "key": "taskForm.priority",
+    "val": "Priority"
+  },
+  {
+    "key": "taskForm.assignee",
+    "val": "Assignee"
+  },
+  {
+    "key": "taskForm.deadline",
+    "val": "Deadline"
+  },
+  {
+    "key": "taskForm.create",
+    "val": "Create Task"
+  },
+  {
+    "key": "taskForm.creating",
+    "val": "Creating…"
+  },
+  {
+    "key": "taskForm.titlePlaceholder",
+    "val": "Task description"
+  },
+  {
+    "key": "projectForm.new",
+    "val": "New Project"
+  },
+  {
+    "key": "projectForm.edit",
+    "val": "Edit Project"
+  },
+  {
+    "key": "projectForm.inWorkspace",
+    "val": "In workspace: {{name}}"
+  },
+  {
+    "key": "projectForm.title",
+    "val": "Title"
+  },
+  {
+    "key": "projectForm.description",
+    "val": "Description"
+  },
+  {
+    "key": "projectForm.deadline",
+    "val": "Deadline"
+  },
+  {
+    "key": "projectForm.members",
+    "val": "Project members"
+  },
+  {
+    "key": "projectForm.membersHint",
+    "val": "Select workspace members who should access this project."
+  },
+  {
+    "key": "projectForm.create",
+    "val": "Create project"
+  },
+  {
+    "key": "projectForm.saveChanges",
+    "val": "Save changes"
+  },
+  {
+    "key": "projectForm.saving",
+    "val": "Saving…"
+  },
+  {
+    "key": "projectForm.projectNamePlaceholder",
+    "val": "Project name"
+  },
+  {
+    "key": "projectForm.optionalDescription",
+    "val": "Optional description"
+  },
+  {
+    "key": "projectForm.delete.title",
+    "val": "Delete project?"
+  },
+  {
+    "key": "projectForm.delete.message",
+    "val": "Delete \"{{title}}\" and all its tasks? This cannot be undone."
+  },
+  {
+    "key": "projectForm.delete.confirm",
+    "val": "Delete project"
+  },
+  {
+    "key": "projectList.title",
+    "val": "Projects"
+  },
+  {
+    "key": "projectList.subtitle",
+    "val": "Manage projects in your active workspace."
+  },
+  {
+    "key": "projectList.empty",
+    "val": "No projects yet in this workspace."
+  },
+  {
+    "key": "projectList.createFirst",
+    "val": "Create your first project"
+  },
+  {
+    "key": "projectList.tasksDone",
+    "val": "{{completed}}/{{total}} tasks done"
+  },
+  {
+    "key": "projectList.due",
+    "val": "Due {{date}}"
+  },
+  {
+    "key": "projectList.edit",
+    "val": "Edit"
+  },
+  {
+    "key": "projectList.delete",
+    "val": "Delete"
+  },
+  {
+    "key": "filterBar.status",
+    "val": "Status"
+  },
+  {
+    "key": "filterBar.priority",
+    "val": "Priority"
+  },
+  {
+    "key": "filterBar.deadline",
+    "val": "Deadline"
+  },
+  {
+    "key": "filterBar.allStatuses",
+    "val": "All statuses"
+  },
+  {
+    "key": "filterBar.allPriorities",
+    "val": "All priorities"
+  },
+  {
+    "key": "filterBar.anyDeadline",
+    "val": "Any deadline"
+  },
+  {
+    "key": "filterBar.dueToday",
+    "val": "Due Today"
+  },
+  {
+    "key": "filterBar.dueWeek",
+    "val": "Due This Week"
+  },
+  {
+    "key": "filterBar.overdue",
+    "val": "Overdue"
+  },
+  {
+    "key": "filterBar.clear",
+    "val": "Clear filters"
+  },
+  {
+    "key": "filterBar.results",
+    "val": "{{filtered}} of {{total}} tasks"
+  },
+  {
+    "key": "timerWidget.title",
+    "val": "Click to start/stop timer"
+  },
+  {
+    "key": "timerWidget.started",
+    "val": "Timer started."
+  },
+  {
+    "key": "timerWidget.stopped",
+    "val": "Timer stopped."
+  },
+  {
+    "key": "workspaceMembers.title",
+    "val": "Workspace Members"
+  },
+  {
+    "key": "workspaceMembers.subtitle",
+    "val": "Manage who can see projects and tasks in this workspace."
+  },
+  {
+    "key": "workspaceMembers.inviteOnboard",
+    "val": "Onboard employee"
+  },
+  {
+    "key": "workspaceMembers.inviteByEmail",
+    "val": "Invite by email"
+  },
+  {
+    "key": "workspaceMembers.done",
+    "val": "Done"
+  },
+  {
+    "key": "workspaceMembers.count",
+    "val": "{{count}} {{memberWord}}"
+  },
+  {
+    "key": "workspaceMembers.share",
+    "val": "Share Workspace"
+  },
+  {
+    "key": "workspaceMembers.shareBtn",
+    "val": "Share"
+  },
+  {
+    "key": "workspaceMembers.invitePlaceholder",
+    "val": "Invite by name or email"
+  },
+  {
+    "key": "workspaceMembers.selectPerson",
+    "val": "Select a person to invite"
+  },
+  {
+    "key": "workspaceMembers.learnMore",
+    "val": "Learn more about sharing"
+  },
+  {
+    "key": "workspaceMembers.manageTitle",
+    "val": "Manage workspace members"
+  },
+  {
+    "key": "workspaceMembers.removeMember",
+    "val": "Remove member"
+  },
+  {
+    "key": "workspaceMembers.changeRole",
+    "val": "Change role?"
+  },
+  {
+    "key": "workspaceMembers.changeRoleMessage",
+    "val": "{{name}} will become {{newRole}} in this workspace."
+  },
+  {
+    "key": "workspaceMembers.noMembersFound",
+    "val": "No members found."
+  },
+  {
+    "key": "workspaceMembers.loading",
+    "val": "Loading members…"
+  },
+  {
+    "key": "pageHeader.howItWorks",
+    "val": "How it works"
+  },
+  {
+    "key": "pageHeader.hideGuide",
+    "val": "Hide guide"
+  },
+  {
+    "key": "pageHeader.theFlow",
+    "val": "The flow"
+  },
+  {
+    "key": "pageHeader.goodToKnow",
+    "val": "Good to know"
+  },
+  {
+    "key": "credentialsBanner.shareWith",
+    "val": "Share with {{name}}"
+  },
+  {
+    "key": "credentialsBanner.instructions",
+    "val": "Copy the setup link and send it on WhatsApp, Slack, or any chat. The employee opens it, sets a password, and signs in automatically."
+  },
+  {
+    "key": "credentialsBanner.smtpSent",
+    "val": "An email was also sent because SMTP is configured."
+  },
+  {
+    "key": "credentialsBanner.setupLink",
+    "val": "Setup link (recommended)"
+  },
+  {
+    "key": "credentialsBanner.copyLink",
+    "val": "Copy setup link"
+  },
+  {
+    "key": "credentialsBanner.copyMessage",
+    "val": "Copy full message"
+  },
+  {
+    "key": "credentialsBanner.copyPassword",
+    "val": "Copy temp password"
+  },
+  {
+    "key": "credentialsBanner.copied",
+    "val": "Copied!"
+  },
+  {
+    "key": "credentialsBanner.dismiss",
+    "val": "Dismiss"
+  },
+  {
+    "key": "role.global.employee",
+    "val": "Employee"
+  },
+  {
+    "key": "role.global.manager",
+    "val": "Manager"
+  },
+  {
+    "key": "role.global.hr",
+    "val": "HR"
+  },
+  {
+    "key": "role.global.hrSpecialist",
+    "val": "HR Specialist"
+  },
+  {
+    "key": "role.global.accountant",
+    "val": "Accountant"
+  },
+  {
+    "key": "role.global.admin",
+    "val": "Admin"
+  },
+  {
+    "key": "role.global.administrator",
+    "val": "Administrator"
+  },
+  {
+    "key": "role.workspace.owner",
+    "val": "Owner"
+  },
+  {
+    "key": "role.workspace.admin",
+    "val": "Admin"
+  },
+  {
+    "key": "role.workspace.member",
+    "val": "Member"
+  },
+  {
+    "key": "role.workspace.viewer",
+    "val": "Viewer"
+  },
+  {
+    "key": "role.workspace.adminLabel",
+    "val": "Workspace: Admin"
+  },
+  {
+    "key": "role.workspace.memberLabel",
+    "val": "Workspace: Member"
+  },
+  {
+    "key": "role.workspace.viewerLabel",
+    "val": "Workspace: Viewer"
+  },
+  {
+    "key": "task.status.notStarted",
+    "val": "Not Started"
+  },
+  {
+    "key": "task.status.inProgress",
+    "val": "In Progress"
+  },
+  {
+    "key": "task.status.inReview",
+    "val": "In Review"
+  },
+  {
+    "key": "task.status.completed",
+    "val": "Completed"
+  },
+  {
+    "key": "task.priority.low",
+    "val": "Low"
+  },
+  {
+    "key": "task.priority.medium",
+    "val": "Medium"
+  },
+  {
+    "key": "task.priority.high",
+    "val": "High"
+  },
+  {
+    "key": "project.status.completed",
+    "val": "Completed"
+  },
+  {
+    "key": "project.status.overdue",
+    "val": "Overdue"
+  },
+  {
+    "key": "project.status.inProgress",
+    "val": "In Progress"
+  },
+  {
+    "key": "project.status.notStarted",
+    "val": "Not Started"
+  },
+  {
+    "key": "attendanceStatus.present",
+    "val": "Present"
+  },
+  {
+    "key": "attendanceStatus.absent",
+    "val": "Absent"
+  },
+  {
+    "key": "attendanceStatus.late",
+    "val": "Late"
+  },
+  {
+    "key": "attendanceStatus.earlyLeave",
+    "val": "Early Leave"
+  },
+  {
+    "key": "attendanceStatus.halfDay",
+    "val": "Half Day"
+  },
+  {
+    "key": "attendanceStatus.weekend",
+    "val": "Weekend"
+  },
+  {
+    "key": "attendanceStatus.holiday",
+    "val": "Holiday"
+  },
+  {
+    "key": "attendanceStatus.onLeave",
+    "val": "On Leave"
+  },
+  {
+    "key": "attendanceStatus.permission",
+    "val": "Permission"
+  },
+  {
+    "key": "attendanceStatus.remote",
+    "val": "Remote"
+  },
+  {
+    "key": "attendanceStatus.missingCheckout",
+    "val": "Missing Check-out"
+  },
+  {
+    "key": "employmentStatus.active",
+    "val": "Active"
+  },
+  {
+    "key": "employmentStatus.suspended",
+    "val": "Suspended"
+  },
+  {
+    "key": "employmentStatus.resigned",
+    "val": "Resigned"
+  },
+  {
+    "key": "salaryType.monthly",
+    "val": "Monthly"
+  },
+  {
+    "key": "salaryType.daily",
+    "val": "Daily"
+  },
+  {
+    "key": "salaryType.hourly",
+    "val": "Hourly"
+  }
+]

@@ -5,7 +5,11 @@ import { RouterLink } from '@angular/router';
 import { PayrollService } from '../../services/payroll.service';
 import { HRService } from '../../services/hr.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { PrintDocumentService } from '../../services/print-document.service';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import {
   ConfirmDialogComponent,
   ConfirmIcon,
@@ -32,32 +36,23 @@ interface ConfirmRequest {
 @Component({
   selector: 'app-payroll-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, PageHeaderComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, PageHeaderComponent, ConfirmDialogComponent, TranslatePipe],
   template: `
-    <div class="page-ambient pb-12 animate-fade-up">
+    <div class="page-ambient pb-12 animate-fade-up" [attr.data-locale]="locale.locale()">
 
       <app-page-header
-        eyebrow="Finance · Payroll"
-        title="Payroll Workspace"
-        description="Run a month's payroll through a clear lifecycle: add adjustments → calculate → review → approve → mark paid → lock."
-        badge="Accountants only"
+        [eyebrow]="locale.t('payroll.eyebrow')"
+        [title]="locale.t('payroll.title')"
+        [description]="locale.t('payroll.description')"
+        [badge]="locale.t('payroll.badge')"
         badgeTone="warning"
-        [steps]="[
-          { label: 'Add adjustments', description: 'Record bonuses and deductions for the month before calculating.', tone: 'do' },
-          { label: 'Calculate', description: 'The system aggregates worked hours, leaves, late minutes, and adjustments.', tone: 'wait' },
-          { label: 'Review & approve', description: 'Inspect every payslip line. Approve when numbers look right.', tone: 'wait' },
-          { label: 'Mark paid → Lock', description: 'After transfers are done, lock the run to freeze the records permanently.', tone: 'done' }
-        ]"
-        [tips]="[
-          { title: 'Order matters', body: 'Adjustments added after Calculate need a recalculation to be included.' },
-          { title: 'Lock is one-way', body: 'A locked run cannot be edited. Use it once payments are fully reconciled.' },
-          { title: 'Need HR data?', body: 'Jump to the HR Control Center for attendance and leave context.' }
-        ]"
+        [steps]="payrollSteps()"
+        [tips]="payrollTips()"
       >
         <div header-actions class="flex items-center gap-2.5">
           <a routerLink="/admin-hr-portal" class="btn-soft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            HR Center
+            {{ 'common.hrCenter' | translate }}
           </a>
         </div>
       </app-page-header>
@@ -68,29 +63,15 @@ interface ConfirmRequest {
           class="relative px-5 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 inline-flex items-center gap-2"
           [ngClass]="activeTab() === 'runs' ? 'bg-bg-base text-white shadow-card' : 'text-text-secondary hover:text-white'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-          Payroll Runs
+          {{ 'payroll.tab.runs' | translate }}
         </button>
         <button (click)="activeTab.set('adjustments')"
           class="relative px-5 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 inline-flex items-center gap-2"
           [ngClass]="activeTab() === 'adjustments' ? 'bg-bg-base text-white shadow-card' : 'text-text-secondary hover:text-white'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Bonuses & Deductions
+          {{ 'payroll.tab.adjustments' | translate }}
         </button>
       </div>
-
-      <!-- Feedback -->
-      @if (error()) {
-        <div class="flex items-center gap-3 p-3.5 mb-5 bg-danger/10 border border-danger/25 text-danger rounded-xl animate-fade-up">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-          <p class="text-sm font-medium">{{ error() }}</p>
-        </div>
-      }
-      @if (success()) {
-        <div class="flex items-center gap-3 p-3.5 mb-5 bg-success/10 border border-success/25 text-success rounded-xl animate-fade-up">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-          <p class="text-sm font-medium">{{ success() }}</p>
-        </div>
-      }
 
       <div class="tab-panel" [attr.data-tab]="activeTab()">
 
@@ -103,19 +84,19 @@ interface ConfirmRequest {
 
               <!-- Generate New Run -->
               <div class="bg-bg-elevated border border-border rounded-2xl p-6">
-                <h2 class="section-title mb-5"><span class="dot"></span>Generate Run</h2>
+                <h2 class="section-title mb-5"><span class="dot"></span>{{ 'common.generateRun' | translate }}</h2>
                 <form [formGroup]="runForm" (ngSubmit)="submitRunPayroll()" class="flex flex-col gap-4">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Payroll Month</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.payrollMonth' | translate }}</label>
                     <input type="month" formControlName="month" class="field font-mono" />
                   </div>
                   <button type="submit" [disabled]="runForm.invalid || processing()" class="btn-accent w-full mt-1">
                     @if (processing()) {
                       <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                      Calculating…
+                      {{ 'common.calculating' | translate }}
                     } @else {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                      Run Payroll
+                      {{ 'common.runPayroll' | translate }}
                     }
                   </button>
                 </form>
@@ -124,7 +105,7 @@ interface ConfirmRequest {
               <!-- Run History List -->
               <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-border">
-                  <h2 class="section-title"><span class="dot"></span>Previous Runs</h2>
+                  <h2 class="section-title"><span class="dot"></span>{{ 'common.previousRuns' | translate }}</h2>
                   <span class="text-[10px] uppercase font-bold tracking-widest text-text-muted">{{ payrollRuns().length }}</span>
                 </div>
                 <div class="flex flex-col gap-2 p-3 max-h-[420px] overflow-y-auto hide-scrollbar">
@@ -135,7 +116,7 @@ interface ConfirmRequest {
                       <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-mono font-extrabold text-white">{{ run.month }}</span>
                         <span class="chip" [ngClass]="runStatusChip(run.status)">
-                          <span class="chip-dot"></span>{{ run.status.replace('_', ' ') }}
+                          <span class="chip-dot"></span>{{ runStatusLabel(run.status) }}
                         </span>
                       </div>
                       <div class="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-border/50">
@@ -144,14 +125,14 @@ interface ConfirmRequest {
                           <span class="text-success font-mono font-bold">{{ run.summary.totalNetSalary | currency }}</span>
                         </div>
                         <div class="text-text-muted">
-                          Staff:
+                          {{ 'common.staff' | translate }}:
                           <span class="text-white font-mono font-bold">{{ run.summary.employeesCount }}</span>
                         </div>
                       </div>
                     </button>
                   }
                   @if (payrollRuns().length === 0) {
-                    <div class="text-center py-10 text-text-muted text-xs">No payroll runs yet.</div>
+                    <div class="text-center py-10 text-text-muted text-xs">{{ 'common.noPayrollRuns' | translate }}</div>
                   }
                 </div>
               </div>
@@ -164,8 +145,8 @@ interface ConfirmRequest {
                   <div class="w-16 h-16 rounded-2xl bg-bg-base border border-border flex items-center justify-center text-text-muted">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
                   </div>
-                  <h3 class="text-base font-display font-bold text-white">No Run Selected</h3>
-                  <p class="text-sm text-text-muted max-w-sm">Pick a payroll run from the left, or generate a new month, to inspect individual payslips and adjust lifecycle.</p>
+                  <h3 class="text-base font-display font-bold text-white">{{ 'common.noRunSelected' | translate }}</h3>
+                  <p class="text-sm text-text-muted max-w-sm">{{ 'common.noRunSelectedHint' | translate }}</p>
                 </div>
               } @else {
                 <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden animate-fade-up">
@@ -174,21 +155,21 @@ interface ConfirmRequest {
                   <div class="px-6 py-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
                       <h3 class="text-base font-display font-bold text-white">
-                        Month: <span class="font-mono text-accent">{{ selectedRun()?.month }}</span>
+                        {{ 'common.monthLabel' | translate }} <span class="font-mono text-accent">{{ selectedRun()?.month }}</span>
                       </h3>
-                      <p class="text-[11px] text-text-muted font-mono mt-1">Calculated {{ selectedRun()?.calculatedAt | date:'medium' }}</p>
+                      <p class="text-[11px] text-text-muted font-mono mt-1">{{ locale.t('common.calculatedAt', { date: (selectedRun()?.calculatedAt | date:'medium') || '' }) }}</p>
                     </div>
                     <div class="flex items-center gap-2.5">
-                      <label class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Lifecycle</label>
+                      <label class="text-[10px] uppercase font-bold tracking-widest text-text-muted">{{ 'common.lifecycle' | translate }}</label>
                       <select [value]="selectedRun()?.status"
                               (change)="onStatusChange($event)"
                               [disabled]="selectedRun()?.status === 'locked' && !isAdmin()"
                               class="field !py-1.5 !text-xs !w-auto font-semibold">
-                        <option value="calculated">Calculated (Draft)</option>
-                        <option value="under_review">Under Review</option>
-                        <option value="approved">Approved</option>
-                        <option value="paid">Paid</option>
-                        <option value="locked">Locked</option>
+                        <option value="calculated">{{ locale.t('common.calculatedDraft') }}</option>
+                        <option value="under_review">{{ locale.t('common.underReview') }}</option>
+                        <option value="approved">{{ locale.t('common.approved') }}</option>
+                        <option value="paid">{{ locale.t('common.paid') }}</option>
+                        <option value="locked">{{ locale.t('common.locked') }}</option>
                       </select>
                     </div>
                   </div>
@@ -196,19 +177,19 @@ interface ConfirmRequest {
                   <!-- KPIs -->
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
                     <div class="bg-bg-elevated p-4">
-                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Basic Payroll</div>
+                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">{{ 'common.basicPayroll' | translate }}</div>
                       <div class="text-base font-display font-bold text-white mt-1 font-mono">{{ selectedRun()?.summary?.totalBasicSalary | currency }}</div>
                     </div>
                     <div class="bg-bg-elevated p-4">
-                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Bonuses</div>
+                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">{{ 'common.bonuses' | translate }}</div>
                       <div class="text-base font-display font-bold text-success mt-1 font-mono">+{{ selectedRun()?.summary?.totalBonuses | currency }}</div>
                     </div>
                     <div class="bg-bg-elevated p-4">
-                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Deductions</div>
+                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">{{ 'common.deductions' | translate }}</div>
                       <div class="text-base font-display font-bold text-danger mt-1 font-mono">-{{ selectedRun()?.summary?.totalDeductions | currency }}</div>
                     </div>
                     <div class="bg-bg-elevated p-4">
-                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Net Payable</div>
+                      <div class="text-[10px] uppercase font-bold tracking-widest text-text-muted">{{ 'common.netPayable' | translate }}</div>
                       <div class="text-base font-display font-extrabold text-white mt-1 font-mono">{{ selectedRun()?.summary?.totalNetSalary | currency }}</div>
                     </div>
                   </div>
@@ -218,13 +199,14 @@ interface ConfirmRequest {
                     <table class="hr-table">
                       <thead>
                         <tr>
-                          <th>Employee</th>
-                          <th class="text-right">Basic</th>
-                          <th class="text-center">Days W/A</th>
-                          <th class="text-center">Late</th>
-                          <th class="text-center">Overtime</th>
-                          <th class="text-right">Adjustments</th>
-                          <th class="text-right">Net</th>
+                          <th>{{ 'common.employee' | translate }}</th>
+                          <th class="text-right">{{ 'common.basic' | translate }}</th>
+                          <th class="text-center">{{ 'common.daysWorkedAbsent' | translate }}</th>
+                          <th class="text-center">{{ 'common.late' | translate }}</th>
+                          <th class="text-center">{{ 'common.overtime' | translate }}</th>
+                          <th class="text-right">{{ 'common.adjustments' | translate }}</th>
+                          <th class="text-right">{{ 'common.net' | translate }}</th>
+                          <th class="text-right no-print">{{ 'common.actions' | translate }}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -250,10 +232,18 @@ interface ConfirmRequest {
                               <div class="text-danger">-{{ slip.deductions | currency }}</div>
                             </td>
                             <td class="text-right font-mono font-extrabold text-white bg-bg-base/40">{{ slip.netSalary | currency }}</td>
+                            <td class="text-right no-print">
+                              <button type="button"
+                                (click)="printPayslip(slip._id)"
+                                [disabled]="printingDocId() === slip._id"
+                                class="px-3 py-1.5 bg-accent-subtle hover:bg-accent text-accent hover:text-white border border-accent/25 hover:border-accent rounded-lg font-bold text-[11px] transition-all">
+                                {{ 'common.printPayslip' | translate }}
+                              </button>
+                            </td>
                           </tr>
                         }
                         @if (payslips().length === 0) {
-                          <tr><td colspan="7" class="text-center py-10 text-text-muted text-xs">No payslips in this run.</td></tr>
+                          <tr><td colspan="8" class="text-center py-10 text-text-muted text-xs">{{ 'common.noPayslips' | translate }}</td></tr>
                         }
                       </tbody>
                     </table>
@@ -271,60 +261,60 @@ interface ConfirmRequest {
             <!-- Adjustment form -->
             <div class="lg:col-span-1">
               <div class="bg-bg-elevated border border-border rounded-2xl p-6">
-                <h2 class="section-title mb-5"><span class="dot"></span>Add Adjustment</h2>
+                <h2 class="section-title mb-5"><span class="dot"></span>{{ 'common.addAdjustment' | translate }}</h2>
                 <form [formGroup]="adjustmentForm" (ngSubmit)="submitAdjustment()" class="flex flex-col gap-4">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Employee</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.employee' | translate }}</label>
                     <select formControlName="userId" class="field">
-                      <option value="">— choose employee —</option>
+                      <option value="">{{ locale.t('common.choose') }}</option>
                       @for (emp of employees(); track emp._id) {
-                        <option [value]="emp._id">{{ emp.name }} · {{ emp.role }}</option>
+                        <option [value]="emp._id">{{ emp.name }} · {{ locale.roleLabel(emp.role) }}</option>
                       }
                     </select>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Type</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.type' | translate }}</label>
                       <select formControlName="type" (change)="onAdjustmentTypeChange()" class="field">
-                        <option value="bonus">Bonus</option>
-                        <option value="deduction">Deduction</option>
+                        <option value="bonus">{{ locale.t('common.bonus') }}</option>
+                        <option value="deduction">{{ locale.t('common.deduction') }}</option>
                       </select>
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Category</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.category' | translate }}</label>
                       <select formControlName="subType" class="field">
                         @if (adjustmentForm.value.type === 'bonus') {
-                          <option value="bonus">Performance Bonus</option>
-                          <option value="allowance">Allowance</option>
-                          <option value="commission">Commission</option>
-                          <option value="manual">Manual</option>
+                          <option value="bonus">{{ locale.t('common.performanceBonus') }}</option>
+                          <option value="allowance">{{ locale.t('common.allowance') }}</option>
+                          <option value="commission">{{ locale.t('common.commission') }}</option>
+                          <option value="manual">{{ locale.t('common.manual') }}</option>
                         }
                         @if (adjustmentForm.value.type === 'deduction') {
-                          <option value="penalty">Disciplinary Penalty</option>
-                          <option value="manual">Manual Deduction</option>
+                          <option value="penalty">{{ locale.t('common.disciplinaryPenalty') }}</option>
+                          <option value="manual">{{ locale.t('common.manualDeduction') }}</option>
                         }
                       </select>
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Amount</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.amount' | translate }}</label>
                       <input type="number" formControlName="amount" class="field font-mono" />
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Month</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.month' | translate }}</label>
                       <input type="month" formControlName="payrollMonth" class="field font-mono" />
                     </div>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Reason</label>
-                    <textarea formControlName="reason" rows="3" placeholder="Explanation details…" class="field resize-none"></textarea>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.reason' | translate }}</label>
+                    <textarea formControlName="reason" rows="3" [placeholder]="locale.t('common.explanationDetails')" class="field resize-none"></textarea>
                   </div>
                   <button type="submit" [disabled]="adjustmentForm.invalid || processing()" class="btn-accent w-full mt-1">
                     @if (processing()) {
                       <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                     }
-                    Save Adjustment
+                    {{ 'common.saveAdjustment' | translate }}
                   </button>
                 </form>
               </div>
@@ -334,9 +324,9 @@ interface ConfirmRequest {
             <div class="lg:col-span-2">
               <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-border">
-                  <h2 class="section-title"><span class="dot"></span>Adjustments History</h2>
+                  <h2 class="section-title"><span class="dot"></span>{{ 'common.adjustmentsHistory' | translate }}</h2>
                   <div class="flex items-center gap-2">
-                    <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">Period</span>
+                    <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ 'common.period' | translate }}</span>
                     <input type="month" [value]="filterMonth()" (change)="onFilterMonthChange($event)"
                            class="field !py-1.5 !text-xs !w-auto font-mono" />
                   </div>
@@ -345,12 +335,12 @@ interface ConfirmRequest {
                   <table class="hr-table">
                     <thead>
                       <tr>
-                        <th>Employee</th>
-                        <th>Month</th>
-                        <th>Category</th>
-                        <th class="text-right">Amount</th>
-                        <th>Reason</th>
-                        <th class="text-center">Status</th>
+                        <th>{{ 'common.employee' | translate }}</th>
+                        <th>{{ 'common.month' | translate }}</th>
+                        <th>{{ 'common.category' | translate }}</th>
+                        <th class="text-right">{{ 'common.amount' | translate }}</th>
+                        <th>{{ 'common.reason' | translate }}</th>
+                        <th class="text-center">{{ 'common.status' | translate }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -369,13 +359,13 @@ interface ConfirmRequest {
                           <td class="text-text-muted max-w-xs truncate" [title]="adj.reason">{{ adj.reason }}</td>
                           <td class="text-center">
                             <span class="chip" [ngClass]="adjStatusChip(adj.status)">
-                              <span class="chip-dot"></span>{{ adj.status }}
+                              <span class="chip-dot"></span>{{ adjStatusLabel(adj.status) }}
                             </span>
                           </td>
                         </tr>
                       }
                       @if (salaryAdjustments().length === 0) {
-                        <tr><td colspan="6" class="text-center py-10 text-text-muted text-xs">No adjustments for this period.</td></tr>
+                        <tr><td colspan="6" class="text-center py-10 text-text-muted text-xs">{{ 'common.noAdjustmentsPeriod' | translate }}</td></tr>
                       }
                     </tbody>
                   </table>
@@ -408,11 +398,25 @@ export class PayrollWorkspaceComponent implements OnInit {
   private hrService = inject(HRService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
+  private printDocs = inject(PrintDocumentService);
+  locale = inject(LocaleService);
+
+  payrollSteps = () => [
+    { label: this.locale.t('payroll.step.adjustments'), description: this.locale.t('payroll.step.adjustmentsDesc'), tone: 'do' as const },
+    { label: this.locale.t('payroll.step.calculate'), description: this.locale.t('payroll.step.calculateDesc'), tone: 'wait' as const },
+    { label: this.locale.t('payroll.step.review'), description: this.locale.t('payroll.step.reviewDesc'), tone: 'wait' as const },
+    { label: this.locale.t('payroll.step.lock'), description: this.locale.t('payroll.step.lockDesc'), tone: 'done' as const },
+  ];
+
+  payrollTips = () => [
+    { title: this.locale.t('payroll.step.calculate'), body: this.locale.t('payroll.tip.order') },
+    { title: this.locale.t('common.locked'), body: this.locale.t('payroll.tip.lockOneWay') },
+    { title: this.locale.t('common.hrCenter'), body: this.locale.t('payroll.tip.hrContext') },
+  ];
 
   activeTab = signal<'runs' | 'adjustments'>('runs');
   processing = signal(false);
-  error = signal('');
-  success = signal('');
 
   employees = signal<EmployeeWithProfile[]>([]);
   payrollRuns = signal<PayrollRun[]>([]);
@@ -426,6 +430,7 @@ export class PayrollWorkspaceComponent implements OnInit {
   adjustmentForm!: FormGroup;
 
   confirmRequest = signal<ConfirmRequest | null>(null);
+  printingDocId = signal<string | null>(null);
 
   ngOnInit() {
     const now = new Date();
@@ -491,7 +496,30 @@ export class PayrollWorkspaceComponent implements OnInit {
     const emp = this.employees().find(e => e._id === idStr);
     if (emp) return emp.name;
     if (typeof userId === 'object' && userId.name) return userId.name;
-    return 'Unknown';
+    return this.locale.t('common.unknown');
+  }
+
+  runStatusLabel(status: string): string {
+    const keys: Record<string, string> = {
+      calculated: 'common.calculatedDraft',
+      under_review: 'common.underReview',
+      approved: 'common.approved',
+      paid: 'common.paid',
+      locked: 'common.locked',
+    };
+    const key = keys[status];
+    return key ? this.locale.t(key) : status.replace(/_/g, ' ');
+  }
+
+  adjStatusLabel(status: string): string {
+    const keys: Record<string, string> = {
+      approved: 'common.approved',
+      applied: 'common.approved',
+      cancelled: 'common.rejected',
+      pending: 'common.pending',
+    };
+    const key = keys[status];
+    return key ? this.locale.t(key) : status;
   }
 
   onAdjustmentTypeChange() {
@@ -510,22 +538,19 @@ export class PayrollWorkspaceComponent implements OnInit {
   // ─── Submissions ──────────────────────────────
   submitRunPayroll() {
     if (this.runForm.invalid) return;
-    this.flushMessages();
     this.processing.set(true);
     const monthStr = this.runForm.value.month;
     this.payrollService.runPayroll(monthStr).subscribe({
       next: (res) => {
         this.processing.set(false);
         if (res.success) {
-          this.success.set(`Payroll run generated for ${monthStr}.`);
+          this.toast.success(this.locale.t('payroll.toast.runGenerated', { month: monthStr }));
           this.loadRuns();
           if (res.data && res.data.run) this.selectRun(res.data.run);
-          this.autoDismiss();
         }
       },
-      error: (err) => {
+      error: () => {
         this.processing.set(false);
-        this.error.set(err.error?.error || 'Failed to run payroll calculation.');
       }
     });
   }
@@ -537,28 +562,25 @@ export class PayrollWorkspaceComponent implements OnInit {
     const runId = this.selectedRun()!._id;
 
     this.confirmRequest.set({
-      title: `Transition to "${newStatus.replace('_', ' ')}"?`,
-      message: 'This change will be recorded in the run\'s audit log.',
-      confirmLabel: 'Confirm transition',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('common.transitionTitle', { status: this.runStatusLabel(newStatus) }),
+      message: this.locale.t('common.transitionMessage'),
+      confirmLabel: this.locale.t('common.confirmTransition'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'accent',
       icon: 'check',
       onConfirm: () => {
         this.processing.set(true);
-        this.flushMessages();
         this.payrollService.updateStatus(runId, newStatus).subscribe({
           next: (res) => {
             this.processing.set(false);
             if (res.success) {
-              this.success.set(`Run transitioned to ${newStatus}.`);
+              this.toast.success(this.locale.t('payroll.toast.runTransitioned', { status: this.runStatusLabel(newStatus) }));
               this.loadRuns();
               this.selectedRun.set(res.data);
-              this.autoDismiss();
             }
           },
-          error: (err) => {
+          error: () => {
             this.processing.set(false);
-            this.error.set(err.error?.error || 'Failed to update run status.');
             event.target.value = oldStatus;
           }
         });
@@ -569,13 +591,12 @@ export class PayrollWorkspaceComponent implements OnInit {
 
   submitAdjustment() {
     if (this.adjustmentForm.invalid) return;
-    this.flushMessages();
     this.processing.set(true);
     this.payrollService.addAdjustment(this.adjustmentForm.value).subscribe({
       next: (res) => {
         this.processing.set(false);
         if (res.success) {
-          this.success.set('Salary adjustment recorded successfully.');
+          this.toast.success(this.locale.t('payroll.toast.adjustmentSaved'));
           this.adjustmentForm.reset({
             type: 'bonus',
             subType: 'bonus',
@@ -583,14 +604,21 @@ export class PayrollWorkspaceComponent implements OnInit {
             payrollMonth: this.filterMonth()
           });
           this.loadAdjustments();
-          this.autoDismiss();
         }
       },
-      error: (err) => {
+      error: () => {
         this.processing.set(false);
-        this.error.set(err.error?.error || 'Failed to record adjustment.');
       }
     });
+  }
+
+  async printPayslip(payslipId: string): Promise<void> {
+    this.printingDocId.set(payslipId);
+    try {
+      await this.printDocs.printPayslip(payslipId);
+    } finally {
+      this.printingDocId.set(null);
+    }
   }
 
   // ─── Confirm Modal ─────────────────────────────
@@ -622,8 +650,4 @@ export class PayrollWorkspaceComponent implements OnInit {
     return 'chip-warning';
   }
 
-  private flushMessages() { this.error.set(''); this.success.set(''); }
-  private autoDismiss() {
-    setTimeout(() => { this.success.set(''); this.error.set(''); }, 4000);
-  }
 }

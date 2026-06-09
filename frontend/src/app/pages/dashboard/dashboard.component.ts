@@ -21,10 +21,12 @@ import { Project, Task } from '../../models/types';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { ConfirmDialogComponent } from '../../components/ui/confirm-dialog/confirm-dialog.component';
-import { FlashBannerComponent } from '../../components/ui/flash-banner/flash-banner.component';
 import { ProjectFormModalComponent } from '../../components/projects/project-form-modal/project-form-modal.component';
+import { ToastService } from '../../services/toast.service';
 import { ProjectListComponent } from '../../components/projects/project-list/project-list.component';
 import { WorkspaceMember } from '../../services/workspace.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface ProjectWithStats extends Project {
   taskCount: number;
@@ -46,9 +48,9 @@ interface WorkspaceTask extends Task {
     FormsModule,
     BaseChartDirective,
     ConfirmDialogComponent,
-    FlashBannerComponent,
     ProjectFormModalComponent,
     ProjectListComponent,
+    TranslatePipe,
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
@@ -64,11 +66,12 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   public activeTimerService = inject(ActiveTimerService);
   private timeEntryService = inject(TimeEntryService);
+  locale = inject(LocaleService);
+  private toast = inject(ToastService);
 
   projects = signal<ProjectWithStats[]>([]);
   workspaceTasks = signal<WorkspaceTask[]>([]);
   loading = signal(true);
-  error = signal('');
   creating = signal(false);
   showCreateForm = signal(false);
   editingProjectId = signal<string | null>(null);
@@ -78,9 +81,10 @@ export class DashboardComponent implements OnInit {
   deleteProjectConfirm = signal<{ id: string; title: string } | null>(null);
 
   deleteProjectMessage = computed(() => {
+    this.locale.locale();
     const req = this.deleteProjectConfirm();
     if (!req) return '';
-    return `Delete "${req.title}" and all its tasks? This cannot be undone.`;
+    return this.locale.t('common.deleteProjectMessage', { title: req.title });
   });
 
   projectForm!: FormGroup;
@@ -93,11 +97,12 @@ export class DashboardComponent implements OnInit {
   
   /** Unified label — task title OR quick session description. */
   runningLabel = computed(() => {
+    this.locale.locale();
     const task = this.activeTimerService.activeTask();
     if (task) return task.title;
     const entry = this.timeEntryService.active();
-    if (entry) return entry.description?.trim() || 'Quick session';
-    return 'No active task';
+    if (entry) return entry.description?.trim() || this.locale.t('shell.quickSession');
+    return this.locale.t('dashboard.noActiveTask');
   });
 
   anyTimerRunning = computed(
@@ -153,10 +158,11 @@ export class DashboardComponent implements OnInit {
 
   // Chart Data
   public doughnutChartData = computed<ChartConfiguration<'doughnut'>['data']>(() => {
+    this.locale.locale();
     const completed = this.completedTasks();
     const pending = this.totalTasks() - completed;
     return {
-      labels: ['Completed', 'In Progress / Pending'],
+      labels: [this.locale.t('common.chartCompleted'), this.locale.t('common.chartInProgressPending')],
       datasets: [
         {
           data: [completed, pending],
@@ -192,12 +198,21 @@ export class DashboardComponent implements OnInit {
   currentDate = new Date();
 
   public lineChartData = computed<ChartConfiguration<'line'>['data']>(() => {
+    this.locale.locale();
     return {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      labels: [
+        this.locale.t('common.chartMon'),
+        this.locale.t('common.chartTue'),
+        this.locale.t('common.chartWed'),
+        this.locale.t('common.chartThu'),
+        this.locale.t('common.chartFri'),
+        this.locale.t('common.chartSat'),
+        this.locale.t('common.chartSun'),
+      ],
       datasets: [
         {
           data: [7.5, 8.2, 8.0, 8.5, 7.0, 4.0, 2.0],
-          label: 'Actual Hours',
+          label: this.locale.t('common.actualHours'),
           borderColor: '#6366F1', // accent
           backgroundColor: 'rgba(99, 102, 241, 0.1)',
           fill: true,
@@ -212,7 +227,7 @@ export class DashboardComponent implements OnInit {
         },
         {
           data: [8, 8, 8, 8, 8, 0, 0],
-          label: 'Expected Hours',
+          label: this.locale.t('common.expectedHours'),
           borderColor: '#3B4048', // text-muted or border
           backgroundColor: 'transparent',
           borderDash: [5, 5],
@@ -286,7 +301,7 @@ export class DashboardComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    // Rehydrate quick session if shell hasn't loaded it yet
+    this.activeTimerService.loadActive().subscribe();
     this.timeEntryService.loadActive().subscribe();
 
     this.projectForm = this.fb.group({
@@ -346,7 +361,6 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Failed to load projects.');
         this.loading.set(false);
       },
     });
@@ -452,15 +466,16 @@ export class DashboardComponent implements OnInit {
       ? this.projectService.update(this.editingProjectId()!, payload)
       : this.projectService.create(payload);
 
+    const isEdit = !!this.editingProjectId();
     request$.subscribe({
       next: () => {
         this.creating.set(false);
         this.cancelCreate();
         this.loadProjects();
+        this.toast.success(isEdit ? 'Project updated.' : 'Project created.');
       },
-      error: (err: { error?: { error?: string } }) => {
+      error: () => {
         this.creating.set(false);
-        this.error.set(err.error?.error ?? 'Failed to save project.');
       },
     });
   }
@@ -485,8 +500,11 @@ export class DashboardComponent implements OnInit {
     if (!req) return;
     this.deleteProjectConfirm.set(null);
     this.projectService.delete(req.id).subscribe({
-      next: () => this.loadProjects(),
-      error: () => this.error.set('Failed to delete project.'),
+      next: () => {
+        this.loadProjects();
+        this.toast.success('Project deleted.');
+      },
+      error: () => {},
     });
   }
 

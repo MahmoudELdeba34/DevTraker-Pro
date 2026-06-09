@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
   computed,
   effect,
   inject,
@@ -26,8 +25,10 @@ import {
   ConfirmDialogComponent,
   ConfirmVariant,
 } from '../../components/ui/confirm-dialog/confirm-dialog.component';
-import { FlashBannerComponent } from '../../components/ui/flash-banner/flash-banner.component';
 import { CredentialsBannerComponent } from '../../components/ui/credentials-banner/credentials-banner.component';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type FilterRole = 'all' | WorkspaceRole | 'owner';
 
@@ -41,20 +42,20 @@ interface PendingAction {
   selector: 'app-members',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, ConfirmDialogComponent, FlashBannerComponent, CredentialsBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ConfirmDialogComponent, CredentialsBannerComponent, TranslatePipe],
   templateUrl: './members.component.html',
   styleUrls: ['./members.component.css'],
 })
-export class MembersComponent implements OnDestroy {
+export class MembersComponent {
   workspaceSvc = inject(WorkspaceService);
   private onboardingSvc = inject(OnboardingService);
   private activitySvc = inject(ActivityService);
   private authSvc = inject(AuthService);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
   members = signal<WorkspaceMember[]>([]);
   loading = signal(false);
-  flash = signal<{ type: 'ok' | 'err'; text: string } | null>(null);
-  private flashTimer?: ReturnType<typeof setTimeout>;
 
   // Filters
   search = signal('');
@@ -89,43 +90,62 @@ export class MembersComponent implements OnDestroy {
     const p = this.pending();
     if (!p) return null;
     if (p.kind === 'remove') {
-      const wsName = this.activeWs()?.name || 'this workspace';
+      const wsName = this.activeWs()?.name || this.locale.t('common.thisWorkspace');
       return {
         title:
           p.member._id === this.myUserId()
-            ? 'Leave workspace?'
-            : 'Remove member?',
+            ? this.locale.t('members.confirm.leaveTitle')
+            : this.locale.t('members.confirm.removeTitle'),
         message:
           p.member._id === this.myUserId()
-            ? `You'll lose access to projects and tasks in ${wsName}.`
-            : `${p.member.name} will lose access to projects and tasks in this workspace.`,
-        confirmLabel: 'Yes, remove',
+            ? this.locale.t('members.confirm.leaveMessage', { workspaceName: wsName })
+            : this.locale.t('members.confirm.removeMessage', { name: p.member.name }),
+        confirmLabel: this.locale.t('members.confirm.yesRemove'),
         variant: 'danger' as ConfirmVariant,
       };
     }
     if (p.kind === 'send-credentials') {
       return {
-        title: 'Send new login credentials?',
-        message: `${p.member.name} will get a new temporary password and setup link. Their current sessions will be signed out.`,
-        confirmLabel: 'Send credentials',
+        title: this.locale.t('members.confirm.sendCredentialsTitle'),
+        message: this.locale.t('members.confirm.sendCredentialsMessage', { name: p.member.name }),
+        confirmLabel: this.locale.t('members.confirm.sendCredentials'),
         variant: 'accent' as ConfirmVariant,
       };
     }
     if (p.kind === 'stop-tracking') {
       return {
-        title: `Stop ${p.member.name}'s timer?`,
-        message: `They are tracking "${p.member.tracking?.label || 'a session'}". The elapsed time will be saved to their timesheet.`,
-        confirmLabel: 'Stop timer',
+        title: this.locale.t('members.confirm.stopTimerTitle', { name: p.member.name }),
+        message: this.locale.t('members.confirm.stopTimerMessage', {
+          label: p.member.tracking?.label || this.locale.t('shell.quickSession'),
+        }),
+        confirmLabel: this.locale.t('members.confirm.stopTimer'),
         variant: 'danger' as ConfirmVariant,
       };
     }
     return {
-      title: 'Change role?',
-      message: `${p.member.name} will become ${p.newRole} in this workspace.`,
-      confirmLabel: 'Update role',
+      title: this.locale.t('members.confirm.changeRoleTitle'),
+      message: this.locale.t('members.confirm.changeRoleMessage', {
+        name: p.member.name,
+        newRole: this.workspaceRoleLabel(p.newRole!),
+      }),
+      confirmLabel: this.locale.t('members.confirm.updateRole'),
       variant: 'accent' as ConfirmVariant,
     };
   });
+
+  filterOptions = computed(() => [
+    { id: 'all' as FilterRole, label: this.locale.t('common.all') },
+    { id: 'owner' as FilterRole, label: this.locale.t('members.filter.owner') },
+    { id: 'admin' as FilterRole, label: this.locale.t('common.admins') },
+    { id: 'member' as FilterRole, label: this.locale.t('members.stat.members') },
+    { id: 'viewer' as FilterRole, label: this.locale.t('members.stat.viewers') },
+  ]);
+
+  membersDescription = computed(() =>
+    this.locale.t('members.description', {
+      workspaceName: this.activeWs()?.name || this.locale.t('common.thisWorkspace'),
+    })
+  );
 
   // ─── Identity / permissions ────────────────────────────────────────────
   myUserId = computed(() => this.authSvc.currentUser()?._id || '');
@@ -203,10 +223,6 @@ export class MembersComponent implements OnDestroy {
     );
   }
 
-  ngOnDestroy(): void {
-    if (this.flashTimer) clearTimeout(this.flashTimer);
-  }
-
   loadMembers(workspaceId: string): void {
     this.loading.set(true);
     this.workspaceSvc.getMembers(workspaceId).subscribe({
@@ -216,7 +232,6 @@ export class MembersComponent implements OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.flashMsg('err', "Couldn't load members");
       },
     });
   }
@@ -227,11 +242,11 @@ export class MembersComponent implements OnDestroy {
     if (!ws) return;
     const email = this.inviteEmail().trim().toLowerCase();
     if (!email || !email.includes('@')) {
-      this.flashMsg('err', 'Enter a valid email');
+      this.flashMsg('err', this.locale.t('members.toast.invalidEmail'));
       return;
     }
     if (this.members().some((m) => m.email.toLowerCase() === email)) {
-      this.flashMsg('err', 'This user is already a member');
+      this.flashMsg('err', this.locale.t('members.toast.alreadyMember'));
       return;
     }
 
@@ -257,20 +272,21 @@ export class MembersComponent implements OnDestroy {
         }
 
         if (res.newAccount && res.emailSent) {
-          this.flashMsg('ok', `Account created — credentials emailed to ${email}`);
+          this.flashMsg('ok', this.locale.t('members.toast.accountEmailed', { email }));
         } else if (res.newAccount) {
-          this.flashMsg('ok', `Account created — copy the setup link below and send it to ${email}`);
+          this.flashMsg('ok', this.locale.t('members.toast.accountCopyLink', { email }));
         } else {
           this.flashMsg(
             'ok',
-            `Added ${res.invitedUser?.name || email} to the workspace`
+            this.locale.t('members.toast.addedToWorkspace', {
+              name: res.invitedUser?.name || email,
+            })
           );
         }
         this.loadMembers(ws._id);
       },
-      error: (err) => {
+      error: () => {
         this.inviting.set(false);
-        this.flashMsg('err', err?.error?.error || "Couldn't add this user");
       },
     });
   }
@@ -305,13 +321,12 @@ export class MembersComponent implements OnDestroy {
     this.workspaceSvc.addMember(ws._id, user._id, this.addExistingRole()).subscribe({
       next: () => {
         this.addingExistingId.set(null);
-        this.flashMsg('ok', `${user.name} added to ${ws.name}`);
+        this.flashMsg('ok', this.locale.t('members.toast.userAdded', { name: user.name, workspaceName: ws.name }));
         this.availableUsers.update((list) => list.filter((u) => u._id !== user._id));
         this.loadMembers(ws._id);
       },
-      error: (err) => {
+      error: () => {
         this.addingExistingId.set(null);
-        this.flashMsg('err', err?.error?.error || "Couldn't add this member");
       },
     });
   }
@@ -381,12 +396,11 @@ export class MembersComponent implements OnDestroy {
         .subscribe({
           next: () => {
             this.pending.set(null);
-            this.flashMsg('ok', `${p.member.name}'s role updated`);
+            this.flashMsg('ok', this.locale.t('members.toast.roleUpdated', { name: p.member.name }));
             this.loadMembers(ws._id);
           },
-          error: (e) => {
+          error: () => {
             this.pending.set(null);
-            this.flashMsg('err', e?.error?.error || "Couldn't update role");
           },
         });
     } else if (p.kind === 'send-credentials') {
@@ -402,21 +416,20 @@ export class MembersComponent implements OnDestroy {
           this.flashMsg(
             'ok',
             res.emailSent
-              ? `New credentials emailed to ${p.member.email}`
-              : `New credentials ready — copy the setup link below for ${p.member.name}`
+              ? this.locale.t('members.toast.credentialsEmailed', { email: p.member.email })
+              : this.locale.t('members.toast.credentialsReady', { name: p.member.name })
           );
         },
-        error: (e) => {
+        error: () => {
           this.pending.set(null);
           this.sendingCredentials.set(null);
-          this.flashMsg('err', e?.error?.error || "Couldn't send credentials");
         },
       });
     } else if (p.kind === 'remove') {
       this.workspaceSvc.removeMember(ws._id, p.member._id).subscribe({
         next: () => {
           this.pending.set(null);
-          this.flashMsg('ok', `${p.member.name} removed`);
+          this.flashMsg('ok', this.locale.t('members.toast.memberRemoved', { name: p.member.name }));
           if (p.member._id === this.myUserId()) {
             // I just removed myself — refresh the workspace list
             this.workspaceSvc.loadWorkspaces();
@@ -424,9 +437,8 @@ export class MembersComponent implements OnDestroy {
             this.loadMembers(ws._id);
           }
         },
-        error: (e) => {
+        error: () => {
           this.pending.set(null);
-          this.flashMsg('err', e?.error?.error || "Couldn't remove member");
         },
       });
     } else if (p.kind === 'stop-tracking') {
@@ -435,13 +447,12 @@ export class MembersComponent implements OnDestroy {
         next: () => {
           this.pending.set(null);
           this.stoppingTimerId.set(null);
-          this.flashMsg('ok', `${p.member.name}'s timer stopped`);
+          this.flashMsg('ok', this.locale.t('members.toast.timerStopped', { name: p.member.name }));
           this.loadMembers(ws._id);
         },
-        error: (e) => {
+        error: () => {
           this.pending.set(null);
           this.stoppingTimerId.set(null);
-          this.flashMsg('err', e?.error?.error || "Couldn't stop timer");
         },
       });
     }
@@ -519,13 +530,26 @@ export class MembersComponent implements OnDestroy {
   }
 
   private flashMsg(type: 'ok' | 'err', text: string): void {
-    this.flash.set({ type, text });
-    if (this.flashTimer) clearTimeout(this.flashTimer);
-    this.flashTimer = setTimeout(() => this.flash.set(null), 3500);
+    if (type === 'ok') this.toast.success(text);
+    else this.toast.error(text);
   }
 
   setFilter(role: FilterRole): void {
     this.filterRole.set(role);
+  }
+
+  workspaceRoleLabel(role: string): string {
+    const key = `role.workspace.${role}` as const;
+    const translated = this.locale.t(key);
+    return translated !== key ? translated : role;
+  }
+
+  youRoleLabel(role: string): string {
+    return this.locale.t('members.youRole', { role: this.workspaceRoleLabel(role) });
+  }
+
+  memberWord(count: number): string {
+    return count === 1 ? this.locale.t('common.member') : this.locale.t('common.members');
   }
 
   trackById = (_: number, m: WorkspaceMember) => m._id;

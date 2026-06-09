@@ -10,6 +10,9 @@ import { TaskService } from '../../services/task.service';
 import { TimeEntryService } from '../../services/time-entry.service';
 import { Project, Workspace, Task, TimeEntry } from '../../models/types';
 import { ActiveTimerService } from '../../services/active-timer.service';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { UiPreferencesComponent } from '../ui/ui-preferences/ui-preferences.component';
 import { WorkspaceMembersComponent } from '../workspace-members/workspace-members.component';
 
 @Component({
@@ -21,11 +24,13 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
     RouterLinkActive,
     ReactiveFormsModule,
     WorkspaceMembersComponent,
+    UiPreferencesComponent,
   ],
   template: `
-    <div class="flex h-screen bg-bg-base text-white font-body overflow-hidden">
+    <div class="flex h-screen bg-bg-base text-text-primary font-body overflow-hidden" [class.flex-row-reverse]="locale.isRtl()" [attr.data-locale]="locale.locale()">
       <!-- DESKTOP SIDEBAR -->
-      <aside class="hidden md:flex flex-col w-[260px] bg-bg-base border-r border-border h-full flex-shrink-0 relative z-20">
+      <aside class="hidden md:flex flex-col w-[260px] bg-bg-base h-full flex-shrink-0 relative z-20"
+             [class.border-r]="!locale.isRtl()" [class.border-l]="locale.isRtl()" [class.border-border]="true">
         <!-- Logo -->
         <div class="h-20 flex items-center px-6">
           <span class="font-display font-bold text-2xl tracking-tight text-white">
@@ -41,8 +46,8 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                 {{ activeWorkspaceInitials() }}
               </div>
               <div class="flex flex-col">
-                <span class="text-sm font-semibold text-white leading-tight truncate max-w-[120px]">{{ workspaceService.activeWorkspace()?.name || 'Loading...' }}</span>
-                <span class="text-[10px] text-text-muted">Team Workspace</span>
+                <span class="text-sm font-semibold text-text-primary leading-tight truncate max-w-[120px]">{{ workspaceService.activeWorkspace()?.name || locale.t('shell.loading') }}</span>
+                <span class="text-[10px] text-text-muted">{{ locale.t('shell.teamWorkspace') }}</span>
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted transition-transform" [class.rotate-180]="showWorkspaceMenu()">
@@ -54,7 +59,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
           @if (showWorkspaceMenu()) {
             <div class="absolute top-full left-4 right-4 mt-2 bg-bg-elevated border border-border rounded-xl shadow-modal z-50 py-2 animate-scale-in">
               <div class="px-3 pb-2 mb-2 border-b border-border">
-                <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Your Workspaces</span>
+                <span class="text-xs font-bold text-text-muted uppercase tracking-wider">{{ locale.t('shell.yourWorkspaces') }}</span>
               </div>
               <div class="max-h-48 overflow-y-auto hide-scrollbar">
                 @for (ws of workspaceService.workspaces(); track ws._id) {
@@ -77,12 +82,12 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                 @if (workspaceService.activeWorkspace()) {
                   <a routerLink="/members" (click)="showWorkspaceMenu.set(false)" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-white hover:bg-bg-hover transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    Manage Members
+                    {{ locale.t('shell.manageMembers') }}
                   </a>
                 }
                 <button (click)="openCreateWorkspace()" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-white hover:bg-bg-hover transition-colors">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add Workspace
+                  {{ locale.t('shell.addWorkspace') }}
                 </button>
               </div>
             </div>
@@ -92,7 +97,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
         <!-- Navigation -->
         <nav class="flex-1 overflow-y-auto px-4 space-y-1 pb-4 hide-scrollbar">
           @for (item of visibleNavItems(); track item.path) {
-            @if (item.label === 'My Projects') {
+            @if (item.labelKey === 'nav.projects') {
               <div class="flex flex-col gap-1">
                 <button (click)="projectsExpanded.set(!projectsExpanded())" 
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-sm font-medium group"
@@ -101,7 +106,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                   <div class="flex items-center gap-3">
                     <span [innerHTML]="item.icon" class="text-text-muted opacity-80 transition-colors"
                           [class.text-accent]="projectsExpanded() || isProjectsRouteActive()"></span>
-                    {{ item.label }}
+                    {{ locale.t(item.labelKey) }}
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted transition-transform" [class.rotate-180]="projectsExpanded()">
                     <path d="M6 9l6 6 6-6"/>
@@ -124,11 +129,11 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                       </a>
                     }
                     @if (projects().length === 0 && !loadingProjects()) {
-                      <div class="px-3 py-2 text-[11px] text-text-muted italic">No projects found</div>
+                      <div class="px-3 py-2 text-[11px] text-text-muted italic">{{ locale.t('shell.noProjects') }}</div>
                     }
                     <button class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-muted hover:text-accent transition-colors text-xs font-semibold group mt-1" [routerLink]="['/dashboard']" [queryParams]="{create: 'true'}">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      New Project
+                      {{ locale.t('shell.newProject') }}
                     </button>
                   </div>
                 }
@@ -139,7 +144,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                  [routerLinkActiveOptions]="{exact: item.exact}"
                  class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-sm font-medium group">
                 <span [innerHTML]="item.icon" class="text-text-muted group-[.active]:text-accent opacity-80"></span>
-                {{ item.label }}
+                {{ locale.t(item.labelKey) }}
               </a>
             }
           }
@@ -152,7 +157,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
             </svg>
-            Settings
+            {{ locale.t('nav.settings') }}
           </a>
           <a routerLink="/support" routerLinkActive="bg-bg-hover text-white" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-sm font-medium">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted">
@@ -160,13 +165,15 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
               <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path>
               <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
-            Support
+            {{ locale.t('nav.support') }}
           </a>
         </div>
       </aside>
 
       <!-- MAIN CONTENT WRAPPER -->
-      <div class="flex-1 flex flex-col min-w-0 h-full relative bg-bg-surface rounded-tl-2xl border-l border-t border-border overflow-hidden">
+      <div class="flex-1 flex flex-col min-w-0 h-full relative bg-bg-surface overflow-hidden"
+           [class.rounded-tl-2xl]="!locale.isRtl()" [class.rounded-tr-2xl]="locale.isRtl()"
+           [class.border-l]="!locale.isRtl()" [class.border-r]="locale.isRtl()" [class.border-t]="true" [class.border-border]="true">
         <!-- TOPBAR -->
         <header class="h-20 flex items-center justify-between px-8 bg-transparent z-10 border-b border-border">
           
@@ -179,7 +186,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </div>
-              <input type="text" placeholder="Global search..." class="w-full bg-bg-elevated border border-border rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-text-muted focus:outline-none focus:border-accent transition-colors">
+              <input type="text" [placeholder]="locale.t('shell.globalSearch')" class="w-full bg-bg-elevated border border-border rounded-lg pl-9 pr-4 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors">
             </div>
           </div>
 
@@ -194,12 +201,14 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
           </div>
 
           <!-- Right Actions -->
-          <div class="flex items-center gap-5 ml-auto">
+          <div class="flex items-center gap-3 ml-auto">
+            <app-ui-preferences />
+
             <!-- Record Button (Global Timer) -->
             @if (anyTimerRunning()) {
               <div class="relative">
                 <button class="flex items-center gap-3 px-3 py-1.5 bg-bg-elevated border border-accent/40 rounded-full hover:bg-bg-hover transition-colors group shadow-[0_0_12px_rgba(99,102,241,0.15)]"
-                        title="Time Tracking"
+                        title="{{ locale.t('shell.timeTracking') }}"
                         (click)="toggleTaskSelector()">
                   <span class="w-1.5 h-1.5 rounded-full bg-danger animate-pulse"></span>
                   <span class="text-xs font-bold font-mono tracking-wider text-accent">{{ globalDisplayTime() }}</span>
@@ -214,14 +223,14 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                 @if (showTaskSelector()) {
                   <div class="absolute top-full right-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
                     <div class="flex items-center justify-between mb-4">
-                      <h3 class="text-sm font-bold text-white tracking-tight">Time Tracking</h3>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-danger/20 text-danger border border-danger/30 uppercase tracking-widest animate-pulse-glow">Live</span>
+                      <h3 class="text-sm font-bold text-white tracking-tight">{{ locale.t('shell.timeTracking') }}</h3>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-danger/20 text-danger border border-danger/30 uppercase tracking-widest animate-pulse-glow">{{ locale.t('shell.live') }}</span>
                     </div>
 
                     <!-- Daily Goal -->
                     <div class="bg-bg-base border border-border rounded-lg p-4 mb-4">
                       <div class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Daily Goal (7H)</span>
+                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">{{ locale.t('shell.dailyGoal') }}</span>
                         <span class="text-xs font-bold font-mono text-white">{{ dailyDisplay() }}</span>
                       </div>
                       <div class="h-1.5 bg-bg-elevated rounded-full overflow-hidden w-full">
@@ -233,9 +242,9 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                     <div class="bg-bg-base border border-danger/30 rounded-lg p-4 mb-4 shadow-[0_0_15px_rgba(239,68,68,0.05)]">
                       <div class="flex items-center gap-2 mb-1">
                         @if (activeTimerService.activeTask()) {
-                          <span class="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-accent-subtle text-accent border border-accent/30">Task</span>
+                          <span class="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-accent-subtle text-accent border border-accent/30">{{ locale.t('shell.chip.task') }}</span>
                         } @else {
-                          <span class="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-info/15 text-info border border-info/30">Quick session</span>
+                          <span class="text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-info/15 text-info border border-info/30">{{ locale.t('shell.quickSession') }}</span>
                         }
                       </div>
                       <div class="flex flex-col gap-1 mb-4">
@@ -244,21 +253,21 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                       </div>
                       <button class="w-full py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-bold tracking-wide transition-colors flex items-center justify-center gap-2" (click)="stopAny()">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/></svg>
-                        Stop
+                        {{ locale.t('shell.stop') }}
                       </button>
                     </div>
 
                     <!-- Recent Tasks -->
                     <div class="mb-2 flex items-center justify-between">
-                      <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Recent</span>
-                      <span class="text-[10px] text-text-muted">Tap a task to switch</span>
+                      <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">{{ locale.t('shell.recent') }}</span>
+                      <span class="text-[10px] text-text-muted">{{ locale.t('shell.tapToSwitch') }}</span>
                     </div>
                     <div class="max-h-44 overflow-y-auto flex flex-col gap-1 pb-2 hide-scrollbar">
                       @if (loadingRecent()) {
                         <div class="h-8 rounded-md bg-bg-base/60 animate-pulse"></div>
                         <div class="h-8 rounded-md bg-bg-base/60 animate-pulse"></div>
                       } @else if (recentTasks().length === 0) {
-                        <p class="text-xs text-text-muted text-center py-4">No recent tasks.</p>
+                        <p class="text-xs text-text-muted text-center py-4">{{ locale.t('shell.noRecentTasks') }}</p>
                       } @else {
                         @for (t of recentTasks(); track t._id) {
                           <button
@@ -283,7 +292,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                     </div>
 
                     <div class="mt-3 pt-3 border-t border-border text-center">
-                      <a routerLink="/my-timesheet" class="text-xs font-semibold text-text-secondary hover:text-white transition-colors" (click)="toggleTaskSelector()">View Timesheet</a>
+                      <a routerLink="/my-timesheet" class="text-xs font-semibold text-text-secondary hover:text-white transition-colors" (click)="toggleTaskSelector()">{{ locale.t('shell.viewTimesheet') }}</a>
                     </div>
                   </div>
                 }
@@ -291,9 +300,9 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
             } @else {
               <div class="relative">
                 <button class="flex items-center gap-2 px-3 py-1.5 bg-bg-elevated border border-border rounded-full hover:bg-accent/20 hover:border-accent/50 hover:text-accent transition-colors text-text-muted group"
-                        (click)="toggleTaskSelector()" title="Start Timer">
+                        (click)="toggleTaskSelector()" [title]="locale.t('shell.startTimer')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  <span class="text-xs font-semibold hidden md:inline-block">Start Timer</span>
+                  <span class="text-xs font-semibold hidden md:inline-block">{{ locale.t('shell.startTimer') }}</span>
                 </button>
 
                 <!-- Task Selector Dropdown (When not tracking) -->
@@ -303,23 +312,23 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                     <div class="flex items-center justify-between mb-4">
                       @if (popoverProject(); as pp) {
                         <div class="flex items-center gap-2 min-w-0">
-                          <button (click)="backToProjects()" class="p-1 -ml-1 rounded text-text-muted hover:text-white hover:bg-bg-hover transition-colors shrink-0" title="Back">
+                          <button (click)="backToProjects()" class="p-1 -ml-1 rounded text-text-muted hover:text-white hover:bg-bg-hover transition-colors shrink-0" [title]="locale.t('shell.title.back')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
                           </button>
                           <div class="min-w-0">
-                            <div class="text-[10px] uppercase tracking-widest text-accent font-bold">Tasks</div>
+                            <div class="text-[10px] uppercase tracking-widest text-accent font-bold">{{ locale.t('shell.tasks') }}</div>
                             <h3 class="text-sm font-bold text-white tracking-tight truncate">{{ pp.title }}</h3>
                           </div>
                         </div>
                       } @else {
-                        <h3 class="text-sm font-bold text-white tracking-tight">Time Tracking</h3>
+                        <h3 class="text-sm font-bold text-white tracking-tight">{{ locale.t('shell.timeTracking') }}</h3>
                       }
                     </div>
 
                     <!-- Daily Goal -->
                     <div class="bg-bg-base border border-border rounded-lg p-4 mb-4">
                       <div class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Daily Goal (7H)</span>
+                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">{{ locale.t('shell.dailyGoal') }}</span>
                         <span class="text-xs font-bold font-mono text-white">{{ dailyDisplay() }}</span>
                       </div>
                       <div class="h-1.5 bg-bg-elevated rounded-full overflow-hidden w-full">
@@ -332,14 +341,14 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
 
                       <!-- ClickUp-style Quick Session: free-form description timer -->
                       <div class="mb-4">
-                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider block mb-2">What are you working on?</span>
+                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider block mb-2">{{ locale.t('shell.whatWorkingOn') }}</span>
                         <div class="flex gap-2">
                           <input
                             type="text"
                             [value]="quickDescription()"
                             (input)="quickDescription.set($any($event.target).value)"
                             (keydown.enter)="startQuickSession()"
-                            placeholder="e.g. Reviewing API docs…"
+                            [placeholder]="locale.t('shell.whatWorkingOnPlaceholder')"
                             maxlength="200"
                             class="flex-1 min-w-0 bg-bg-base border border-border text-white text-xs rounded-lg px-3 py-2 outline-none focus:border-accent transition-colors placeholder:text-text-muted/60"
                           />
@@ -347,18 +356,18 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                             (click)="startQuickSession()"
                             [disabled]="startingQuickSession()"
                             class="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-xs font-bold tracking-wide transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0 shadow-[0_0_10px_rgba(99,102,241,0.25)]"
-                            title="Start tracking now"
+                            [title]="locale.t('shell.title.startTracking')"
                           >
                             @if (startingQuickSession()) {
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="animate-spin-slow"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
                             } @else {
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                             }
-                            Start
+                            {{ locale.t('shell.start') }}
                           </button>
                         </div>
                         <p class="text-[10px] text-text-muted mt-1.5">
-                          Skip the task picker — tracks against the current workspace.
+                          {{ locale.t('shell.skipTaskPicker') }}
                         </p>
                       </div>
 
@@ -367,7 +376,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                       <!-- Recent Tasks (quick re-start) -->
                       @if (loadingRecent() || recentTasks().length > 0) {
                         <div class="mb-2">
-                          <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Recent Tasks</span>
+                          <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">{{ locale.t('shell.recentTasks') }}</span>
                         </div>
                         <div class="max-h-32 overflow-y-auto flex flex-col gap-1 pb-3 hide-scrollbar">
                           @if (loadingRecent()) {
@@ -400,7 +409,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                       }
 
                       <div class="mb-2">
-                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Pick a Project</span>
+                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">{{ locale.t('shell.pickProject') }}</span>
                       </div>
                       <div class="max-h-44 overflow-y-auto flex flex-col gap-1 pb-2 hide-scrollbar">
                         @for (project of projects(); track project._id) {
@@ -412,8 +421,8 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                         }
                         @if (!projects().length) {
                           <div class="text-xs text-text-muted p-3 text-center">
-                            No projects in this workspace yet.
-                            <a routerLink="/dashboard" [queryParams]="{create: 'true'}" class="block mt-1 text-accent hover:underline" (click)="toggleTaskSelector()">Create one →</a>
+                            {{ locale.t('shell.noProjectsInWorkspace') }}
+                            <a routerLink="/dashboard" [queryParams]="{create: 'true'}" class="block mt-1 text-accent hover:underline" (click)="toggleTaskSelector()">{{ locale.t('shell.createOne') }}</a>
                           </div>
                         }
                       </div>
@@ -426,8 +435,8 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                           <div class="h-10 rounded-md bg-bg-base/60 animate-pulse"></div>
                         } @else if (popoverTasks().length === 0) {
                           <div class="text-xs text-text-muted p-4 text-center">
-                            This project has no tasks yet.
-                            <a [routerLink]="['/projects', popoverProject()!._id]" class="block mt-1 text-accent hover:underline" (click)="toggleTaskSelector()">Open project →</a>
+                            {{ locale.t('shell.noTasksInProject') }}
+                            <a [routerLink]="['/projects', popoverProject()!._id]" class="block mt-1 text-accent hover:underline" (click)="toggleTaskSelector()">{{ locale.t('shell.openProject') }}</a>
                           </div>
                         } @else {
                           @for (t of popoverTasks(); track t._id) {
@@ -452,9 +461,9 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                                         [class.bg-warning]="t.status === 'in_review'"
                                         [class.bg-text-muted]="t.status === 'not_started'"
                                         [class.text-white]="true">
-                                    {{ t.status.replace('_', ' ') }}
+                                    {{ locale.statusLabel(t.status) }}
                                   </span>
-                                  <span class="text-[9px] text-text-muted ml-1 uppercase tracking-wider">{{ t.priority }}</span>
+                                  <span class="text-[9px] text-text-muted ml-1 uppercase tracking-wider">{{ locale.priorityLabel(t.priority) }}</span>
                                 </div>
                               </div>
                             </button>
@@ -464,7 +473,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                     }
 
                     <div class="mt-3 pt-3 border-t border-border text-center">
-                      <a routerLink="/my-timesheet" class="text-xs font-semibold text-text-secondary hover:text-white transition-colors" (click)="toggleTaskSelector()">View Timesheet</a>
+                      <a routerLink="/my-timesheet" class="text-xs font-semibold text-text-secondary hover:text-white transition-colors" (click)="toggleTaskSelector()">{{ locale.t('shell.viewTimesheet') }}</a>
                     </div>
                   </div>
                 }
@@ -486,9 +495,9 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
               @if (showNotifications()) {
                 <div class="absolute right-0 mt-4 w-80 bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
                   <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-display font-semibold text-sm">Notifications</h3>
+                    <h3 class="font-display font-semibold text-sm">{{ locale.t('shell.notifications') }}</h3>
                     @if (unreadCount() > 0) {
-                      <button (click)="markAllAsRead()" class="text-xs text-accent hover:text-accent-hover font-medium">Mark all read</button>
+                      <button (click)="markAllAsRead()" class="text-xs text-accent hover:text-accent-hover font-medium">{{ locale.t('shell.markAllRead') }}</button>
                     }
                   </div>
                   <div class="max-h-64 overflow-y-auto space-y-2 hide-scrollbar">
@@ -504,7 +513,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                       </div>
                     }
                     @if (notifications().length === 0) {
-                      <div class="text-center py-6 text-text-muted text-sm">No new notifications</div>
+                      <div class="text-center py-6 text-text-muted text-sm">{{ locale.t('shell.noNotifications') }}</div>
                     }
                   </div>
                 </div>
@@ -512,7 +521,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
             </div>
 
             <!-- Help Icon -->
-            <a routerLink="/support" class="text-text-muted hover:text-white transition-colors" title="Support">
+            <a routerLink="/support" class="text-text-muted hover:text-white transition-colors" [title]="locale.t('shell.title.support')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path>
@@ -520,7 +529,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
               </svg>
             </a>
 
-            <a routerLink="/account" class="text-text-muted hover:text-white transition-colors" title="Settings">
+            <a routerLink="/account" class="text-text-muted hover:text-white transition-colors" [title]="locale.t('shell.title.settings')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
@@ -541,17 +550,17 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                   </div>
                   <a routerLink="/account" class="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors flex items-center gap-2" (click)="toggleUserMenu()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Profile
+                    {{ locale.t('shell.profile') }}
                   </a>
                   <a routerLink="/support" class="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors flex items-center gap-2" (click)="toggleUserMenu()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    Support
+                    {{ locale.t('nav.support') }}
                   </a>
                   <button (click)="logout()" class="w-full text-left px-3 py-2 mt-1 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                     </svg>
-                    Sign out
+                    {{ locale.t('shell.logout') }}
                   </button>
                 </div>
               }
@@ -573,7 +582,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
              [routerLinkActiveOptions]="{exact: item.exact}"
              class="flex flex-col items-center justify-center w-full h-full text-text-muted hover:text-white transition-colors">
             <span [innerHTML]="item.icon" class="mb-1 transform scale-90"></span>
-            <span class="text-[10px] font-medium">{{ item.label }}</span>
+            <span class="text-[10px] font-medium">{{ locale.t(item.labelKey) }}</span>
           </a>
         }
       </div>
@@ -596,7 +605,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
                  (click)="toggleMobileMenu()"
                  class="flex items-center gap-3 px-3 py-3 rounded-lg text-text-secondary hover:text-white transition-colors text-sm font-medium group">
                 <span [innerHTML]="item.icon" class="text-text-muted group-[.active]:text-accent"></span>
-                {{ item.label }}
+                {{ locale.t(item.labelKey) }}
               </a>
             }
           </nav>
@@ -616,27 +625,24 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div class="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-modal animate-scale-in">
             <div class="px-6 py-5 border-b border-border flex items-center justify-between">
-              <h2 class="text-lg font-bold text-white tracking-tight">New Workspace</h2>
+              <h2 class="text-lg font-bold text-white tracking-tight">{{ locale.t('shell.newWorkspace') }}</h2>
               <button class="text-text-muted hover:text-white transition-colors" (click)="closeCreateWorkspace()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
             <form [formGroup]="workspaceForm" (ngSubmit)="submitWorkspace()" class="p-6 flex flex-col gap-5">
               <div class="flex flex-col gap-2">
-                <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Name <span class="text-danger">*</span></label>
-                <input type="text" formControlName="name" placeholder="E.g., Engineering Team" class="w-full bg-bg-base border border-border text-white text-sm rounded-lg px-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50" />
+                <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ locale.t('shell.workspaceName') }} <span class="text-danger">{{ locale.t('common.required') }}</span></label>
+                <input type="text" formControlName="name" [placeholder]="locale.t('shell.workspaceNamePlaceholder')" class="w-full bg-bg-base border border-border text-white text-sm rounded-lg px-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50" />
               </div>
               <div class="flex flex-col gap-2">
-                <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Description</label>
-                <textarea formControlName="description" rows="2" placeholder="Optional" class="w-full bg-bg-base border border-border text-white text-sm rounded-lg px-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50 resize-none"></textarea>
+                <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ locale.t('shell.workspaceDescription') }}</label>
+                <textarea formControlName="description" rows="2" [placeholder]="locale.t('shell.workspaceOptional')" class="w-full bg-bg-base border border-border text-white text-sm rounded-lg px-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50 resize-none"></textarea>
               </div>
-              @if (createError()) {
-                <div class="text-danger text-xs font-medium">{{ createError() }}</div>
-              }
               <div class="flex items-center justify-end gap-3 mt-2">
-                <button type="button" class="px-4 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-white hover:bg-bg-hover transition-colors" (click)="closeCreateWorkspace()">Cancel</button>
+                <button type="button" class="px-4 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-white hover:bg-bg-hover transition-colors" (click)="closeCreateWorkspace()">{{ locale.t('shell.cancel') }}</button>
                 <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)]" [disabled]="creatingWs() || workspaceForm.invalid">
-                  {{ creatingWs() ? 'Creating...' : 'Create Workspace' }}
+                  {{ creatingWs() ? locale.t('shell.creatingWorkspace') : locale.t('shell.createWorkspace') }}
                 </button>
               </div>
             </form>
@@ -647,6 +653,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
   `
 })
 export class ShellComponent implements OnInit {
+  locale = inject(LocaleService);
   authService = inject(AuthService);
   notificationService = inject(NotificationService);
   workspaceService = inject(WorkspaceService);
@@ -654,6 +661,7 @@ export class ShellComponent implements OnInit {
   taskService = inject(TaskService);
   timeEntryService = inject(TimeEntryService);
   activeTimerService = inject(ActiveTimerService);
+  private toast = inject(ToastService);
   fb = inject(FormBuilder);
   router = inject(Router);
 
@@ -698,7 +706,7 @@ export class ShellComponent implements OnInit {
     const task = this.activeTimerService.activeTask();
     if (task) return task.title;
     const entry = this.timeEntryService.active();
-    if (entry) return entry.description?.trim() || 'Quick session';
+    if (entry) return entry.description?.trim() || this.locale.t('shell.quickSession');
     return '';
   });
 
@@ -762,25 +770,25 @@ export class ShellComponent implements OnInit {
     return ws.name.substring(0, 2);
   });
 
-  navItems = [
-    { path: '/dashboard', label: 'Dashboard', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
-    { path: '/projects', label: 'My Projects', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' },
-    { path: '/members', label: 'Members', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
-    { path: '/my-timesheet', label: 'My Timesheet', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' },
-    { path: '/request-center', label: 'Request Center', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' },
-    { path: '/admin-hr-portal', label: 'HR Portal', exact: false, roles: ['admin', 'manager', 'hr'], icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
-    { path: '/team-activity', label: 'Team Activity', exact: false, roles: ['admin', 'manager', 'hr'], icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' },
-    { path: '/payroll-workspace', label: 'Payroll', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>' },
-    { path: '/reports', label: 'Reports', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>' },
-    { path: '/account', label: 'Account', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
+  navItems: Array<{ path: string; labelKey: string; exact: boolean; icon: string; roles?: string[] }> = [
+    { path: '/dashboard', labelKey: 'nav.dashboard', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
+    { path: '/projects', labelKey: 'nav.projects', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' },
+    { path: '/members', labelKey: 'nav.members', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
+    { path: '/my-timesheet', labelKey: 'nav.timesheet', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' },
+    { path: '/request-center', labelKey: 'nav.requests', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' },
+    { path: '/admin-hr-portal', labelKey: 'nav.hrPortal', exact: false, roles: ['admin', 'manager', 'hr'], icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
+    { path: '/team-activity', labelKey: 'nav.teamActivity', exact: false, roles: ['admin', 'manager', 'hr'], icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' },
+    { path: '/payroll-workspace', labelKey: 'nav.payroll', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>' },
+    { path: '/reports', labelKey: 'nav.reports', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>' },
+    { path: '/account', labelKey: 'nav.account', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
   ];
 
-  mobileNavItems = [
-    { path: '/dashboard', label: 'Home', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
-    { path: '/projects', label: 'Projects', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' },
-    { path: '/my-timesheet', label: 'Time', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>' },
-    { path: '/admin-hr-portal', label: 'HR', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
-    { path: '/account', label: 'Account', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
+  mobileNavItems: Array<{ path: string; labelKey: string; exact: boolean; icon: string }> = [
+    { path: '/dashboard', labelKey: 'nav.home', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
+    { path: '/projects', labelKey: 'nav.projects', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' },
+    { path: '/my-timesheet', labelKey: 'nav.timesheet', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>' },
+    { path: '/admin-hr-portal', labelKey: 'nav.hrPortal', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
+    { path: '/account', labelKey: 'nav.account', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
   ];
 
   /** Nav items the current user is allowed to see. Items without a `roles`
@@ -795,8 +803,13 @@ export class ShellComponent implements OnInit {
   ngOnInit() {
     this.loadNotifications();
     this.workspaceService.loadWorkspaces();
-    // Rehydrate any running quick session from a previous tab/visit
+    this.rehydrateActiveTracking();
+  }
+
+  /** Restore quick sessions and task timers after refresh or new tab. */
+  private rehydrateActiveTracking(): void {
     this.timeEntryService.loadActive().subscribe();
+    this.activeTimerService.loadActive().subscribe();
   }
 
   isProjectsRouteActive(): boolean {
@@ -871,10 +884,10 @@ export class ShellComponent implements OnInit {
         this.workspaceService.loadWorkspaces();
         // Note: active is naturally set in loadWorkspaces if none, but we can explicitly set it:
         this.workspaceService.activeWorkspace.set(ws);
+        this.toast.success(this.locale.t('shell.toast.workspaceCreated', { name: ws.name }));
       },
       error: () => {
         this.creatingWs.set(false);
-        this.createError.set('Failed to create workspace.');
       }
     });
   }
@@ -972,6 +985,7 @@ export class ShellComponent implements OnInit {
         if (res?.data) {
           this.activeTimerService.setActiveTask(res.data);
           this.timeEntryService.active.set(null);
+          this.toast.success(this.locale.t('shell.toast.timerStarted', { title: task.title }));
         }
         this.startingTaskId.set(null);
         this.showTaskSelector.set(false);
@@ -1122,6 +1136,7 @@ export class ShellComponent implements OnInit {
           this.quickDescription.set('');
           this.showTaskSelector.set(false);
           this.loadRecentAndDaily();
+          this.toast.success(this.locale.t('shell.toast.quickSessionStarted'));
         },
         error: () => this.startingQuickSession.set(false),
       });
@@ -1132,8 +1147,11 @@ export class ShellComponent implements OnInit {
     const task = this.activeTimerService.activeTask();
     if (task) {
       this.activeTimerService.stopTimer();
+      this.toast.info(this.locale.t('shell.toast.timerStopped'));
     } else if (this.timeEntryService.active()) {
-      this.timeEntryService.stop().subscribe();
+      this.timeEntryService.stop().subscribe({
+        next: () => this.toast.info(this.locale.t('shell.toast.sessionStopped')),
+      });
     }
     setTimeout(() => this.loadRecentAndDaily(), 400);
   }

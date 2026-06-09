@@ -3,12 +3,14 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LocaleService } from '../../../core/i18n/locale.service';
 
 export type ConfirmVariant = 'danger' | 'accent' | 'warning';
 export type ConfirmIcon = 'alert' | 'clock' | 'check' | 'warning';
@@ -21,11 +23,13 @@ export type ConfirmIcon = 'alert' | 'clock' | 'check' | 'warning';
   templateUrl: './confirm-dialog.component.html',
 })
 export class ConfirmDialogComponent {
+  locale = inject(LocaleService);
+
   open = input(false);
   title = input('');
   message = input('');
-  confirmLabel = input('Confirm');
-  cancelLabel = input('Cancel');
+  confirmLabel = input('');
+  cancelLabel = input('');
   variant = input<ConfirmVariant>('accent');
   icon = input<ConfirmIcon>('alert');
   showInput = input(false);
@@ -40,6 +44,17 @@ export class ConfirmDialogComponent {
   inputText = signal('');
 
   requiresInput = computed(() => this.showInput() || this.showTextarea());
+
+  cancelLabelDisplay = computed(() => {
+    this.locale.locale();
+    const label = this.cancelLabel();
+    return label || this.locale.t('common.cancel');
+  });
+  confirmLabelDisplay = computed(() => {
+    this.locale.locale();
+    const label = this.confirmLabel();
+    return label || this.locale.t('common.confirm');
+  });
 
   iconContainerClass = computed(() => {
     switch (this.variant()) {

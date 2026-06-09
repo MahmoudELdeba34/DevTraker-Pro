@@ -66,6 +66,11 @@ export class TaskService {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/my/timesheet`);
   }
 
+  /** Fetch the task timer currently running for the logged-in user, if any. */
+  getActiveTimer(): Observable<ApiResponse<Task | null>> {
+    return this.http.get<ApiResponse<Task | null>>(`${this.apiUrl}/my/active-timer`);
+  }
+
   startTimer(id: string): Observable<ApiResponse<Task>> {
     return this.http.post<ApiResponse<Task>>(
       `${this.apiUrl}/${id}/timer/start`,

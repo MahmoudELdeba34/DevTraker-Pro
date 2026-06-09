@@ -15,6 +15,9 @@ import { Task } from '../../models/types';
 import { TaskService } from '../../services/task.service';
 import { ActiveTimerService } from '../../services/active-timer.service';
 import { TimeEntryService } from '../../services/time-entry.service';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 function formatMs(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -28,9 +31,10 @@ function formatMs(ms: number): string {
   selector: 'app-timer-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="flex items-center gap-2 rounded-full pl-3 pr-1 py-1 transition-colors"
+         [attr.data-locale]="locale.locale()"
          [ngClass]="{
            'bg-accent/10 border border-accent/20': !isRunning(),
            'bg-accent/20 border border-accent/50 shadow-[0_0_10px_rgba(99,102,241,0.2)]': isRunning()
@@ -43,7 +47,7 @@ function formatMs(ms: number): string {
               [ngClass]="isRunning() ? 'bg-danger hover:bg-danger/80' : 'bg-accent hover:bg-accent-hover'"
               (click)="toggleTimer($event)"
               [disabled]="timerLoading()"
-              title="Click to start/stop timer">
+              [title]="'timerWidget.title' | translate">
         @if (timerLoading()) {
           <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -78,6 +82,8 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
   private taskService = inject(TaskService);
   private activeTimerService = inject(ActiveTimerService);
   private timeEntryService = inject(TimeEntryService);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
   constructor() {
     effect(() => {
@@ -92,9 +98,14 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loggedMs = this.task.timeLogs.reduce((acc, l) => acc + l.duration, 0);
+    this.loggedMs = (this.task.timeLogs || []).reduce((acc, l) => acc + l.duration, 0);
 
-    if (this.task.activeTimerStart) {
+    const active = this.activeTimerService.activeTask();
+    if (active?._id === this.task._id && active.activeTimerStart) {
+      this.task = active;
+      this.isRunning.set(true);
+      this.startTick();
+    } else if (this.task.activeTimerStart) {
       this.isRunning.set(true);
       this.activeTimerService.setActiveTask(this.task);
       this.startTick();
@@ -125,6 +136,7 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
         this.isRunning.set(true);
         this.activeTimerService.setActiveTask(res.data);
         this.timeEntryService.active.set(null);
+        this.toast.success(this.locale.t('timerWidget.started'));
         this.startTick();
         this.timerUpdated.emit(res.data);
       },
@@ -145,6 +157,7 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
           this.activeTimerService.setActiveTask(null);
         }
         this.displayTime.set(formatMs(this.loggedMs));
+        this.toast.info(this.locale.t('timerWidget.stopped'));
         this.timerUpdated.emit(res.data);
       },
       error: () => {
@@ -156,9 +169,13 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
 
   private startTick(): void {
     this.clearInterval();
+    const timerStart =
+      this.activeTimerService.activeTask()?._id === this.task._id
+        ? this.activeTimerService.activeTask()?.activeTimerStart
+        : this.task.activeTimerStart;
     this.intervalId = setInterval(() => {
-      const elapsed = this.task.activeTimerStart
-        ? Date.now() - new Date(this.task.activeTimerStart).getTime()
+      const elapsed = timerStart
+        ? Date.now() - new Date(timerStart).getTime()
         : 0;
       this.displayTime.set(formatMs(this.loggedMs + elapsed));
     }, 1000);

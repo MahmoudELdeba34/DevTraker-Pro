@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { UserService } from './services/user.service';
+import { ThemeService } from './core/theme/theme.service';
+import { LocaleService } from './core/i18n/locale.service';
 import { Subscription, interval, filter } from 'rxjs';
 import { ToastContainerComponent } from './components/ui/toast-container/toast-container.component';
 
@@ -15,12 +17,17 @@ export class AppComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(AuthService);
   private userService = inject(UserService);
+  private themeService = inject(ThemeService);
+  private localeService = inject(LocaleService);
 
   private heartbeatSub?: Subscription;
   private routerSub?: Subscription;
   private currentUrl = '/';
 
   ngOnInit() {
+    this.themeService.init();
+    this.localeService.init();
+
     // Track active page route changes
     this.routerSub = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))

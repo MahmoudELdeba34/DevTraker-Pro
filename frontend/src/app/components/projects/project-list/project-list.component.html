@@ -1,15 +1,15 @@
-<section class="projects-section">
+<section class="projects-section" [attr.data-locale]="locale.locale()">
   <div class="section-header">
     <div>
-      <h2 class="section-title">Projects</h2>
-      <p class="section-subtitle">Manage projects in your active workspace.</p>
+      <h2 class="section-title">{{ 'projectList.title' | translate }}</h2>
+      <p class="section-subtitle">{{ 'projectList.subtitle' | translate }}</p>
     </div>
     <button type="button" class="btn-primary" (click)="createProject.emit()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      New Project
+      {{ 'common.newProject' | translate }}
     </button>
   </div>
 
@@ -21,8 +21,8 @@
     </div>
   } @else if (!projects().length) {
     <div class="empty-state">
-      <p>No projects yet in this workspace.</p>
-      <button type="button" class="btn-primary mt-3" (click)="createProject.emit()">Create your first project</button>
+      <p>{{ 'projectList.empty' | translate }}</p>
+      <button type="button" class="btn-primary mt-3" (click)="createProject.emit()">{{ 'projectList.createFirst' | translate }}</button>
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -46,15 +46,15 @@
           </div>
 
           <div class="meta-row">
-            <span>{{ project.completedCount }}/{{ project.taskCount }} tasks done</span>
+            <span>{{ tasksDoneLabel(project) }}</span>
             @if (project.deadline) {
-              <span>Due {{ formatDate(project.deadline) }}</span>
+              <span>{{ dueLabel(project.deadline) }}</span>
             }
           </div>
 
           <div class="card-actions">
-            <button type="button" class="action-btn" (click)="onEdit(project, $event)">Edit</button>
-            <button type="button" class="action-btn danger" (click)="onDelete(project, $event)">Delete</button>
+            <button type="button" class="action-btn" (click)="onEdit(project, $event)">{{ 'projectList.edit' | translate }}</button>
+            <button type="button" class="action-btn danger" (click)="onDelete(project, $event)">{{ 'projectList.delete' | translate }}</button>
           </div>
         </a>
       }

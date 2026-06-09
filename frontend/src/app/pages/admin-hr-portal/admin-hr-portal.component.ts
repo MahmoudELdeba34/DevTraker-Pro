@@ -4,7 +4,11 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { RouterLink } from '@angular/router';
 import { HRService } from '../../services/hr.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { PrintDocumentService } from '../../services/print-document.service';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import {
   ConfirmDialogComponent,
   ConfirmIcon,
@@ -35,37 +39,28 @@ interface ConfirmRequest {
 @Component({
   selector: 'app-admin-hr-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, PageHeaderComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, PageHeaderComponent, ConfirmDialogComponent, TranslatePipe],
   template: `
-    <div class="page-ambient pb-12 animate-fade-up">
+    <div class="page-ambient pb-12 animate-fade-up" [attr.data-locale]="locale.locale()">
 
       <app-page-header
-        eyebrow="HR Operations"
-        title="HR Control Center"
-        description="Approve time-off requests, adjust attendance, manage the employee roster, and hand-off finalized hours to Payroll."
-        badge="Admin view"
+        [eyebrow]="locale.t('hrPortal.eyebrow')"
+        [title]="locale.t('hrPortal.title')"
+        [description]="locale.t('hrPortal.description')"
+        [badge]="locale.t('hrPortal.badge')"
         badgeTone="accent"
-        [steps]="[
-          { label: 'Clear the approval queue', description: 'Review pending leaves, permissions, and overtime first.', tone: 'do' },
-          { label: 'Audit attendance', description: 'Fix punch errors and confirm late/early statuses.', tone: 'wait' },
-          { label: 'Keep the roster fresh', description: 'Add new hires, update contracts, and maintain salaries.', tone: 'wait' },
-          { label: 'Hand off to Payroll', description: 'Once the month is closed, jump to the Payroll workspace.', tone: 'done' }
-        ]"
-        [tips]="[
-          { title: 'Rejection requires a reason', body: 'You will be prompted to explain a rejection so the employee understands.' },
-          { title: 'Stats are clickable', body: 'Tap a pending count to jump straight into that approval queue.' },
-          { title: 'Salaries are sensitive', body: 'Only admins/accountants see compensation. Other HR users see roles only.' }
-        ]"
+        [steps]="hrPortalSteps()"
+        [tips]="hrPortalTips()"
       >
         <div header-actions class="flex items-center gap-2.5">
           <a routerLink="/employee-home" class="btn-soft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Clock Terminal
+            {{ 'common.clockTerminal' | translate }}
           </a>
           @if (isAccountantOrAdmin()) {
             <a routerLink="/payroll-workspace" class="btn-accent">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              Payroll Workspace
+              {{ 'common.payrollWorkspace' | translate }}
             </a>
           }
         </div>
@@ -75,7 +70,7 @@ interface ConfirmRequest {
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 stagger">
         <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Total Staff</span>
+            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.stat.totalStaff' | translate }}</span>
             <div class="w-7 h-7 rounded-lg bg-accent-subtle text-accent flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             </div>
@@ -84,7 +79,7 @@ interface ConfirmRequest {
         </div>
         <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Present Today</span>
+            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.stat.presentToday' | translate }}</span>
             <div class="w-7 h-7 rounded-lg bg-success/10 text-success flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
@@ -93,7 +88,7 @@ interface ConfirmRequest {
         </div>
         <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Pending Requests</span>
+            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.stat.pendingRequests' | translate }}</span>
             <div class="w-7 h-7 rounded-lg bg-warning/10 text-warning flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
             </div>
@@ -102,7 +97,7 @@ interface ConfirmRequest {
         </div>
         <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">On Break</span>
+            <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.stat.onBreak' | translate }}</span>
             <div class="w-7 h-7 rounded-lg bg-info/10 text-info flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/></svg>
             </div>
@@ -113,7 +108,7 @@ interface ConfirmRequest {
 
       <!-- Tabs -->
       <div class="bg-bg-elevated border border-border rounded-xl p-1 mb-6 inline-flex gap-1 flex-wrap">
-        @for (t of tabs; track t.key) {
+        @for (t of tabs(); track t.key) {
           <button (click)="activeTab.set(t.key)"
             class="relative px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 inline-flex items-center gap-2"
             [ngClass]="activeTab() === t.key ? 'bg-bg-base text-white shadow-card' : 'text-text-secondary hover:text-white'">
@@ -125,20 +120,6 @@ interface ConfirmRequest {
         }
       </div>
 
-      <!-- Feedback -->
-      @if (error()) {
-        <div class="flex items-center gap-3 p-3.5 mb-5 bg-danger/10 border border-danger/25 text-danger rounded-xl animate-fade-up">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
-          <p class="text-sm font-medium">{{ error() }}</p>
-        </div>
-      }
-      @if (success()) {
-        <div class="flex items-center gap-3 p-3.5 mb-5 bg-success/10 border border-success/25 text-success rounded-xl animate-fade-up">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-          <p class="text-sm font-medium">{{ success() }}</p>
-        </div>
-      }
-
       <!-- Tab content -->
       <div class="tab-panel" [attr.data-tab]="activeTab()">
 
@@ -147,19 +128,19 @@ interface ConfirmRequest {
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-bg-elevated border border-border rounded-2xl overflow-hidden">
               <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-                <h2 class="section-title"><span class="dot"></span>Today's Attendance</h2>
-                <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ todayAttendance().length }} entries</span>
+                <h2 class="section-title"><span class="dot"></span>{{ 'hrPortal.section.todayAttendance' | translate }}</h2>
+                <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.entriesCount', { count: todayAttendance().length }) }}</span>
               </div>
               <div class="overflow-x-auto hide-scrollbar">
                 <table class="hr-table">
                   <thead>
                     <tr>
-                      <th>Employee</th>
-                      <th>Check In</th>
-                      <th>Check Out</th>
-                      <th>Duration</th>
-                      <th>Break</th>
-                      <th class="text-center">Status</th>
+                      <th>{{ 'hrPortal.table.employee' | translate }}</th>
+                      <th>{{ 'hrPortal.table.checkIn' | translate }}</th>
+                      <th>{{ 'hrPortal.table.checkOut' | translate }}</th>
+                      <th>{{ 'hrPortal.table.duration' | translate }}</th>
+                      <th>{{ 'hrPortal.table.break' | translate }}</th>
+                      <th class="text-center">{{ 'common.status' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -175,13 +156,13 @@ interface ConfirmRequest {
                         <td class="font-mono text-text-muted">{{ formatBreakMinutes(item) }}</td>
                         <td class="text-center">
                           <span class="chip" [ngClass]="attendanceChip(item.status)">
-                            <span class="chip-dot"></span>{{ item.status }}
+                            <span class="chip-dot"></span>{{ attendanceStatusLabel(item.status) }}
                           </span>
                         </td>
                       </tr>
                     }
                     @if (todayAttendance().length === 0) {
-                      <tr><td colspan="6" class="text-center py-10 text-text-muted text-xs">No attendance logs today yet.</td></tr>
+                      <tr><td colspan="6" class="text-center py-10 text-text-muted text-xs">{{ 'hrPortal.empty.noAttendanceToday' | translate }}</td></tr>
                     }
                   </tbody>
                 </table>
@@ -191,51 +172,51 @@ interface ConfirmRequest {
             <!-- Adjust attendance form -->
             <div class="lg:col-span-1">
               <div class="bg-bg-elevated border border-border rounded-2xl p-6 sticky top-4">
-                <h2 class="section-title mb-5"><span class="dot"></span>Adjust Timesheet</h2>
+                <h2 class="section-title mb-5"><span class="dot"></span>{{ 'hrPortal.section.adjustTimesheet' | translate }}</h2>
                 <form [formGroup]="adjustForm" (ngSubmit)="submitAdjust()" class="flex flex-col gap-4">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Employee *</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.form.employeeRequired' | translate }}</label>
                     <select formControlName="userId" class="field">
-                      <option value="">— choose —</option>
+                      <option value="">{{ 'common.choose' | translate }}</option>
                       @for (emp of employees(); track emp._id) {
-                        <option [value]="emp._id">{{ emp.name }} · {{ emp.role }}</option>
+                        <option [value]="emp._id">{{ emp.name }} · {{ locale.roleLabel(emp.role) }}</option>
                       }
                     </select>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Date *</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.form.dateRequired' | translate }}</label>
                     <input type="date" formControlName="date" class="field font-mono" />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Check In</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.checkIn' | translate }}</label>
                       <input type="time" formControlName="checkIn" class="field font-mono" />
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Check Out</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.checkOut' | translate }}</label>
                       <input type="time" formControlName="checkOut" class="field font-mono" />
                     </div>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Status *</label>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.form.statusRequired' | translate }}</label>
                     <select formControlName="status" class="field">
-                      <option value="Present">Present</option>
-                      <option value="Absent">Absent</option>
-                      <option value="Late">Late</option>
-                      <option value="Early Leave">Early Leave</option>
-                      <option value="Half Day">Half Day</option>
-                      <option value="On Leave">On Leave</option>
+                      <option value="Present">{{ 'attendanceStatus.present' | translate }}</option>
+                      <option value="Absent">{{ 'attendanceStatus.absent' | translate }}</option>
+                      <option value="Late">{{ 'attendanceStatus.late' | translate }}</option>
+                      <option value="Early Leave">{{ 'attendanceStatus.earlyLeave' | translate }}</option>
+                      <option value="Half Day">{{ 'attendanceStatus.halfDay' | translate }}</option>
+                      <option value="On Leave">{{ 'attendanceStatus.onLeave' | translate }}</option>
                     </select>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Reason *</label>
-                    <textarea formControlName="reason" rows="2" placeholder="Why is this adjustment needed?" class="field resize-none"></textarea>
+                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'hrPortal.form.reasonRequired' | translate }}</label>
+                    <textarea formControlName="reason" rows="2" [placeholder]="'common.whyAdjustmentNeeded' | translate" class="field resize-none"></textarea>
                   </div>
                   <button type="submit" [disabled]="adjustForm.invalid || processing()" class="btn-accent w-full mt-1">
                     @if (processing()) {
                       <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                     }
-                    Apply Correction
+                    {{ 'hrPortal.form.applyCorrection' | translate }}
                   </button>
                 </form>
               </div>
@@ -248,19 +229,19 @@ interface ConfirmRequest {
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-bg-elevated border border-border rounded-2xl overflow-hidden">
               <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-                <h2 class="section-title"><span class="dot"></span>Employee Roster</h2>
-                <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ employees().length }} people</span>
+                <h2 class="section-title"><span class="dot"></span>{{ 'hrPortal.section.employeeRoster' | translate }}</h2>
+                <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.peopleCount', { count: employees().length }) }}</span>
               </div>
               <div class="overflow-x-auto hide-scrollbar">
                 <table class="hr-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Department · Title</th>
-                      <th>Role</th>
-                      <th>Salary</th>
-                      <th class="text-center">Status</th>
-                      <th class="text-right">Action</th>
+                      <th>{{ 'hrPortal.table.name' | translate }}</th>
+                      <th>{{ 'hrPortal.table.deptTitle' | translate }}</th>
+                      <th>{{ 'hrPortal.table.role' | translate }}</th>
+                      <th>{{ 'hrPortal.table.salary' | translate }}</th>
+                      <th class="text-center">{{ 'common.status' | translate }}</th>
+                      <th class="text-right">{{ 'hrPortal.table.action' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -272,26 +253,26 @@ interface ConfirmRequest {
                         </td>
                         <td>
                           <div class="text-white font-medium">{{ item.profile?.roleTitle || '—' }}</div>
-                          <div class="text-[10px] text-text-muted font-mono">{{ item.profile?.department || 'No dept' }}</div>
+                          <div class="text-[10px] text-text-muted font-mono">{{ item.profile?.department || ('hrPortal.form.noDept' | translate) }}</div>
                         </td>
-                        <td><span class="font-mono text-accent capitalize">{{ item.role }}</span></td>
+                        <td><span class="font-mono text-accent capitalize">{{ locale.roleLabel(item.role) }}</span></td>
                         <td>
                           @if (item.profile?.basicSalary) {
                             <div class="font-mono text-white">{{ item.profile!.basicSalary | currency }}</div>
-                            <div class="text-[10px] text-text-muted">{{ item.profile!.salaryType || 'monthly' }}</div>
+                            <div class="text-[10px] text-text-muted">{{ salaryTypeLabel(item.profile!.salaryType || 'monthly') }}</div>
                           } @else {
-                            <span class="text-text-muted text-xs italic">not configured</span>
+                            <span class="text-text-muted text-xs italic">{{ 'hrPortal.form.notConfigured' | translate }}</span>
                           }
                         </td>
                         <td class="text-center">
                           <span class="chip" [ngClass]="profileStatusChip(item.profile?.status)">
-                            <span class="chip-dot"></span>{{ item.profile?.status || 'draft' }}
+                            <span class="chip-dot"></span>{{ employmentStatusLabel(item.profile?.status) }}
                           </span>
                         </td>
                         <td class="text-right">
                           <button (click)="selectEmployee(item)"
                             class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-accent border border-border hover:border-accent/40 rounded-lg font-bold text-[11px] transition-all">
-                            Edit
+                            {{ 'common.edit' | translate }}
                           </button>
                         </td>
                       </tr>
@@ -304,10 +285,10 @@ interface ConfirmRequest {
             <!-- Edit profile -->
             <div class="lg:col-span-1">
               <div class="bg-bg-elevated border border-border rounded-2xl p-6 sticky top-4">
-                <h2 class="section-title mb-5"><span class="dot"></span>Edit Profile</h2>
+                <h2 class="section-title mb-5"><span class="dot"></span>{{ 'hrPortal.section.editProfile' | translate }}</h2>
                 @if (!selectedEmployee()) {
                   <div class="text-center py-12 px-4 text-text-muted border border-dashed border-border rounded-xl text-sm">
-                    Select an employee from the roster to edit their HR profile details.
+                    {{ 'hrPortal.form.selectRosterHint' | translate }}
                   </div>
                 } @else {
                   <form [formGroup]="profileForm" (ngSubmit)="submitProfile()" class="flex flex-col gap-4 animate-fade-up">
@@ -316,64 +297,64 @@ interface ConfirmRequest {
                       <p class="text-[10px] text-text-muted">{{ selectedEmployee()?.email }}</p>
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">System Role</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.systemRole' | translate }}</label>
                       <select formControlName="role" class="field">
-                        <option value="employee">Employee</option>
-                        <option value="manager">Manager</option>
-                        <option value="hr">HR Specialist</option>
-                        <option value="accountant">Accountant</option>
-                        <option value="admin">Administrator</option>
+                        <option value="employee">{{ locale.roleLabel('employee') }}</option>
+                        <option value="manager">{{ locale.roleLabel('manager') }}</option>
+                        <option value="hr">{{ locale.roleLabel('hr') }}</option>
+                        <option value="accountant">{{ locale.roleLabel('accountant') }}</option>
+                        <option value="admin">{{ locale.roleLabel('admin') }}</option>
                       </select>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                       <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Department</label>
+                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.department' | translate }}</label>
                         <input type="text" formControlName="department" placeholder="Engineering" class="field" />
                       </div>
                       <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Title</label>
+                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.title' | translate }}</label>
                         <input type="text" formControlName="roleTitle" placeholder="Lead Dev" class="field" />
                       </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                       <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Basic Salary</label>
+                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.basicSalary' | translate }}</label>
                         <input type="number" formControlName="basicSalary" class="field font-mono" />
                       </div>
                       <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Type</label>
+                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.salaryType' | translate }}</label>
                         <select formControlName="salaryType" class="field">
-                          <option value="monthly">Monthly</option>
-                          <option value="daily">Daily</option>
-                          <option value="hourly">Hourly</option>
+                          <option value="monthly">{{ 'common.monthly' | translate }}</option>
+                          <option value="daily">{{ 'common.daily' | translate }}</option>
+                          <option value="hourly">{{ 'common.hourly' | translate }}</option>
                         </select>
                       </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                       <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Days / Wk</label>
+                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.daysPerWeek' | translate }}</label>
                         <input type="number" formControlName="workingDays" class="field font-mono" />
                       </div>
                       <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Hrs / Day</label>
+                        <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.hrsPerDay' | translate }}</label>
                         <input type="number" formControlName="workingHours" class="field font-mono" />
                       </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Annual Leave (days)</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.annualLeaveDays' | translate }}</label>
                       <input type="number" formControlName="annualLeaveBalance" class="field font-mono" />
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Employment Status</label>
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.employmentStatus' | translate }}</label>
                       <select formControlName="status" class="field">
-                        <option value="active">Active</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="resigned">Resigned</option>
+                        <option value="active">{{ 'common.active' | translate }}</option>
+                        <option value="suspended">{{ 'common.suspended' | translate }}</option>
+                        <option value="resigned">{{ 'common.resigned' | translate }}</option>
                       </select>
                     </div>
                     <div class="flex gap-2.5 mt-2">
-                      <button type="submit" [disabled]="profileForm.invalid || processing()" class="btn-accent flex-1">Save</button>
-                      <button type="button" class="btn-soft" (click)="selectedEmployee.set(null)">Cancel</button>
+                      <button type="submit" [disabled]="profileForm.invalid || processing()" class="btn-accent flex-1">{{ 'common.save' | translate }}</button>
+                      <button type="button" class="btn-soft" (click)="selectedEmployee.set(null)">{{ 'common.cancel' | translate }}</button>
                     </div>
                   </form>
                 }
@@ -386,19 +367,19 @@ interface ConfirmRequest {
         @if (activeTab() === 'leaves') {
           <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 class="section-title"><span class="dot"></span>Pending Leave Requests</h2>
-              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ pendingLeaves().length }} waiting</span>
+              <h2 class="section-title"><span class="dot"></span>{{ 'hrPortal.section.pendingLeaves' | translate }}</h2>
+              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.waitingCount', { count: pendingLeaves().length }) }}</span>
             </div>
             <div class="overflow-x-auto hide-scrollbar">
               <table class="hr-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>Type</th>
-                    <th>Period</th>
-                    <th>Days</th>
-                    <th>Reason</th>
-                    <th class="text-right">Decision</th>
+                    <th>{{ 'hrPortal.table.employee' | translate }}</th>
+                    <th>{{ 'hrPortal.table.type' | translate }}</th>
+                    <th>{{ 'hrPortal.table.period' | translate }}</th>
+                    <th>{{ 'hrPortal.table.days' | translate }}</th>
+                    <th>{{ 'hrPortal.table.reason' | translate }}</th>
+                    <th class="text-right">{{ 'common.decision' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -414,16 +395,18 @@ interface ConfirmRequest {
                       <td class="text-text-muted max-w-xs truncate" [title]="item.reason">{{ item.reason }}</td>
                       <td class="text-right">
                         <div class="inline-flex gap-1.5">
+                          <button type="button" (click)="printLeave(item._id)"
+                            class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-text-secondary hover:text-accent border border-border hover:border-accent/30 rounded-lg font-bold text-[11px] transition-all">{{ 'common.print' | translate }}</button>
                           <button (click)="promptApproveLeave(item._id)" [disabled]="processing()"
-                            class="px-3 py-1.5 bg-success/10 hover:bg-success text-success hover:text-white border border-success/25 hover:border-success rounded-lg font-bold text-[11px] transition-all">Approve</button>
+                            class="px-3 py-1.5 bg-success/10 hover:bg-success text-success hover:text-white border border-success/25 hover:border-success rounded-lg font-bold text-[11px] transition-all">{{ 'common.approve' | translate }}</button>
                           <button (click)="promptRejectLeave(item._id)" [disabled]="processing()"
-                            class="px-3 py-1.5 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/25 hover:border-danger rounded-lg font-bold text-[11px] transition-all">Reject</button>
+                            class="px-3 py-1.5 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/25 hover:border-danger rounded-lg font-bold text-[11px] transition-all">{{ 'common.reject' | translate }}</button>
                         </div>
                       </td>
                     </tr>
                   }
                   @if (pendingLeaves().length === 0) {
-                    <tr><td colspan="6" class="text-center py-10 text-text-muted text-xs">No pending leave requests.</td></tr>
+                    <tr><td colspan="6" class="text-center py-10 text-text-muted text-xs">{{ 'hrPortal.empty.noPendingLeaves' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -435,20 +418,20 @@ interface ConfirmRequest {
         @if (activeTab() === 'permissions') {
           <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 class="section-title"><span class="dot"></span>Pending Permissions</h2>
-              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ pendingPermissions().length }} waiting</span>
+              <h2 class="section-title"><span class="dot"></span>{{ 'hrPortal.section.pendingPermissions' | translate }}</h2>
+              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.waitingCount', { count: pendingPermissions().length }) }}</span>
             </div>
             <div class="overflow-x-auto hide-scrollbar">
               <table class="hr-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>Type</th>
-                    <th>Date</th>
-                    <th>Interval</th>
-                    <th>Duration</th>
-                    <th>Reason</th>
-                    <th class="text-right">Decision</th>
+                    <th>{{ 'hrPortal.table.employee' | translate }}</th>
+                    <th>{{ 'hrPortal.table.type' | translate }}</th>
+                    <th>{{ 'hrPortal.table.date' | translate }}</th>
+                    <th>{{ 'hrPortal.table.interval' | translate }}</th>
+                    <th>{{ 'hrPortal.table.duration' | translate }}</th>
+                    <th>{{ 'hrPortal.table.reason' | translate }}</th>
+                    <th class="text-right">{{ 'common.decision' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -465,16 +448,18 @@ interface ConfirmRequest {
                       <td class="text-text-muted max-w-xs truncate" [title]="item.reason">{{ item.reason }}</td>
                       <td class="text-right">
                         <div class="inline-flex gap-1.5">
+                          <button type="button" (click)="printPermission(item._id)"
+                            class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-text-secondary hover:text-accent border border-border hover:border-accent/30 rounded-lg font-bold text-[11px] transition-all">{{ 'common.print' | translate }}</button>
                           <button (click)="promptApprovePermission(item._id)" [disabled]="processing()"
-                            class="px-3 py-1.5 bg-success/10 hover:bg-success text-success hover:text-white border border-success/25 hover:border-success rounded-lg font-bold text-[11px] transition-all">Approve</button>
+                            class="px-3 py-1.5 bg-success/10 hover:bg-success text-success hover:text-white border border-success/25 hover:border-success rounded-lg font-bold text-[11px] transition-all">{{ 'common.approve' | translate }}</button>
                           <button (click)="promptRejectPermission(item._id)" [disabled]="processing()"
-                            class="px-3 py-1.5 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/25 hover:border-danger rounded-lg font-bold text-[11px] transition-all">Reject</button>
+                            class="px-3 py-1.5 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/25 hover:border-danger rounded-lg font-bold text-[11px] transition-all">{{ 'common.reject' | translate }}</button>
                         </div>
                       </td>
                     </tr>
                   }
                   @if (pendingPermissions().length === 0) {
-                    <tr><td colspan="7" class="text-center py-10 text-text-muted text-xs">No pending permissions.</td></tr>
+                    <tr><td colspan="7" class="text-center py-10 text-text-muted text-xs">{{ 'hrPortal.empty.noPendingPermissions' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -486,20 +471,20 @@ interface ConfirmRequest {
         @if (activeTab() === 'overtime') {
           <div class="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 class="section-title"><span class="dot"></span>Pending Overtime Logs</h2>
-              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ pendingOvertime().length }} waiting</span>
+              <h2 class="section-title"><span class="dot"></span>{{ 'hrPortal.section.pendingOvertime' | translate }}</h2>
+              <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.waitingCount', { count: pendingOvertime().length }) }}</span>
             </div>
             <div class="overflow-x-auto hide-scrollbar">
               <table class="hr-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>Date</th>
-                    <th>Interval</th>
-                    <th>Hours</th>
-                    <th>Rate</th>
-                    <th>Reason</th>
-                    <th class="text-right">Decision</th>
+                    <th>{{ 'hrPortal.table.employee' | translate }}</th>
+                    <th>{{ 'hrPortal.table.date' | translate }}</th>
+                    <th>{{ 'hrPortal.table.interval' | translate }}</th>
+                    <th>{{ 'hrPortal.table.hours' | translate }}</th>
+                    <th>{{ 'hrPortal.table.rate' | translate }}</th>
+                    <th>{{ 'hrPortal.table.reason' | translate }}</th>
+                    <th class="text-right">{{ 'common.decision' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -516,16 +501,18 @@ interface ConfirmRequest {
                       <td class="text-text-muted max-w-xs truncate" [title]="item.reason">{{ item.reason }}</td>
                       <td class="text-right">
                         <div class="inline-flex gap-1.5">
+                          <button type="button" (click)="printOvertime(item._id)"
+                            class="px-3 py-1.5 bg-bg-base hover:bg-accent-subtle text-text-secondary hover:text-accent border border-border hover:border-accent/30 rounded-lg font-bold text-[11px] transition-all">{{ 'common.print' | translate }}</button>
                           <button (click)="promptApproveOvertime(item._id)" [disabled]="processing()"
-                            class="px-3 py-1.5 bg-success/10 hover:bg-success text-success hover:text-white border border-success/25 hover:border-success rounded-lg font-bold text-[11px] transition-all">Approve</button>
+                            class="px-3 py-1.5 bg-success/10 hover:bg-success text-success hover:text-white border border-success/25 hover:border-success rounded-lg font-bold text-[11px] transition-all">{{ 'common.approve' | translate }}</button>
                           <button (click)="promptRejectOvertime(item._id)" [disabled]="processing()"
-                            class="px-3 py-1.5 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/25 hover:border-danger rounded-lg font-bold text-[11px] transition-all">Reject</button>
+                            class="px-3 py-1.5 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/25 hover:border-danger rounded-lg font-bold text-[11px] transition-all">{{ 'common.reject' | translate }}</button>
                         </div>
                       </td>
                     </tr>
                   }
                   @if (pendingOvertime().length === 0) {
-                    <tr><td colspan="7" class="text-center py-10 text-text-muted text-xs">No pending overtime claims.</td></tr>
+                    <tr><td colspan="7" class="text-center py-10 text-text-muted text-xs">{{ 'hrPortal.empty.noPendingOvertime' | translate }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -545,7 +532,7 @@ interface ConfirmRequest {
           [variant]="req.variant"
           [icon]="req.icon ?? 'alert'"
           [showTextarea]="!!req.requireReason"
-          [inputPlaceholder]="req.reasonPlaceholder || 'Provide a reason…'"
+          [inputPlaceholder]="req.reasonPlaceholder || locale.t('common.provideReason')"
           (confirmed)="executeConfirm($event)"
           (cancelled)="cancelConfirm()"
         />
@@ -557,11 +544,33 @@ export class AdminHrPortalComponent implements OnInit {
   private hrService = inject(HRService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
+  private printDocs = inject(PrintDocumentService);
+  locale = inject(LocaleService);
+
+  hrPortalSteps = () => [
+    { label: this.locale.t('hrPortal.step.clearQueue'), description: this.locale.t('hrPortal.step.clearQueueDesc'), tone: 'do' as const },
+    { label: this.locale.t('hrPortal.step.auditAttendance'), description: this.locale.t('hrPortal.step.auditAttendanceDesc'), tone: 'wait' as const },
+    { label: this.locale.t('hrPortal.step.roster'), description: this.locale.t('hrPortal.step.rosterDesc'), tone: 'wait' as const },
+    { label: this.locale.t('hrPortal.step.payroll'), description: this.locale.t('hrPortal.step.payrollDesc'), tone: 'done' as const },
+  ];
+
+  hrPortalTips = () => [
+    { title: this.locale.t('hrPortal.step.clearQueue'), body: this.locale.t('hrPortal.tip.rejectionReason') },
+    { title: this.locale.t('hrPortal.step.auditAttendance'), body: this.locale.t('hrPortal.tip.statsClickable') },
+    { title: this.locale.t('hrPortal.step.roster'), body: this.locale.t('hrPortal.tip.salariesSensitive') },
+  ];
+
+  tabs = (): { key: Tab; label: string; badge?: () => number }[] => [
+    { key: 'overview',    label: this.locale.t('hrPortal.tab.todayAttendance') },
+    { key: 'registry',    label: this.locale.t('hrPortal.tab.employeeRegistry') },
+    { key: 'leaves',      label: this.locale.t('hrPortal.tab.leaves'),      badge: () => this.pendingLeaves().length },
+    { key: 'permissions', label: this.locale.t('hrPortal.tab.permissions'), badge: () => this.pendingPermissions().length },
+    { key: 'overtime',    label: this.locale.t('hrPortal.tab.overtime'),    badge: () => this.pendingOvertime().length },
+  ];
 
   activeTab = signal<Tab>('overview');
   processing = signal(false);
-  error = signal('');
-  success = signal('');
 
   employees = signal<EmployeeWithProfile[]>([]);
   todayAttendance = signal<Attendance[]>([]);
@@ -575,14 +584,6 @@ export class AdminHrPortalComponent implements OnInit {
 
   adjustForm!: FormGroup;
   profileForm!: FormGroup;
-
-  tabs: { key: Tab; label: string; badge?: () => number }[] = [
-    { key: 'overview',    label: "Today's Attendance" },
-    { key: 'registry',    label: 'Employee Registry' },
-    { key: 'leaves',      label: 'Leaves',      badge: () => this.pendingLeaves().length },
-    { key: 'permissions', label: 'Permissions', badge: () => this.pendingPermissions().length },
-    { key: 'overtime',    label: 'Overtime',    badge: () => this.pendingOvertime().length },
-  ];
 
   ngOnInit() {
     this.initForms();
@@ -637,7 +638,7 @@ export class AdminHrPortalComponent implements OnInit {
     const emp = this.employees().find(e => e._id === idStr);
     if (emp) return emp.name;
     if (typeof userId === 'object' && userId.name) return userId.name;
-    return 'Unknown';
+    return this.locale.t('common.unknown');
   }
   getEmployeeEmail(userId: string | any): string {
     const idStr = typeof userId === 'object' ? userId._id : userId;
@@ -678,6 +679,45 @@ export class AdminHrPortalComponent implements OnInit {
     return mins > 0 ? `${mins}m` : '—';
   }
 
+  attendanceStatusLabel(status: string): string {
+    const keys: Record<string, string> = {
+      'Present': 'attendanceStatus.present',
+      'Absent': 'attendanceStatus.absent',
+      'Late': 'attendanceStatus.late',
+      'Early Leave': 'attendanceStatus.earlyLeave',
+      'Half Day': 'attendanceStatus.halfDay',
+      'On Leave': 'attendanceStatus.onLeave',
+      'Weekend': 'attendanceStatus.weekend',
+      'Holiday': 'attendanceStatus.holiday',
+      'Permission': 'attendanceStatus.permission',
+      'Remote': 'attendanceStatus.remote',
+      'Missing Check-out': 'attendanceStatus.missingCheckout',
+    };
+    const key = keys[status];
+    return key ? this.locale.t(key) : status;
+  }
+
+  employmentStatusLabel(status?: string): string {
+    const keys: Record<string, string> = {
+      active: 'common.active',
+      suspended: 'common.suspended',
+      resigned: 'common.resigned',
+      draft: 'common.draft',
+    };
+    const key = status ? keys[status] : undefined;
+    return key ? this.locale.t(key) : this.locale.t('common.draft');
+  }
+
+  salaryTypeLabel(type?: string): string {
+    const keys: Record<string, string> = {
+      monthly: 'common.monthly',
+      daily: 'common.daily',
+      hourly: 'common.hourly',
+    };
+    const key = type ? keys[type] : undefined;
+    return key ? this.locale.t(key) : (type || '');
+  }
+
   attendanceChip(status: string): string {
     if (status === 'Present')                                 return 'chip-success';
     if (status === 'Absent')                                  return 'chip-danger';
@@ -695,18 +735,16 @@ export class AdminHrPortalComponent implements OnInit {
   submitAdjust() {
     if (this.adjustForm.invalid) return;
     this.processing.set(true);
-    this.flushMessages();
     this.hrService.adjustAttendance(this.adjustForm.value).subscribe({
       next: (res) => {
         this.processing.set(false);
         if (res.success) {
-          this.success.set('Timesheet updated successfully.');
+          this.toast.success(this.locale.t('hrPortal.toast.timesheetUpdated'));
           this.adjustForm.reset({ status: 'Present' });
           this.loadTodayAttendance();
-          this.autoDismiss();
         }
       },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to adjust timesheet.'); }
+      error: () => { this.processing.set(false); }
     });
   }
 
@@ -728,29 +766,31 @@ export class AdminHrPortalComponent implements OnInit {
   submitProfile() {
     if (this.profileForm.invalid || !this.selectedEmployee()) return;
     this.processing.set(true);
-    this.flushMessages();
     const userId = this.selectedEmployee()!._id;
     this.hrService.updateProfile(userId, this.profileForm.value).subscribe({
       next: (res) => {
         this.processing.set(false);
         if (res.success) {
-          this.success.set('Profile updated successfully.');
+          this.toast.success(this.locale.t('hrPortal.toast.profileUpdated'));
           this.selectedEmployee.set(null);
           this.loadEmployees();
-          this.autoDismiss();
         }
       },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to update profile.'); }
+      error: () => { this.processing.set(false); }
     });
   }
+
+  printLeave(id: string): void { void this.printDocs.printLeave(id); }
+  printPermission(id: string): void { void this.printDocs.printPermission(id); }
+  printOvertime(id: string): void { void this.printDocs.printOvertime(id); }
 
   // ─── Approve / Reject prompts ─────────────────
   promptApproveLeave(id: string) {
     this.openConfirm({
-      title: 'Approve this leave request?',
-      message: 'The employee will be notified and the leave balance updated.',
-      confirmLabel: 'Approve',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('hrPortal.confirm.approveLeaveTitle'),
+      message: this.locale.t('common.approveLeaveMessage'),
+      confirmLabel: this.locale.t('common.approve'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'accent',
       icon: 'check',
       onConfirm: () => this.doApproveLeave(id)
@@ -758,23 +798,23 @@ export class AdminHrPortalComponent implements OnInit {
   }
   promptRejectLeave(id: string) {
     this.openConfirm({
-      title: 'Reject this leave request?',
-      message: 'Please provide a reason. The employee will see your explanation.',
-      confirmLabel: 'Reject Leave',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('hrPortal.confirm.rejectLeaveTitle'),
+      message: this.locale.t('common.rejectLeaveMessage'),
+      confirmLabel: this.locale.t('common.rejectLeave'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'danger',
       icon: 'alert',
       requireReason: true,
-      reasonPlaceholder: 'Explain why this leave is being rejected…',
+      reasonPlaceholder: this.locale.t('common.explainRejection'),
       onConfirm: (reason) => this.doRejectLeave(id, reason!)
     });
   }
   promptApprovePermission(id: string) {
     this.openConfirm({
-      title: 'Approve this permission?',
-      message: 'The employee will be notified immediately.',
-      confirmLabel: 'Approve',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('hrPortal.confirm.approvePermissionTitle'),
+      message: this.locale.t('common.approvePermissionMessage'),
+      confirmLabel: this.locale.t('common.approve'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'accent',
       icon: 'clock',
       onConfirm: () => this.doApprovePermission(id)
@@ -782,10 +822,10 @@ export class AdminHrPortalComponent implements OnInit {
   }
   promptRejectPermission(id: string) {
     this.openConfirm({
-      title: 'Reject this permission?',
-      message: 'This action cannot be undone.',
-      confirmLabel: 'Reject',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('hrPortal.confirm.rejectPermissionTitle'),
+      message: this.locale.t('common.rejectPermissionMessage'),
+      confirmLabel: this.locale.t('common.reject'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'danger',
       icon: 'alert',
       onConfirm: () => this.doRejectPermission(id)
@@ -793,10 +833,10 @@ export class AdminHrPortalComponent implements OnInit {
   }
   promptApproveOvertime(id: string) {
     this.openConfirm({
-      title: 'Approve this overtime claim?',
-      message: 'Overtime hours will be added to the next payroll calculation.',
-      confirmLabel: 'Approve',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('hrPortal.confirm.approveOvertimeTitle'),
+      message: this.locale.t('common.approveOvertimeMessage'),
+      confirmLabel: this.locale.t('common.approve'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'accent',
       icon: 'check',
       onConfirm: () => this.doApproveOvertime(id)
@@ -804,10 +844,10 @@ export class AdminHrPortalComponent implements OnInit {
   }
   promptRejectOvertime(id: string) {
     this.openConfirm({
-      title: 'Reject this overtime claim?',
-      message: 'The hours will not count toward payroll.',
-      confirmLabel: 'Reject',
-      cancelLabel: 'Cancel',
+      title: this.locale.t('hrPortal.confirm.rejectOvertimeTitle'),
+      message: this.locale.t('common.rejectOvertimeMessage'),
+      confirmLabel: this.locale.t('common.reject'),
+      cancelLabel: this.locale.t('common.cancel'),
       variant: 'danger',
       icon: 'alert',
       onConfirm: () => this.doRejectOvertime(id)
@@ -816,45 +856,45 @@ export class AdminHrPortalComponent implements OnInit {
 
   // ─── Action runners ───────────────────────────
   private doApproveLeave(id: string) {
-    this.processing.set(true); this.flushMessages();
+    this.processing.set(true);
     this.hrService.approveLeave(id).subscribe({
-      next: () => { this.processing.set(false); this.success.set('Leave approved.'); this.loadPendingLeaves(); this.loadEmployees(); this.autoDismiss(); },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to approve leave.'); }
+      next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.leaveApproved')); this.loadPendingLeaves(); this.loadEmployees(); },
+      error: () => { this.processing.set(false); }
     });
   }
   private doRejectLeave(id: string, reason: string) {
-    this.processing.set(true); this.flushMessages();
+    this.processing.set(true);
     this.hrService.rejectLeave(id, reason).subscribe({
-      next: () => { this.processing.set(false); this.success.set('Leave rejected.'); this.loadPendingLeaves(); this.autoDismiss(); },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to reject leave.'); }
+      next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.leaveRejected')); this.loadPendingLeaves(); },
+      error: () => { this.processing.set(false); }
     });
   }
   private doApprovePermission(id: string) {
-    this.processing.set(true); this.flushMessages();
+    this.processing.set(true);
     this.hrService.approvePermission(id).subscribe({
-      next: () => { this.processing.set(false); this.success.set('Permission approved.'); this.loadPendingPermissions(); this.autoDismiss(); },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to approve permission.'); }
+      next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.permissionApproved')); this.loadPendingPermissions(); },
+      error: () => { this.processing.set(false); }
     });
   }
   private doRejectPermission(id: string) {
-    this.processing.set(true); this.flushMessages();
+    this.processing.set(true);
     this.hrService.rejectPermission(id).subscribe({
-      next: () => { this.processing.set(false); this.success.set('Permission rejected.'); this.loadPendingPermissions(); this.autoDismiss(); },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to reject permission.'); }
+      next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.permissionRejected')); this.loadPendingPermissions(); },
+      error: () => { this.processing.set(false); }
     });
   }
   private doApproveOvertime(id: string) {
-    this.processing.set(true); this.flushMessages();
+    this.processing.set(true);
     this.hrService.approveOvertime(id).subscribe({
-      next: () => { this.processing.set(false); this.success.set('Overtime approved.'); this.loadPendingOvertime(); this.autoDismiss(); },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to approve overtime.'); }
+      next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.overtimeApproved')); this.loadPendingOvertime(); },
+      error: () => { this.processing.set(false); }
     });
   }
   private doRejectOvertime(id: string) {
-    this.processing.set(true); this.flushMessages();
+    this.processing.set(true);
     this.hrService.rejectOvertime(id).subscribe({
-      next: () => { this.processing.set(false); this.success.set('Overtime rejected.'); this.loadPendingOvertime(); this.autoDismiss(); },
-      error: (err) => { this.processing.set(false); this.error.set(err.error?.error || 'Failed to reject overtime.'); }
+      next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.overtimeRejected')); this.loadPendingOvertime(); },
+      error: () => { this.processing.set(false); }
     });
   }
 
@@ -874,6 +914,4 @@ export class AdminHrPortalComponent implements OnInit {
     req.onConfirm(trimmed || undefined);
   }
 
-  private flushMessages() { this.error.set(''); this.success.set(''); }
-  private autoDismiss() { setTimeout(() => { this.success.set(''); this.error.set(''); }, 4000); }
 }

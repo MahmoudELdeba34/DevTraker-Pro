@@ -20,6 +20,7 @@ import workspacesRouter from './routes/workspaces';
 import notificationsRouter from './routes/notifications';
 import timeEntriesRouter from './routes/timeEntries';
 import activityRouter from './routes/activity';
+import documentsRouter from './routes/documents';
 import { startReminderCron } from './jobs/reminderCron';
 import { migrateWorkspaceMembers } from './utils/migrations';
 import { getJwtSecret } from './utils/tokens';
@@ -78,6 +79,7 @@ app.use('/api/workspaces', workspacesRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/time-entries', timeEntriesRouter);
 app.use('/api/activity', activityRouter);
+app.use('/api/documents', documentsRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, data: { status: 'ok', timestamp: new Date() } });

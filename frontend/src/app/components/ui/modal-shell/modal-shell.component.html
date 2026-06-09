@@ -2,6 +2,7 @@
   <div
     class="modal-backdrop fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
     (click)="onBackdrop()"
+    [attr.data-locale]="locale.locale()"
   >
     <div
       class="modal-panel bg-bg-elevated border border-border rounded-xl w-full shadow-modal animate-scale-in flex flex-col max-h-[90vh] overflow-hidden"
@@ -20,7 +21,7 @@
             type="button"
             class="text-text-muted hover:text-white transition-colors shrink-0"
             (click)="closed.emit()"
-            aria-label="Close"
+            [attr.aria-label]="'common.close' | translate"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />

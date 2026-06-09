@@ -1,15 +1,18 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { LocaleService } from '../../../core/i18n/locale.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-modal-shell',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './modal-shell.component.html',
   styleUrls: ['./modal-shell.component.css'],
 })
 export class ModalShellComponent {
+  locale = inject(LocaleService);
   open = input(false);
   title = input('');
   subtitle = input('');

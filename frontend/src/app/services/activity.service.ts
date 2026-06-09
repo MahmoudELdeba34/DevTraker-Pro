@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse, ActivityReport, PresenceReport } from '../models/types';
+import { SKIP_ERROR_TOAST } from '../core/http-context';
 
 export interface RangeParams {
   from?: string; // YYYY-MM-DD
@@ -30,10 +31,13 @@ export class ActivityService {
       .pipe(map((r) => r.data));
   }
 
-  /** Live team presence. */
-  getPresence(): Observable<PresenceReport> {
+  /** Live team presence. Pass silent=true to skip error toasts on background polls. */
+  getPresence(options?: { silent?: boolean }): Observable<PresenceReport> {
+    const context = options?.silent
+      ? new HttpContext().set(SKIP_ERROR_TOAST, true)
+      : undefined;
     return this.http
-      .get<ApiResponse<PresenceReport>>(`${this.apiUrl}/presence`)
+      .get<ApiResponse<PresenceReport>>(`${this.apiUrl}/presence`, { context })
       .pipe(map((r) => r.data));
   }
 

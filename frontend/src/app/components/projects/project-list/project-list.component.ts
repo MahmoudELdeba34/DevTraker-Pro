@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Project } from '../../../models/types';
+import { LocaleService } from '../../../core/i18n/locale.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface ProjectListItem extends Project {
   taskCount: number;
@@ -13,11 +15,13 @@ export interface ProjectListItem extends Project {
   selector: 'app-project-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslatePipe],
   templateUrl: './project-list.component.html',
   styleUrls: ['./project-list.component.css'],
 })
 export class ProjectListComponent {
+  locale = inject(LocaleService);
+
   projects = input<ProjectListItem[]>([]);
   loading = input(false);
 
@@ -26,12 +30,27 @@ export class ProjectListComponent {
   deleteProject = output<{ id: string; title: string }>();
 
   getStatus(project: ProjectListItem): { label: string; class: string } {
-    if (project.progressPercent === 100) return { label: 'Completed', class: 'status-completed' };
-    if (project.deadline && new Date(project.deadline) < new Date()) {
-      return { label: 'Overdue', class: 'status-overdue' };
+    if (project.progressPercent === 100) {
+      return { label: this.locale.t('project.status.completed'), class: 'status-completed' };
     }
-    if (project.progressPercent > 0) return { label: 'In Progress', class: 'status-progress' };
-    return { label: 'Not Started', class: 'status-not-started' };
+    if (project.deadline && new Date(project.deadline) < new Date()) {
+      return { label: this.locale.t('project.status.overdue'), class: 'status-overdue' };
+    }
+    if (project.progressPercent > 0) {
+      return { label: this.locale.t('project.status.inProgress'), class: 'status-progress' };
+    }
+    return { label: this.locale.t('project.status.notStarted'), class: 'status-not-started' };
+  }
+
+  tasksDoneLabel(project: ProjectListItem): string {
+    return this.locale.t('projectList.tasksDone', {
+      completed: project.completedCount,
+      total: project.taskCount,
+    });
+  }
+
+  dueLabel(dateStr: string): string {
+    return this.locale.t('projectList.due', { date: this.formatDate(dateStr) });
   }
 
   formatDate(dateStr: string): string {

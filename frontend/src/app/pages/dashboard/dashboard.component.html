@@ -1,24 +1,20 @@
-<main class="h-full flex flex-col gap-6">
+<main class="h-full flex flex-col gap-6" [attr.data-locale]="locale.locale()">
 
   <!-- Header Section -->
   <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-display font-bold text-white tracking-tight">Dashboard</h1>
+      <h1 class="text-2xl font-display font-bold text-white tracking-tight">{{ 'dashboard.title' | translate }}</h1>
       <p class="text-sm text-text-secondary mt-1">
-        {{ workspaceService.activeWorkspace()?.name || 'No workspace' }}
+        {{ workspaceService.activeWorkspace()?.name || ('common.noWorkspace' | translate) }}
         · {{ weekStart | date:'MMM d' }} - {{ weekEnd | date:'MMM d' }}
       </p>
     </div>
     <div class="flex items-center gap-3">
       <button type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors" (click)="openCreateForm()">
-        New Project
+        {{ 'dashboard.newProject' | translate }}
       </button>
     </div>
   </div>
-
-  @if (error()) {
-    <app-flash-banner type="err" [message]="error()" [dismissible]="true" (dismissed)="error.set('')" />
-  }
 
   <!-- Currently Tracking Banner -->
   <div class="bg-gradient-to-r from-[#170E35] to-[#201041] border border-[#2D1A55] rounded-xl p-8 relative overflow-hidden group"
@@ -26,10 +22,10 @@
     <div class="flex items-center gap-2 mb-3 text-[10px] font-bold text-text-muted tracking-widest uppercase">
       @if (anyTimerRunning()) {
         <div class="w-2 h-2 rounded-full bg-danger animate-pulse"></div>
-        CURRENTLY TRACKING
+        {{ 'dashboard.currentlyTracking' | translate }}
       } @else {
         <div class="w-2 h-2 rounded-full bg-text-muted/40"></div>
-        NOT TRACKING
+        {{ 'dashboard.notTracking' | translate }}
       }
     </div>
     <div class="flex flex-col gap-1">
@@ -45,19 +41,19 @@
   <!-- Analytics Cards -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
     <div class="bg-bg-elevated border border-border rounded-xl p-6">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">Projects</div>
+      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.projects' | translate }}</div>
       <div class="text-3xl font-display font-bold text-white">{{ totalProjects() }}</div>
     </div>
     <div class="bg-bg-elevated border border-border rounded-xl p-6">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">Tasks</div>
+      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.tasks' | translate }}</div>
       <div class="text-3xl font-display font-bold text-white">{{ totalTasks() }}</div>
     </div>
     <div class="bg-bg-elevated border border-border rounded-xl p-6">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">Completed</div>
+      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.completed' | translate }}</div>
       <div class="text-3xl font-display font-bold text-success">{{ completedTasks() }}</div>
     </div>
     <div class="bg-bg-elevated border border-border rounded-xl p-6">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">Progress</div>
+      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.progress' | translate }}</div>
       <div class="text-3xl font-display font-bold text-accent">{{ overallProgress() }}%</div>
     </div>
   </div>
@@ -67,7 +63,7 @@
     <div class="lg:col-span-2 bg-bg-elevated border border-border rounded-xl p-6">
       <div class="flex items-center gap-2 mb-6">
         <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
-        <h3 class="text-sm font-bold text-white tracking-tight">Time Tracking Overview</h3>
+        <h3 class="text-sm font-bold text-white tracking-tight">{{ 'dashboard.timeTrackingOverview' | translate }}</h3>
       </div>
       <div class="h-[250px] w-full">
         <canvas baseChart
@@ -80,7 +76,7 @@
     <div class="bg-bg-elevated border border-border rounded-xl p-6">
       <div class="flex items-center gap-2 mb-6">
         <div class="w-1.5 h-1.5 rounded-full bg-success"></div>
-        <h3 class="text-sm font-bold text-white tracking-tight">Task Completion</h3>
+        <h3 class="text-sm font-bold text-white tracking-tight">{{ 'dashboard.taskCompletion' | translate }}</h3>
       </div>
       <div class="h-[250px] w-full flex items-center justify-center">
         <canvas baseChart
@@ -119,9 +115,9 @@
 @if (deleteProjectConfirm(); as req) {
   <app-confirm-dialog
     [open]="true"
-    title="Delete project?"
+    [title]="'common.deleteProjectTitle' | translate"
     [message]="deleteProjectMessage()"
-    confirmLabel="Delete project"
+    [confirmLabel]="'common.deleteProjectConfirm' | translate"
     variant="danger"
     (confirmed)="executeDeleteProject()"
     (cancelled)="cancelDeleteProject()"

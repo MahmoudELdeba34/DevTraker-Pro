@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
   signal,
@@ -10,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceMember } from '../../../services/workspace.service';
 import { User } from '../../../models/types';
+import { LocaleService } from '../../../core/i18n/locale.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export type AssigneePickerMode = 'select' | 'dropdown';
 
@@ -17,22 +20,27 @@ export type AssigneePickerMode = 'select' | 'dropdown';
   selector: 'app-assignee-picker',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './assignee-picker.component.html',
 })
 export class AssigneePickerComponent {
+  locale = inject(LocaleService);
+
   members = input<WorkspaceMember[]>([]);
   value = input<string | null>(null);
   mode = input<AssigneePickerMode>('select');
   searchable = input(false);
   disabled = input(false);
-  placeholder = input('Unassigned');
-  label = input('Assignee');
+  placeholder = input('');
+  label = input('');
 
   valueChange = output<string | null>();
 
   open = signal(false);
   search = signal('');
+
+  placeholderText = computed(() => this.placeholder() || this.locale.t('common.unassigned'));
+  labelText = computed(() => this.label() || this.locale.t('common.assignee'));
 
   filteredMembers = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -66,9 +74,5 @@ export class AssigneePickerComponent {
 
   initials(name: string): string {
     return (name || '?').substring(0, 2).toUpperCase();
-  }
-
-  memberLabel(member: WorkspaceMember | User): string {
-    return member.name;
   }
 }

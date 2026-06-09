@@ -12,9 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivityService } from '../../services/activity.service';
 import { TimeEntryService } from '../../services/time-entry.service';
 import { ActiveTimerService } from '../../services/active-timer.service';
+import { ToastService } from '../../services/toast.service';
 import { TaskService } from '../../services/task.service';
 import { ActivityReport, ActivityDay } from '../../models/types';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type PresetRange = 'today' | 'week' | 'month' | 'custom';
 
@@ -22,7 +25,7 @@ type PresetRange = 'today' | 'week' | 'month' | 'custom';
   selector: 'app-my-timesheet',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, DatePipe, PageHeaderComponent, TranslatePipe],
   styleUrls: ['./my-timesheet.component.css'],
   templateUrl: './my-timesheet.component.html',
 })
@@ -31,11 +34,27 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
   private timeEntryService = inject(TimeEntryService);
   private activeTimerService = inject(ActiveTimerService);
   private taskService = inject(TaskService);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
-  // ── State ────────────────────────────────────────────────────────────
+  headerSteps = computed(() => [
+    { label: this.locale.t('timesheet.step.pickRange'), description: this.locale.t('timesheet.step.pickRangeDesc'), tone: 'do' as const },
+    { label: this.locale.t('timesheet.step.reviewDays'), description: this.locale.t('timesheet.step.reviewDaysDesc'), tone: 'wait' as const },
+    { label: this.locale.t('timesheet.step.printExport'), description: this.locale.t('timesheet.step.printExportDesc'), tone: 'done' as const },
+  ]);
+
+  headerTips = computed(() => [
+    { title: this.locale.t('common.overtime'), body: this.locale.t('timesheet.tip.overtime') },
+    { title: this.locale.t('common.tasksQuick'), body: this.locale.t('timesheet.tip.sources') },
+    { title: this.locale.t('common.live'), body: this.locale.t('timesheet.tip.live') },
+  ]);
+
+  printReportTitle = computed(() => {
+    const name = this.report()?.user?.name ?? '';
+    return this.locale.t('timesheet.print.reportTitle', { userName: name });
+  });
   report = signal<ActivityReport | null>(null);
   loading = signal(true);
-  error = signal<string | null>(null);
 
   preset = signal<PresetRange>('week');
   fromDate = signal<string>('');
@@ -96,7 +115,6 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
 
   load() {
     this.loading.set(true);
-    this.error.set(null);
     this.activityService
       .getMyReport({ from: this.fromDate(), to: this.toDate() })
       .subscribe({
@@ -104,8 +122,7 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
           this.report.set(r);
           this.loading.set(false);
         },
-        error: (e) => {
-          this.error.set(e?.error?.error || 'Failed to load report');
+        error: () => {
           this.loading.set(false);
         },
       });
@@ -130,13 +147,19 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
       this.taskService.stopTimer(taskTimer._id).subscribe({
         next: () => {
           this.activeTimerService.setActiveTask(null);
+          this.toast.info(this.locale.t('timesheet.toast.timerStopped'));
           this.load();
         },
       });
       return;
     }
     if (this.timeEntryService.active()) {
-      this.timeEntryService.stop().subscribe({ next: () => this.load() });
+      this.timeEntryService.stop().subscribe({
+        next: () => {
+          this.toast.info(this.locale.t('timesheet.toast.sessionStopped'));
+          this.load();
+        },
+      });
     }
   }
 
@@ -149,7 +172,8 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
     return `${h}h ${String(m).padStart(2, '0')}m`;
   }
 
-  formatHmsTime(iso: string): string {
+  formatHmsTime(iso: string | null | undefined): string {
+    if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   }

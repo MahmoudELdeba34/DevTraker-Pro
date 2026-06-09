@@ -24,9 +24,11 @@ import {
   ConfirmDialogComponent,
   ConfirmVariant,
 } from '../ui/confirm-dialog/confirm-dialog.component';
-import { FlashBannerComponent } from '../ui/flash-banner/flash-banner.component';
 import { CredentialsBannerComponent } from '../ui/credentials-banner/credentials-banner.component';
+import { ToastService } from '../../services/toast.service';
 import { OnboardingCredentialsResult } from '../../services/onboarding.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type ConfirmKind = 'remove' | 'role';
 
@@ -40,7 +42,7 @@ interface PendingAction {
   selector: 'app-workspace-members',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FlashBannerComponent, CredentialsBannerComponent],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, CredentialsBannerComponent, TranslatePipe],
   templateUrl: './workspace-members.component.html',
   styleUrls: ['./workspace-members.component.css'],
 })
@@ -48,13 +50,14 @@ export class WorkspaceMembersComponent implements OnInit {
   private workspaceSvc = inject(WorkspaceService);
   private onboardingSvc = inject(OnboardingService);
   private authSvc = inject(AuthService);
+  private toast = inject(ToastService);
+  locale = inject(LocaleService);
 
   @Input({ required: true }) workspace!: Workspace;
   @Output() closed = new EventEmitter<void>();
 
   members = signal<WorkspaceMember[]>([]);
   loading = signal(true);
-  flash = signal<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   // Invite form
   inviteEmail = signal('');
@@ -73,20 +76,23 @@ export class WorkspaceMembersComponent implements OnInit {
       return {
         title:
           p.member._id === this.myUserId()
-            ? 'Leave workspace?'
-            : 'Remove member?',
+            ? this.locale.t('common.leaveWorkspaceTitle')
+            : this.locale.t('common.removeMemberTitle'),
         message:
           p.member._id === this.myUserId()
-            ? `You'll lose access to projects and tasks in ${this.workspace.name}.`
-            : `${p.member.name} will lose access to projects and tasks in this workspace.`,
-        confirmLabel: 'Yes, remove',
+            ? this.locale.t('common.leaveWorkspaceMessage', { workspaceName: this.workspace.name })
+            : this.locale.t('common.removeMemberMessage', { name: p.member.name }),
+        confirmLabel: this.locale.t('common.yesRemove'),
         variant: 'danger' as ConfirmVariant,
       };
     }
     return {
-      title: 'Change role?',
-      message: `${p.member.name} will become ${p.newRole} in this workspace.`,
-      confirmLabel: 'Update role',
+      title: this.locale.t('workspaceMembers.changeRole'),
+      message: this.locale.t('workspaceMembers.changeRoleMessage', {
+        name: p.member.name,
+        newRole: this.workspaceRoleLabel(p.newRole!),
+      }),
+      confirmLabel: this.locale.t('common.updateRole'),
       variant: 'accent' as ConfirmVariant,
     };
   });
@@ -135,7 +141,6 @@ export class WorkspaceMembersComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.flashMsg('err', "Couldn't load members");
       },
     });
   }
@@ -144,11 +149,11 @@ export class WorkspaceMembersComponent implements OnInit {
   submitInvite(): void {
     const email = this.inviteEmail().trim().toLowerCase();
     if (!email || !email.includes('@')) {
-      this.flashMsg('err', 'Enter a valid email');
+      this.flashMsg('err', this.locale.t('members.toast.invalidEmail'));
       return;
     }
     if (this.members().some((m) => m.email.toLowerCase() === email)) {
-      this.flashMsg('err', 'This user is already a member');
+      this.flashMsg('err', this.locale.t('members.toast.alreadyMember'));
       return;
     }
 
@@ -165,21 +170,17 @@ export class WorkspaceMembersComponent implements OnInit {
           this.inviteEmail.set('');
 
           if (res.newAccount && res.emailSent) {
-            this.flashMsg('ok', `Account created — credentials emailed to ${email}`);
+            this.flashMsg('ok', this.locale.t('members.toast.accountEmailed', { email }));
           } else if (res.newAccount && (res.setupLink || res.tempPassword)) {
             this.lastInvite.set(res);
-            this.flashMsg('ok', `Account created — copy credentials below for ${email}`);
+            this.flashMsg('ok', this.locale.t('members.toast.accountCopyLink', { email }));
           } else {
-            this.flashMsg('ok', `Added ${res.invitedUser?.name || email}`);
+            this.flashMsg('ok', this.locale.t('members.toast.addedToWorkspace', { name: res.invitedUser?.name || email }));
           }
           this.refresh();
         },
-        error: (err) => {
+        error: () => {
           this.inviting.set(false);
-          this.flashMsg(
-            'err',
-            err?.error?.error || 'Could not add this user'
-          );
         },
       });
   }
@@ -209,24 +210,22 @@ export class WorkspaceMembersComponent implements OnInit {
         .subscribe({
           next: () => {
             this.pending.set(null);
-            this.flashMsg('ok', `${p.member.name}'s role updated`);
+            this.flashMsg('ok', this.locale.t('members.toast.roleUpdated', { name: p.member.name }));
             this.refresh();
           },
-          error: (e) => {
+          error: () => {
             this.pending.set(null);
-            this.flashMsg('err', e?.error?.error || 'Failed to update role');
           },
         });
     } else if (p.kind === 'remove') {
       this.workspaceSvc.removeMember(this.workspace._id, p.member._id).subscribe({
         next: () => {
           this.pending.set(null);
-          this.flashMsg('ok', `${p.member.name} removed`);
+          this.flashMsg('ok', this.locale.t('members.toast.memberRemoved', { name: p.member.name }));
           this.refresh();
         },
-        error: (e) => {
+        error: () => {
           this.pending.set(null);
-          this.flashMsg('err', e?.error?.error || 'Failed to remove');
         },
       });
     }
@@ -261,8 +260,22 @@ export class WorkspaceMembersComponent implements OnInit {
   }
 
   private flashMsg(type: 'ok' | 'err', text: string): void {
-    this.flash.set({ type, text });
-    setTimeout(() => this.flash.set(null), 3500);
+    if (type === 'ok') this.toast.success(text);
+    else this.toast.error(text);
+  }
+
+  workspaceRoleLabel(role: string): string {
+    const key = `role.workspace.${role}`;
+    const translated = this.locale.t(key);
+    return translated !== key ? translated : role;
+  }
+
+  youRoleLabel(role: string): string {
+    return this.locale.t('common.youRole', { role: this.workspaceRoleLabel(role) });
+  }
+
+  memberWord(count: number): string {
+    return count === 1 ? this.locale.t('common.member') : this.locale.t('common.members');
   }
 
   trackById = (_: number, m: WorkspaceMember) => m._id;

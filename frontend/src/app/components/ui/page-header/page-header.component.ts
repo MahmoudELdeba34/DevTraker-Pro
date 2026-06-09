@@ -5,6 +5,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface PageHeaderStep {
   label: string;
@@ -30,7 +31,7 @@ export interface PageHeaderTip {
   selector: 'app-page-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="mb-6 animate-fade-up">
       <!-- Top row -->
@@ -64,7 +65,7 @@ export interface PageHeaderTip {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
               </svg>
-              {{ expanded() ? 'Hide guide' : 'How it works' }}
+              {{ expanded() ? ('pageHeader.hideGuide' | translate) : ('pageHeader.howItWorks' | translate) }}
             </button>
           }
           <ng-content select="[header-actions]"></ng-content>
@@ -76,7 +77,7 @@ export interface PageHeaderTip {
         <div class="mt-4 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent-subtle to-transparent p-5 animate-slide-down">
           @if (hasSteps()) {
             <div class="mb-4">
-              <div class="text-[10px] font-bold text-accent uppercase tracking-widest mb-3">The flow</div>
+              <div class="text-[10px] font-bold text-accent uppercase tracking-widest mb-3">{{ 'pageHeader.theFlow' | translate }}</div>
               <ol class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 @for (s of steps; track i; let i = $index) {
                   <li class="relative rounded-xl bg-bg-base border border-border p-3 flex gap-3">
@@ -103,7 +104,7 @@ export interface PageHeaderTip {
 
           @if (hasTips()) {
             <div>
-              <div class="text-[10px] font-bold text-accent uppercase tracking-widest mb-2">Good to know</div>
+              <div class="text-[10px] font-bold text-accent uppercase tracking-widest mb-2">{{ 'pageHeader.goodToKnow' | translate }}</div>
               <ul class="space-y-2">
                 @for (t of tips; track t.title) {
                   <li class="flex gap-2 text-xs text-text-secondary">

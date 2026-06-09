@@ -13,6 +13,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActivityService } from '../../services/activity.service';
 import { AuthService } from '../../services/auth.service';
 import { ActivityReport, ActivityDay } from '../../models/types';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type PresetRange = 'today' | 'week' | 'month' | 'custom';
 
@@ -24,7 +26,7 @@ type PresetRange = 'today' | 'week' | 'month' | 'custom';
   selector: 'app-user-activity',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, RouterLink],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink, TranslatePipe],
   styleUrls: ['./user-activity.component.css'],
   templateUrl: './user-activity.component.html',
 })
@@ -33,11 +35,20 @@ export class UserActivityComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private activityService = inject(ActivityService);
   private auth = inject(AuthService);
+  locale = inject(LocaleService);
+
+  printReportTitle = computed(() => {
+    const name = this.report()?.user?.name ?? '';
+    return this.locale.t('userActivity.print.reportTitle', { userName: name });
+  });
+
+  printPeriod = computed(() =>
+    this.locale.t('userActivity.print.period', { from: this.fromDate(), to: this.toDate() })
+  );
 
   userId = signal<string>('');
   report = signal<ActivityReport | null>(null);
   loading = signal(true);
-  error = signal<string | null>(null);
 
   preset = signal<PresetRange>('month');
   fromDate = signal<string>('');
@@ -105,7 +116,6 @@ export class UserActivityComponent implements OnInit, OnDestroy {
   load() {
     if (!this.userId()) return;
     this.loading.set(true);
-    this.error.set(null);
     this.activityService
       .getUserReport(this.userId(), { from: this.fromDate(), to: this.toDate() })
       .subscribe({
@@ -113,8 +123,7 @@ export class UserActivityComponent implements OnInit, OnDestroy {
           this.report.set(r);
           this.loading.set(false);
         },
-        error: (e) => {
-          this.error.set(e?.error?.error || 'Failed to load report');
+        error: () => {
           this.loading.set(false);
         },
       });
@@ -136,9 +145,20 @@ export class UserActivityComponent implements OnInit, OnDestroy {
     return `${h}h ${String(m).padStart(2, '0')}m`;
   }
 
-  formatHmsTime(iso: string): string {
+  formatHmsTime(iso: string | null | undefined): string {
+    if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  formatLastActive(iso?: string | null): string {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   formatDate(date: string): string {

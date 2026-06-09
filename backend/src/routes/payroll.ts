@@ -216,6 +216,155 @@ router.post('/run/:month', async (req: AuthRequest, res: Response): Promise<void
   }
 });
 
+// GET /api/payroll/payslips/:id/print-data — itemized payslip for printing
+router.get('/payslips/:id/print-data', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const role = req.userRole;
+    const payslip = await Payslip.findById(req.params['id'])
+      .populate('userId', 'name email role')
+      .populate({ path: 'payrollRunId', select: 'month status calculatedAt approvedAt' })
+      .populate('approvedBy', 'name');
+
+    if (!payslip) {
+      res.status(404).json({ success: false, error: 'Payslip not found' });
+      return;
+    }
+
+    const ownerId = payslip.userId && typeof payslip.userId === 'object' && '_id' in payslip.userId
+      ? String((payslip.userId as { _id: unknown })._id)
+      : String(payslip.userId);
+
+    const isOwner = req.userId === ownerId;
+    const isPayrollStaff = role === 'admin' || role === 'hr' || role === 'accountant';
+    if (!isOwner && !isPayrollStaff) {
+      res.status(403).json({ success: false, error: 'Access denied' });
+      return;
+    }
+
+    const run = payslip.payrollRunId as any;
+    const month = run?.month ?? '';
+    const profile = await EmployeeProfile.findOne({ userId: ownerId });
+
+    const workingDays = profile?.workingDays || 26;
+    const workingHours = profile?.workingHours || 8;
+    const dailyRate = workingDays > 0 ? payslip.basicSalary / workingDays : 0;
+    const hourlyRate = workingHours > 0 ? dailyRate / workingHours : 0;
+
+    const adjustments = await SalaryAdjustment.find({
+      userId: ownerId,
+      payrollMonth: month,
+      status: 'approved',
+    }).sort({ date: 1 });
+
+    const latenessDeduction = Number(((payslip.lateMinutes / 60) * hourlyRate).toFixed(2));
+    const absenceDeduction = Number(
+      ((payslip.absentDays + payslip.unpaidLeaves) * dailyRate).toFixed(2)
+    );
+
+    let manualBonuses = 0;
+    let manualDeductions = 0;
+    const adjustmentLines: Array<{
+      type: 'bonus' | 'deduction';
+      subType: string;
+      amount: number;
+      reason: string;
+    }> = [];
+
+    adjustments.forEach((adj) => {
+      adjustmentLines.push({
+        type: adj.type,
+        subType: adj.subType,
+        amount: adj.amount,
+        reason: adj.reason,
+      });
+      if (adj.type === 'bonus') manualBonuses += adj.amount;
+      else manualDeductions += adj.amount;
+    });
+
+    const earnings = [
+      { key: 'basic', label: 'Basic salary', amount: payslip.basicSalary },
+      {
+        key: 'overtime',
+        label: 'Overtime',
+        amount: payslip.overtimeAmount,
+        detail: `${payslip.overtimeHours}h`,
+      },
+      ...adjustmentLines
+        .filter((a) => a.type === 'bonus')
+        .map((a) => ({
+          key: `bonus-${a.subType}`,
+          label: a.subType,
+          amount: a.amount,
+          detail: a.reason,
+        })),
+    ];
+
+    const deductions = [
+      ...(payslip.lateMinutes > 0
+        ? [{
+            key: 'late',
+            label: 'Lateness',
+            amount: latenessDeduction,
+            detail: `${payslip.lateMinutes} min`,
+          }]
+        : []),
+      ...(payslip.absentDays + payslip.unpaidLeaves > 0
+        ? [{
+            key: 'absence',
+            label: 'Absence / unpaid leave',
+            amount: absenceDeduction,
+            detail: `${payslip.absentDays} absent, ${payslip.unpaidLeaves} unpaid`,
+          }]
+        : []),
+      ...adjustmentLines
+        .filter((a) => a.type === 'deduction')
+        .map((a) => ({
+          key: `deduction-${a.subType}`,
+          label: a.subType,
+          amount: a.amount,
+          detail: a.reason,
+        })),
+    ];
+
+    res.json({
+      success: true,
+      data: {
+        reference: `PS-${String(payslip._id).slice(-8).toUpperCase()}`,
+        payslip,
+        employee: payslip.userId,
+        profile: profile
+          ? {
+              department: profile.department,
+              roleTitle: profile.roleTitle,
+              employeeId: ownerId.slice(-8).toUpperCase(),
+              hireDate: profile.hireDate,
+              basicSalary: profile.basicSalary,
+              workingDays: profile.workingDays,
+              workingHours: profile.workingHours,
+            }
+          : null,
+        payrollRun: run,
+        earnings,
+        deductions,
+        summary: {
+          grossBasic: payslip.basicSalary,
+          totalEarnings: Number((payslip.basicSalary + payslip.bonuses).toFixed(2)),
+          totalDeductions: payslip.deductions,
+          netSalary: payslip.netSalary,
+          workedDays: payslip.workedDays,
+          absentDays: payslip.absentDays,
+          paidLeaves: payslip.paidLeaves,
+          unpaidLeaves: payslip.unpaidLeaves,
+        },
+        printedAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error('Payslip print-data error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
 // GET /api/payroll/runs - List payroll run history (HR/Admin/Accountant only)
 router.get('/runs', async (req: AuthRequest, res: Response): Promise<void> => {
   try {

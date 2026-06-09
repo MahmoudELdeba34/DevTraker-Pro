@@ -1,63 +1,53 @@
-<div class="page-ambient pb-12 animate-fade-up timesheet-page">
+<div class="page-ambient pb-12 animate-fade-up timesheet-page" [attr.data-locale]="locale.locale()">
 
   <app-page-header
-    eyebrow="Time & Activity"
-    title="My Timesheet"
-    description="Every minute you tracked — tasks, quick sessions, and attendance — rolled up by day. Overtime kicks in after 7 hours per day."
-    [steps]="[
-      { label: 'Pick a range', description: 'Today, this week, this month, or a custom date range.', tone: 'do' },
-      { label: 'Review your days', description: 'See total tracked time, attendance, and detailed entries per day.', tone: 'wait' },
-      { label: 'Print or export', description: 'Print a clean PDF-friendly report for HR, your manager, or your records.', tone: 'done' }
-    ]"
-    [tips]="[
-      { title: 'Overtime rule', body: 'Anything over 7h tracked per day is overtime — shown in amber on each daily card.' },
-      { title: 'Tasks + Quick Sessions', body: 'Time logged on tasks and Quick Sessions from the top bar both count.' },
-      { title: 'Live updates', body: 'Any running timer keeps ticking on the page so totals stay current.' }
-    ]"
+    [eyebrow]="'timesheet.eyebrow' | translate"
+    [title]="'timesheet.title' | translate"
+    [description]="'timesheet.description' | translate"
+    [steps]="headerSteps()"
+    [tips]="headerTips()"
   >
     <div header-actions class="flex items-center gap-2 no-print">
       <button class="btn-soft" (click)="load()" [disabled]="loading()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        Refresh
+        {{ 'common.refresh' | translate }}
       </button>
       <button class="btn-accent" (click)="printReport()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Print Report
+        {{ 'common.printReport' | translate }}
       </button>
     </div>
   </app-page-header>
 
-  <!-- Range bar -->
   <div class="bg-bg-elevated border border-border rounded-2xl p-4 mb-6 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between no-print">
     <div class="flex flex-wrap items-center gap-2">
-      <button class="range-chip" [class.range-chip--active]="preset() === 'today'" (click)="applyPreset('today')">Today</button>
-      <button class="range-chip" [class.range-chip--active]="preset() === 'week'" (click)="applyPreset('week')">This Week</button>
-      <button class="range-chip" [class.range-chip--active]="preset() === 'month'" (click)="applyPreset('month')">This Month</button>
+      <button class="range-chip" [class.range-chip--active]="preset() === 'today'" (click)="applyPreset('today')">{{ 'common.today' | translate }}</button>
+      <button class="range-chip" [class.range-chip--active]="preset() === 'week'" (click)="applyPreset('week')">{{ 'common.thisWeek' | translate }}</button>
+      <button class="range-chip" [class.range-chip--active]="preset() === 'month'" (click)="applyPreset('month')">{{ 'common.thisMonth' | translate }}</button>
     </div>
     <div class="flex flex-wrap items-center gap-2 text-xs">
-      <label class="text-text-muted font-semibold uppercase tracking-wider text-[10px]">From</label>
+      <label class="text-text-muted font-semibold uppercase tracking-wider text-[10px]">{{ 'common.from' | translate }}</label>
       <input type="date" class="date-input" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event); customRangeChanged()" />
-      <label class="text-text-muted font-semibold uppercase tracking-wider text-[10px]">To</label>
+      <label class="text-text-muted font-semibold uppercase tracking-wider text-[10px]">{{ 'common.to' | translate }}</label>
       <input type="date" class="date-input" [ngModel]="toDate()" (ngModelChange)="toDate.set($event); customRangeChanged()" />
     </div>
   </div>
 
-  <!-- ── Summary cards -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 stagger summary-grid">
     <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Total Tracked</span>
+        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.totalTracked' | translate }}</span>
         <div class="w-7 h-7 rounded-lg bg-accent-subtle text-accent flex items-center justify-center">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
       </div>
       <div class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ formatHm(totalHours()) }}</div>
-      <p class="text-xs text-text-muted mt-1">Across all days in range</p>
+      <p class="text-xs text-text-muted mt-1">{{ 'common.acrossAllDays' | translate }}</p>
     </div>
 
     <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Overtime</span>
+        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.overtime' | translate }}</span>
         <div class="w-7 h-7 rounded-lg flex items-center justify-center"
              [ngClass]="overtimeHours() > 0 ? 'bg-warning/15 text-warning' : 'bg-success/10 text-success'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -65,48 +55,46 @@
       </div>
       <div class="text-3xl font-display font-extrabold font-mono tabular-nums"
            [ngClass]="overtimeHours() > 0 ? 'text-warning' : 'text-white'">{{ formatHm(overtimeHours()) }}</div>
-      <p class="text-xs text-text-muted mt-1">Anything past 7h/day</p>
+      <p class="text-xs text-text-muted mt-1">{{ 'common.anythingPast7h' | translate }}</p>
     </div>
 
     <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Days Worked</span>
+        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.daysWorked' | translate }}</span>
         <div class="w-7 h-7 rounded-lg bg-success/10 text-success flex items-center justify-center">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
       </div>
       <div class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ daysWorked() }}</div>
-      <p class="text-xs text-text-muted mt-1">Days with tracked time</p>
+      <p class="text-xs text-text-muted mt-1">{{ 'common.daysWithTrackedTime' | translate }}</p>
     </div>
 
     <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">Activity</span>
+        <span class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.tracking' | translate }}</span>
         <div class="w-7 h-7 rounded-lg bg-info/10 text-info flex items-center justify-center">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         </div>
       </div>
       <div class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ tasksCount() }}<span class="text-text-muted text-base"> / {{ quickCount() }}</span></div>
-      <p class="text-xs text-text-muted mt-1">Tasks / quick sessions</p>
+      <p class="text-xs text-text-muted mt-1">{{ 'common.tasksQuickSessions' | translate }}</p>
     </div>
   </div>
 
-  <!-- ── Print-only banner -->
   <div class="print-only mb-6">
     <div class="border-b-2 border-bg-base pb-3 mb-3">
-      <h1 class="text-2xl font-bold">{{ report()?.user?.name }} — Timesheet Report</h1>
-      <p class="text-sm text-text-muted">{{ report()?.user?.email }} · {{ report()?.user?.role }}</p>
+      <h1 class="text-2xl font-bold">{{ printReportTitle() }}</h1>
+      <p class="text-sm text-text-muted">{{ report()?.user?.email }} · {{ locale.roleLabel(report()?.user?.role || '') }}</p>
       <p class="text-xs text-text-muted mt-1">{{ fromDate() }} → {{ toDate() }}</p>
     </div>
     <div class="grid grid-cols-4 gap-3 text-xs">
-      <div><strong>Total:</strong> {{ formatHm(totalHours()) }}</div>
-      <div><strong>Overtime:</strong> {{ formatHm(overtimeHours()) }}</div>
-      <div><strong>Days worked:</strong> {{ daysWorked() }}</div>
-      <div><strong>Tasks / Quick:</strong> {{ tasksCount() }} / {{ quickCount() }}</div>
+      <div><strong>{{ 'common.totalShort' | translate }}</strong> {{ formatHm(totalHours()) }}</div>
+      <div><strong>{{ 'common.overtime' | translate }}:</strong> {{ formatHm(overtimeHours()) }}</div>
+      <div><strong>{{ 'common.daysWorkedShort' | translate }}</strong> {{ daysWorked() }}</div>
+      <div><strong>{{ 'common.tasksQuick' | translate }}:</strong> {{ tasksCount() }} / {{ quickCount() }}</div>
     </div>
   </div>
 
-  <!-- ── Loading state -->
   @if (loading()) {
     <div class="space-y-3">
       @for (i of [0,1,2]; track i) {
@@ -115,18 +103,16 @@
     </div>
   }
 
-  <!-- ── Empty state -->
   @if (!loading() && dailyList().length === 0) {
     <div class="bg-bg-elevated border border-dashed border-border rounded-2xl p-10 text-center">
       <div class="w-14 h-14 rounded-full bg-bg-base border border-border flex items-center justify-center mx-auto mb-3 text-text-muted">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
-      <p class="text-sm text-text-secondary">Nothing tracked in this range yet.</p>
-      <p class="text-xs text-text-muted mt-1">Start a timer from any task or use the Quick Session input in the top bar.</p>
+      <p class="text-sm text-text-secondary">{{ 'timesheet.empty.title' | translate }}</p>
+      <p class="text-xs text-text-muted mt-1">{{ 'timesheet.empty.hint' | translate }}</p>
     </div>
   }
 
-  <!-- ── Daily report cards -->
   @for (day of dailyList(); track day.date) {
     <article class="bg-bg-elevated border border-border rounded-2xl mb-4 overflow-hidden animate-fade-up day-card">
       <header class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-border bg-bg-base/30">
@@ -145,8 +131,8 @@
               }
               @if (day.attendance?.checkIn) {
                 <span class="text-[11px] text-text-muted font-mono">
-                  In {{ day.attendance.checkIn | date:'HH:mm' }}
-                  @if (day.attendance.checkOut) { · Out {{ day.attendance.checkOut | date:'HH:mm' }} } @else { · still on clock }
+                  {{ 'common.inTime' | translate:{ time: formatHmsTime(day.attendance.checkIn) } }}
+                  @if (day.attendance.checkOut) { · {{ 'common.outTime' | translate:{ time: formatHmsTime(day.attendance.checkOut) } }} } @else { · {{ 'common.stillOnClock' | translate }} }
                 </span>
               }
             </div>
@@ -155,19 +141,18 @@
 
         <div class="flex items-center gap-4 text-right">
           <div>
-            <div class="text-[10px] uppercase font-bold text-text-muted tracking-widest">Tracked</div>
+            <div class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ 'common.tracked' | translate }}</div>
             <div class="text-base font-mono font-extrabold text-white tabular-nums">{{ formatHm(dayLiveTotal(day)) }}</div>
           </div>
           @if (dayLiveOvertime(day) > 0) {
             <div>
-              <div class="text-[10px] uppercase font-bold text-warning tracking-widest">Overtime</div>
+              <div class="text-[10px] uppercase font-bold text-warning tracking-widest">{{ 'common.overtime' | translate }}</div>
               <div class="text-base font-mono font-extrabold text-warning tabular-nums">{{ formatHm(dayLiveOvertime(day)) }}</div>
             </div>
           }
         </div>
       </header>
 
-      <!-- Progress bar to 7h threshold (with overtime band) -->
       <div class="h-1.5 w-full bg-bg-base/60 relative overflow-hidden no-print">
         <div class="h-full transition-all duration-500"
              [class.bg-accent]="dayLiveOvertime(day) === 0"
@@ -175,16 +160,14 @@
              [style.width.%]="dayLiveOvertime(day) > 0 ? 100 : dayProgressPct(day)"></div>
       </div>
 
-      <!-- Entries -->
       <div class="divide-y divide-border">
         @if (day.taskLogs.length === 0 && day.quickSessions.length === 0) {
           <div class="px-5 py-4 text-xs text-text-muted">
-            No tracker entries on this day.
-            @if (day.attendance) { Attendance was logged via the clock terminal. }
+            {{ 'timesheet.entry.noEntries' | translate }}
+            @if (day.attendance) { {{ 'timesheet.entry.attendanceOnly' | translate }} }
           </div>
         }
 
-        <!-- Task logs -->
         @for (log of day.taskLogs; track $index) {
           <div class="flex items-center gap-4 px-5 py-3 hover:bg-bg-hover/30 transition-colors">
             <span class="w-1.5 h-8 rounded-full bg-accent shrink-0"></span>
@@ -195,7 +178,7 @@
                 <span class="text-xs text-text-secondary truncate">{{ log.projectTitle }}</span>
               </div>
               <div class="flex items-center gap-2 mt-0.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-accent px-1.5 py-0.5 rounded bg-accent-subtle border border-accent/30">Task</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-accent px-1.5 py-0.5 rounded bg-accent-subtle border border-accent/30">{{ 'timesheet.badge.task' | translate }}</span>
                 <span class="text-[11px] font-mono text-text-muted">{{ formatHmsTime(log.start) }} → {{ formatHmsTime(log.end) }}</span>
               </div>
             </div>
@@ -203,26 +186,25 @@
           </div>
         }
 
-        <!-- Quick sessions -->
         @for (q of day.quickSessions; track q._id) {
           <div class="flex items-center gap-4 px-5 py-3 hover:bg-bg-hover/30 transition-colors">
             <span class="w-1.5 h-8 rounded-full shrink-0" [class.bg-info]="q.endedAt" [class.bg-danger]="!q.endedAt" [class.animate-pulse]="!q.endedAt"></span>
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2 flex-wrap">
-                <span class="text-sm font-semibold text-white truncate">{{ q.description || 'Quick session' }}</span>
+                <span class="text-sm font-semibold text-white truncate">{{ q.description || ('shell.quickSession' | translate) }}</span>
                 @if (!q.endedAt) {
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-danger px-1.5 py-0.5 rounded bg-danger/15 border border-danger/30 animate-pulse">Live</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-danger px-1.5 py-0.5 rounded bg-danger/15 border border-danger/30 animate-pulse">{{ 'timesheet.badge.live' | translate }}</span>
                 }
               </div>
               <div class="flex items-center gap-2 mt-0.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-info px-1.5 py-0.5 rounded bg-info/15 border border-info/30">Quick</span>
-                <span class="text-[11px] font-mono text-text-muted">{{ formatHmsTime(q.startedAt) }} → @if (q.endedAt) { {{ formatHmsTime(q.endedAt) }} } @else { now }</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-info px-1.5 py-0.5 rounded bg-info/15 border border-info/30">{{ 'timesheet.badge.quick' | translate }}</span>
+                <span class="text-[11px] font-mono text-text-muted">{{ formatHmsTime(q.startedAt) }} → @if (q.endedAt) { {{ formatHmsTime(q.endedAt) }} } @else { {{ 'common.live' | translate }} }</span>
               </div>
             </div>
             <span class="font-mono font-bold text-sm text-white tabular-nums shrink-0">
               @if (q.endedAt) { {{ formatHm(q.durationMs) }} }
               @else {
-                <button (click)="stopActive()" class="px-2 py-1 rounded bg-danger/15 text-danger border border-danger/30 hover:bg-danger hover:text-white transition-colors text-[11px] font-bold uppercase tracking-wider no-print">Stop</button>
+                <button (click)="stopActive()" class="px-2 py-1 rounded bg-danger/15 text-danger border border-danger/30 hover:bg-danger hover:text-white transition-colors text-[11px] font-bold uppercase tracking-wider no-print">{{ 'common.stop' | translate }}</button>
               }
             </span>
           </div>
@@ -231,8 +213,4 @@
     </article>
   }
 
-  <!-- ── Error state -->
-  @if (error()) {
-    <div class="mt-4 p-3.5 bg-danger/10 border border-danger/25 text-danger rounded-xl text-sm">{{ error() }}</div>
-  }
 </div>

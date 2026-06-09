@@ -197,6 +197,27 @@ router.get(
   }
 );
 
+// GET /api/tasks/my/active-timer — rehydrate the current user's running task timer
+router.get(
+  '/my/active-timer',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const userId = new mongoose.Types.ObjectId(req.userId);
+      const task = await Task.findOne({
+        activeTimerUserId: userId,
+        activeTimerStart: { $ne: null },
+      })
+        .populate('projectId', 'title')
+        .populate('assignedTo', 'name email role');
+
+      res.json({ success: true, data: task });
+    } catch (err) {
+      console.error('Get active timer error:', err);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  }
+);
+
 // PUT /api/tasks/:id
 router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   try {

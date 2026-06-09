@@ -7,14 +7,16 @@ import { WorkspaceService, WorkspaceMember } from '../../services/workspace.serv
 import { TimerWidgetComponent } from '../timer-widget/timer-widget.component';
 import { DatePickerComponent } from '../ui/date-picker/date-picker.component';
 import { OnChanges, SimpleChanges } from '@angular/core';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-task-details-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TimerWidgetComponent, DatePickerComponent],
+  imports: [CommonModule, FormsModule, TimerWidgetComponent, DatePickerComponent, TranslatePipe],
   template: `
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="close.emit()">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="close.emit()" [attr.data-locale]="locale.locale()">
       <div class="bg-bg-elevated border border-border rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-modal animate-scale-in overflow-hidden" (click)="$event.stopPropagation()">
         
         <!-- Inner Container for padding -->
@@ -23,7 +25,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
           <!-- Top Bar: Breadcrumbs & Close -->
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 text-xs font-medium">
-              <span class="text-text-secondary">{{ projectName || 'Project' }}</span>
+              <span class="text-text-secondary">{{ projectName || locale.t('taskDetails.projectFallback') }}</span>
               <span class="text-text-muted">/</span>
               <span class="text-accent">{{ task.title }}</span>
             </div>
@@ -36,7 +38,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
           <div class="flex items-center gap-3">
             <button class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
                  [ngClass]="task.status === 'completed' ? 'border-success bg-success/20 text-success' : 'border-accent/50 bg-accent/20'"
-                 (click)="toggleComplete()" title="Toggle Complete">
+                 (click)="toggleComplete()" [title]="locale.t('taskDetails.toggleComplete')">
               @if (task.status === 'completed') {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
               } @else {
@@ -53,7 +55,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4 relative">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                Task Status
+                {{ 'taskDetails.taskStatus' | translate }}
               </span>
               <button class="bg-accent/20 text-accent border border-accent/30 text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-2 hover:bg-accent/30 transition-colors"
                       (click)="closeAllDropdowns(); showStatusDropdown.set(!showStatusDropdown())" [disabled]="updating()">
@@ -64,10 +66,10 @@ import { OnChanges, SimpleChanges } from '@angular/core';
               @if (showStatusDropdown()) {
                 <div class="absolute top-full left-28 mt-1 w-36 bg-bg-elevated border border-border rounded-lg shadow-xl overflow-hidden z-50">
                   <div class="flex flex-col text-xs font-medium">
-                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-white transition-colors" (click)="toggleTaskStatus('not_started')">Not Started</button>
-                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-white transition-colors" (click)="toggleTaskStatus('in_progress')">In Progress</button>
-                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-white transition-colors" (click)="toggleTaskStatus('in_review')">In Review</button>
-                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-success transition-colors" (click)="toggleTaskStatus('completed')">Completed</button>
+                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-white transition-colors" (click)="toggleTaskStatus('not_started')">{{ locale.statusLabel('not_started') }}</button>
+                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-white transition-colors" (click)="toggleTaskStatus('in_progress')">{{ locale.statusLabel('in_progress') }}</button>
+                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-white transition-colors" (click)="toggleTaskStatus('in_review')">{{ locale.statusLabel('in_review') }}</button>
+                    <button class="px-3 py-2 text-left hover:bg-bg-hover text-success transition-colors" (click)="toggleTaskStatus('completed')">{{ locale.statusLabel('completed') }}</button>
                   </div>
                 </div>
               }
@@ -76,7 +78,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4 relative">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2 shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Assignee
+                {{ 'taskDetails.assignee' | translate }}
               </span>
               <button
                 type="button"
@@ -91,7 +93,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                   <span class="truncate">{{ task.assignedTo.name }}</span>
                 } @else {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span>Assign member…</span>
+                  <span>{{ 'taskDetails.assignMember' | translate }}</span>
                 }
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" class="ml-auto shrink-0 opacity-60"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               </button>
@@ -103,7 +105,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                       type="text"
                       [ngModel]="assigneeSearch()"
                       (ngModelChange)="assigneeSearch.set($event)"
-                      placeholder="Search members…"
+                      [placeholder]="locale.t('common.searchMembers')"
                       class="w-full bg-bg-base border border-border text-white text-xs rounded-lg px-3 py-2 outline-none focus:border-accent"
                       (click)="$event.stopPropagation()"
                     />
@@ -115,7 +117,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                       (click)="unassignTask()"
                     >
                       <span class="w-6 h-6 rounded-full border border-dashed border-text-muted flex items-center justify-center shrink-0">—</span>
-                      Unassigned
+                      {{ 'taskDetails.unassigned' | translate }}
                     </button>
                     @for (member of filteredMembers(); track member._id) {
                       <button
@@ -137,9 +139,9 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                       </button>
                     }
                     @if (loadingMembers()) {
-                      <div class="p-3 text-xs text-text-muted italic">Loading members…</div>
+                      <div class="p-3 text-xs text-text-muted italic">{{ 'common.loadingMembers' | translate }}</div>
                     } @else if (!filteredMembers().length) {
-                      <div class="p-3 text-xs text-text-muted italic">No members found in this workspace.</div>
+                      <div class="p-3 text-xs text-text-muted italic">{{ 'common.noMembersInWorkspace' | translate }}</div>
                     }
                   </div>
                 </div>
@@ -150,11 +152,11 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4 relative">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2 shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                Start date
+                {{ 'taskDetails.startDate' | translate }}
               </span>
               <app-date-picker
                 [value]="toDateIso(task.startDate)"
-                placeholder="Set start"
+                [placeholder]="locale.t('common.setStart')"
                 (valueChange)="updateStartDate($event)"
               />
             </div>
@@ -162,11 +164,11 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4 relative">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2 shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Due date
+                {{ 'taskDetails.dueDate' | translate }}
               </span>
               <app-date-picker
                 [value]="toDateIso(task.deadline)"
-                placeholder="Set due date"
+                [placeholder]="locale.t('common.setDueDate')"
                 [showOverdue]="true"
                 (valueChange)="updateDeadline($event)"
               />
@@ -175,7 +177,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                Progress
+                {{ 'taskDetails.progress' | translate }}
               </span>
               <div class="flex items-center gap-3 flex-1 max-w-[200px]">
                 <span class="text-xs font-bold text-white w-8">{{ progress }}%</span>
@@ -189,7 +191,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4 relative">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2 shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-                Priority
+                {{ 'taskDetails.priority' | translate }}
               </span>
               <button
                 type="button"
@@ -213,7 +215,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                       (click)="setPriority(p.value)"
                     >
                       <span class="w-2 h-2 rounded-full shrink-0" [ngClass]="p.dotClass"></span>
-                      {{ p.label }}
+                      {{ locale.priorityLabel(p.value) }}
                       @if (task.priority === p.value) {
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ml-auto text-accent"><polyline points="20 6 9 17 4 12"/></svg>
                       }
@@ -226,7 +228,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
             <div class="flex items-center gap-4">
               <span class="text-xs text-text-muted w-24 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                Track Time
+                {{ 'taskDetails.trackTime' | translate }}
               </span>
               <app-timer-widget [task]="task" (timerUpdated)="task = $event" />
             </div>
@@ -241,7 +243,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
               [(ngModel)]="task.description" 
               (blur)="saveDescription($event)"
               class="w-full bg-transparent text-sm text-white placeholder-text-muted outline-none resize-none min-h-[60px]" 
-              placeholder="Add description"></textarea>
+              [placeholder]="locale.t('taskDetails.addDescription')"></textarea>
           </div>
 
           <div class="h-px bg-border my-2 w-full"></div>
@@ -250,7 +252,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
           <div class="flex flex-col gap-4">
             <button class="flex items-center gap-2 text-sm font-bold text-white hover:text-accent transition-colors w-max" (click)="checklistsExpanded = !checklistsExpanded">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform duration-200" [class.-rotate-90]="!checklistsExpanded"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              Checklists ({{ task.subtasks.length || 0 }})
+              {{ locale.t('taskDetails.checklists', { count: task.subtasks.length || 0 }) }}
             </button>
             
             @if (checklistsExpanded) {
@@ -276,7 +278,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                           {{ getSubtaskAssigneeInitials(sub.assignedTo) }}
                         </button>
                       } @else {
-                        <button class="w-5 h-5 rounded-full bg-bg-base border border-dashed border-text-muted flex items-center justify-center text-text-muted hover:text-white hover:border-accent transition-colors opacity-0 group-hover:opacity-100" title="Assign User" (click)="showSubtaskAssigneeDropdown.set(showSubtaskAssigneeDropdown() === sub._id ? null : sub._id)">
+                        <button class="w-5 h-5 rounded-full bg-bg-base border border-dashed border-text-muted flex items-center justify-center text-text-muted hover:text-white hover:border-accent transition-colors opacity-0 group-hover:opacity-100" [title]="locale.t('common.assignUser')" (click)="showSubtaskAssigneeDropdown.set(showSubtaskAssigneeDropdown() === sub._id ? null : sub._id)">
                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         </button>
                       }
@@ -295,7 +297,7 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                             </button>
                           }
                           @if (!workspaceMembers().length) {
-                            <div class="p-3 text-xs text-text-muted italic">No members found.</div>
+                            <div class="p-3 text-xs text-text-muted italic">{{ 'common.noResults' | translate }}</div>
                           }
                         </div>
                       </div>
@@ -304,15 +306,15 @@ import { OnChanges, SimpleChanges } from '@angular/core';
                 }
                 
                 @if (!task.subtasks.length) {
-                  <div class="text-xs text-text-muted p-2 italic">No subtasks yet.</div>
+                  <div class="text-xs text-text-muted p-2 italic">{{ 'taskDetails.noSubtasks' | translate }}</div>
                 }
 
                 <!-- Add Item -->
                 <div class="flex items-center gap-2 mt-1 px-2 py-1">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted shrink-0"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <input type="text" [(ngModel)]="newSubtaskTitle" (keydown.enter)="addSubtask()" placeholder="Add item" class="bg-transparent outline-none text-sm text-white placeholder-text-muted flex-1" />
+                  <input type="text" [(ngModel)]="newSubtaskTitle" (keydown.enter)="addSubtask()" [placeholder]="locale.t('taskDetails.addItem')" class="bg-transparent outline-none text-sm text-white placeholder-text-muted flex-1" />
                   @if (newSubtaskTitle().trim()) {
-                    <button class="text-xs text-accent font-semibold hover:text-accent-hover transition-colors" (click)="addSubtask()" [disabled]="updating()">Add</button>
+                    <button class="text-xs text-accent font-semibold hover:text-accent-hover transition-colors" (click)="addSubtask()" [disabled]="updating()">{{ 'common.add' | translate }}</button>
                   }
                 </div>
               </div>
@@ -344,11 +346,15 @@ export class TaskDetailsModalComponent implements OnInit, OnChanges {
   assigneeSearch = signal('');
   loadingMembers = signal(false);
 
-  readonly priorityOptions: { value: TaskPriority; label: string; dotClass: string }[] = [
-    { value: 'low', label: 'Low', dotClass: 'bg-info' },
-    { value: 'medium', label: 'Medium', dotClass: 'bg-warning' },
-    { value: 'high', label: 'High', dotClass: 'bg-danger' },
+  readonly priorityOptions: { value: TaskPriority; dotClass: string }[] = [
+    { value: 'low', dotClass: 'bg-info' },
+    { value: 'medium', dotClass: 'bg-warning' },
+    { value: 'high', dotClass: 'bg-danger' },
   ];
+
+  locale = inject(LocaleService);
+  private taskService = inject(TaskService);
+  private workspaceService = inject(WorkspaceService);
 
   filteredMembers = computed(() => {
     const q = this.assigneeSearch().trim().toLowerCase();
@@ -360,9 +366,6 @@ export class TaskDetailsModalComponent implements OnInit, OnChanges {
         m.email.toLowerCase().includes(q)
     );
   });
-
-  private taskService = inject(TaskService);
-  private workspaceService = inject(WorkspaceService);
 
   ngOnInit() {
     this.loadMembers();
@@ -415,14 +418,7 @@ export class TaskDetailsModalComponent implements OnInit, OnChanges {
   }
 
   get priorityLabel(): string {
-    switch (this.task.priority) {
-      case 'high':
-        return 'High';
-      case 'low':
-        return 'Low';
-      default:
-        return 'Medium';
-    }
+    return this.locale.priorityLabel(this.task.priority);
   }
 
   priorityClasses(): string {
@@ -455,13 +451,7 @@ export class TaskDetailsModalComponent implements OnInit, OnChanges {
   }
 
   get statusLabel(): string {
-    const labels: Record<string, string> = {
-      'not_started': 'Not Started',
-      'in_progress': 'In Progress',
-      'in_review': 'In Review',
-      'completed': 'Completed'
-    };
-    return labels[this.task.status] || this.task.status;
+    return this.locale.statusLabel(this.task.status);
   }
 
   get progress(): number {

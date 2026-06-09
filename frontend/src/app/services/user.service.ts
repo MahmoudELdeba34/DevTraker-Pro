@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User, ApiResponse } from '../models/types';
+import { SKIP_ERROR_TOAST } from '../core/http-context';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -19,7 +20,11 @@ export class UserService {
   }
 
   sendHeartbeat(currentPage: string): Observable<ApiResponse<void>> {
-    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/heartbeat`, { currentPage });
+    return this.http.post<ApiResponse<void>>(
+      `${this.apiUrl}/heartbeat`,
+      { currentPage },
+      { context: new HttpContext().set(SKIP_ERROR_TOAST, true) }
+    );
   }
 
   getActiveSessions(): Observable<ApiResponse<User[]>> {

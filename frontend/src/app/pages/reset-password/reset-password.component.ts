@@ -1,21 +1,24 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
+import { ToastService } from '../../services/toast.service';
+import { LocaleService } from '../../core/i18n/locale.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   template: `
-    <div class="auth-page flex flex-col items-center justify-center min-h-screen">
+    <div class="auth-page flex flex-col items-center justify-center min-h-screen" [attr.data-locale]="locale.locale()">
       <!-- Logo Header Outside Card -->
       <div class="text-center mb-8 fade-in">
         <h1 class="text-3xl font-display font-bold tracking-tight text-white">
           Pro<span class="text-accent">Track</span>
         </h1>
-        <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">Team Performance Tracking</p>
+        <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">{{ 'common.brandTagline' | translate }}</p>
       </div>
 
       <div class="auth-card w-full max-w-[440px] bg-bg-elevated border border-border rounded-xl p-8 shadow-modal relative overflow-hidden slide-up">
@@ -27,24 +30,14 @@ import { RouterLink, Router } from '@angular/router';
             </svg>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-white mb-2 tracking-tight">Set new password</h2>
-            <p class="text-sm text-text-secondary leading-relaxed">Please enter a unique password to secure your team account.</p>
+            <h2 class="text-xl font-bold text-white mb-2 tracking-tight">{{ 'resetPassword.title' | translate }}</h2>
+            <p class="text-sm text-text-secondary leading-relaxed">{{ 'resetPassword.hint' | translate }}</p>
           </div>
         </div>
 
-        @if (successMessage()) {
-          <div class="alert mb-6 flex items-center gap-3 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm font-medium">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            {{ successMessage() }}
-          </div>
-        }
-
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
           <div class="flex flex-col gap-2">
-            <label for="password" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">New Password</label>
+            <label for="password" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'resetPassword.newPassword' | translate }}</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -56,18 +49,18 @@ import { RouterLink, Router } from '@angular/router';
                 id="password"
                 type="password"
                 formControlName="password"
-                placeholder="Min. 8 characters"
+                [placeholder]="locale.t('common.passwordMin8Placeholder')"
                 class="w-full bg-bg-base border border-border text-white text-sm rounded-lg pl-10 pr-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50 tracking-wide"
                 [class.border-danger]="form.get('password')?.invalid && form.get('password')?.touched"
               />
             </div>
             @if (form.get('password')?.invalid && form.get('password')?.touched) {
-              <span class="text-danger text-[11px] mt-1 font-medium">Password must be at least 8 characters</span>
+              <span class="text-danger text-[11px] mt-1 font-medium">{{ 'resetPassword.passwordMin8' | translate }}</span>
             }
           </div>
 
           <div class="flex flex-col gap-2">
-            <label for="confirmPassword" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Confirm Password</label>
+            <label for="confirmPassword" class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'resetPassword.confirmPassword' | translate }}</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -78,29 +71,29 @@ import { RouterLink, Router } from '@angular/router';
                 id="confirmPassword"
                 type="password"
                 formControlName="confirmPassword"
-                placeholder="Repeat your password"
+                [placeholder]="locale.t('common.repeatPassword')"
                 class="w-full bg-bg-base border border-border text-white text-sm rounded-lg pl-10 pr-4 py-2.5 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/50 tracking-wide"
                 [class.border-danger]="(form.get('confirmPassword')?.invalid || form.errors?.['passwordMismatch']) && form.get('confirmPassword')?.touched"
               />
             </div>
             @if ((form.get('confirmPassword')?.invalid || form.errors?.['passwordMismatch']) && form.get('confirmPassword')?.touched) {
-              <span class="text-danger text-[11px] mt-1 font-medium">Passwords must match</span>
+              <span class="text-danger text-[11px] mt-1 font-medium">{{ 'resetPassword.passwordsMustMatch' | translate }}</span>
             }
           </div>
 
           <button
             type="submit"
             class="w-full bg-accent hover:bg-accent-hover text-white font-semibold text-sm py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_0_25px_rgba(99,102,241,0.5)]"
-            [disabled]="loading() || successMessage() !== ''"
+            [disabled]="loading()"
           >
             @if (loading()) {
               <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Resetting...
+              {{ 'resetPassword.resetting' | translate }}
             } @else {
-              Reset password
+              {{ 'resetPassword.resetBtn' | translate }}
             }
           </button>
         </form>
@@ -111,7 +104,7 @@ import { RouterLink, Router } from '@angular/router';
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Back to login
+            {{ 'common.backToLogin' | translate }}
           </a>
         </div>
       </div>
@@ -121,9 +114,12 @@ import { RouterLink, Router } from '@angular/router';
 export class ResetPasswordComponent {
   form: FormGroup;
   loading = signal(false);
-  successMessage = signal('');
+  private toast = inject(ToastService);
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  locale = inject(LocaleService);
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor() {
     this.form = this.fb.group({
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]]
@@ -146,14 +142,12 @@ export class ResetPasswordComponent {
     }
     
     this.loading.set(true);
-    // Simulate API call
     setTimeout(() => {
       this.loading.set(false);
-      this.successMessage.set('Password reset successfully! Redirecting...');
+      this.toast.success(this.locale.t('resetPassword.toast.success'));
       setTimeout(() => {
         this.router.navigate(['/login']);
       }, 2000);
     }, 1500);
   }
 }
-
