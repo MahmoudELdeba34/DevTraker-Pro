@@ -234,6 +234,56 @@ export class AuthService {
       .pipe(tap((r) => this.persistUserResponse(r)));
   }
 
+  getFaceStatus(): Observable<
+    ApiResponse<{ enrolled: boolean; facePhotoUrl: string | null; enrolledAt: string | null }>
+  > {
+    return this.http.get<
+      ApiResponse<{ enrolled: boolean; facePhotoUrl: string | null; enrolledAt: string | null }>
+    >(`${this.apiUrl}/me/face`);
+  }
+
+  enrollFace(photo: Blob, descriptor: number[]): Observable<
+    ApiResponse<{ enrolled: boolean; facePhotoUrl: string; enrolledAt: string }>
+  > {
+    const form = new FormData();
+    form.append('photo', photo, 'face-enroll.jpg');
+    form.append('faceDescriptor', JSON.stringify(descriptor));
+    return this.http
+      .post<ApiResponse<{ enrolled: boolean; facePhotoUrl: string; enrolledAt: string }>>(
+        `${this.apiUrl}/me/face`,
+        form
+      )
+      .pipe(
+        tap((r) => {
+          if (r.success) {
+            const user = this.currentUser();
+            if (user) {
+              this.updateLocalUser({
+                ...user,
+                faceEnrolled: true,
+                facePhotoUrl: r.data.facePhotoUrl,
+              });
+            }
+          }
+        })
+      );
+  }
+
+  removeFaceProfile(): Observable<ApiResponse<{ enrolled: boolean }>> {
+    return this.http
+      .delete<ApiResponse<{ enrolled: boolean }>>(`${this.apiUrl}/me/face`)
+      .pipe(
+        tap((r) => {
+          if (r.success) {
+            const user = this.currentUser();
+            if (user) {
+              this.updateLocalUser({ ...user, faceEnrolled: false, facePhotoUrl: undefined });
+            }
+          }
+        })
+      );
+  }
+
   private persistUserResponse(r: ApiResponse<{ user: User }>): void {
     if (r.success && r.data?.user) {
       authStore.setItem(STORAGE.user, JSON.stringify(r.data.user));

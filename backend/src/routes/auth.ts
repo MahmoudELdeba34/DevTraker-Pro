@@ -15,6 +15,13 @@ import {
   isValidExternalAvatarUrl,
   safeAvatarFilename,
 } from '../utils/avatar';
+import { uploadFacePhotoMiddleware } from '../middleware/uploadFacePhoto';
+import {
+  buildFacePhotoUrl,
+  deleteFacePhotoFile,
+  validateFacePhotoFile,
+} from '../utils/facePhotos';
+import { parseFaceDescriptor } from '../utils/faceMatch';
 import {
   issuePasswordReset,
   verifyPasswordResetToken,
@@ -92,6 +99,8 @@ function safeUser(u: any) {
     email: u.email,
     role: u.role,
     avatarUrl: u.avatarUrl || undefined,
+    faceEnrolled: Array.isArray(u.faceDescriptor) && u.faceDescriptor.length > 0,
+    facePhotoUrl: u.facePhotoUrl || undefined,
   };
 }
 
@@ -399,6 +408,114 @@ router.delete('/me/avatar', authMiddleware, async (req: AuthRequest, res: Respon
   } catch (err) {
     console.error('Remove avatar error:', err);
     res.status(500).json({ success: false, error: 'Failed to remove avatar' });
+  }
+});
+
+// GET /api/auth/me/face — face enrollment status
+router.get('/me/face', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.userId).select('facePhotoUrl faceDescriptor faceEnrolledAt');
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+    const enrolled = Array.isArray(user.faceDescriptor) && user.faceDescriptor.length > 0;
+    res.json({
+      success: true,
+      data: {
+        enrolled,
+        facePhotoUrl: user.facePhotoUrl || null,
+        enrolledAt: user.faceEnrolledAt || null,
+      },
+    });
+  } catch (err) {
+    console.error('Face status error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/me/face — enroll / update reference face
+router.post(
+  '/me/face',
+  authMiddleware,
+  uploadFacePhotoMiddleware,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.file?.path) {
+        res.status(400).json({ success: false, error: 'Face photo is required' });
+        return;
+      }
+
+      if (!validateFacePhotoFile(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+        res.status(400).json({ success: false, error: 'Invalid image file' });
+        return;
+      }
+
+      const descriptor = parseFaceDescriptor(req.body?.faceDescriptor);
+      if (!descriptor) {
+        fs.unlinkSync(req.file.path);
+        res.status(400).json({
+          success: false,
+          error: 'Face could not be processed. Ensure your face is clearly visible.',
+        });
+        return;
+      }
+
+      const user = await User.findById(req.userId);
+      if (!user) {
+        fs.unlinkSync(req.file.path);
+        res.status(404).json({ success: false, error: 'User not found' });
+        return;
+      }
+
+      const photoUrl = buildFacePhotoUrl(req.file.filename);
+      if (user.facePhotoUrl) {
+        deleteFacePhotoFile(user.facePhotoUrl);
+      }
+
+      user.facePhotoUrl = photoUrl;
+      user.faceDescriptor = descriptor;
+      user.faceEnrolledAt = new Date();
+      await user.save();
+
+      res.json({
+        success: true,
+        data: {
+          enrolled: true,
+          facePhotoUrl: user.facePhotoUrl,
+          enrolledAt: user.faceEnrolledAt,
+        },
+      });
+    } catch (err) {
+      if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      console.error('Face enroll error:', err);
+      res.status(500).json({ success: false, error: 'Failed to enroll face' });
+    }
+  }
+);
+
+// DELETE /api/auth/me/face — remove enrolled face (self or admin/hr later)
+router.delete('/me/face', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    if (user.facePhotoUrl) {
+      deleteFacePhotoFile(user.facePhotoUrl);
+    }
+    user.facePhotoUrl = undefined;
+    user.faceDescriptor = undefined;
+    user.faceEnrolledAt = undefined;
+    await user.save();
+
+    res.json({ success: true, data: { enrolled: false } });
+  } catch (err) {
+    console.error('Face remove error:', err);
+    res.status(500).json({ success: false, error: 'Failed to remove face profile' });
   }
 });
 

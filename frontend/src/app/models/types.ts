@@ -4,6 +4,8 @@ export interface User {
   email: string;
   role: 'employee' | 'manager' | 'admin' | 'hr' | 'accountant';
   avatarUrl?: string;
+  faceEnrolled?: boolean;
+  facePhotoUrl?: string;
   currentPage?: string;
   lastActiveAt?: string;
   sessionStart?: string;
@@ -144,6 +146,10 @@ export interface Attendance {
   earlyOutMinutes: number;
   checkInPhotoUrl?: string;
   checkOutPhotoUrl?: string;
+  checkInFaceVerified?: boolean;
+  checkInFaceDistance?: number;
+  checkOutFaceVerified?: boolean;
+  checkOutFaceDistance?: number;
   adjustedBy?: string;
   adjustmentReason?: string;
 }

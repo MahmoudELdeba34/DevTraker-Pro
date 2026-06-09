@@ -17,6 +17,10 @@ export interface IAttendance extends Document {
   earlyOutMinutes: number;
   checkInPhotoUrl?: string;
   checkOutPhotoUrl?: string;
+  checkInFaceVerified?: boolean;
+  checkInFaceDistance?: number;
+  checkOutFaceVerified?: boolean;
+  checkOutFaceDistance?: number;
   adjustedBy?: Types.ObjectId;
   adjustmentReason?: string;
 }
@@ -46,6 +50,10 @@ const AttendanceSchema = new Schema<IAttendance>(
     earlyOutMinutes: { type: Number, default: 0 },
     checkInPhotoUrl: { type: String, default: null },
     checkOutPhotoUrl: { type: String, default: null },
+    checkInFaceVerified: { type: Boolean, default: null },
+    checkInFaceDistance: { type: Number, default: null },
+    checkOutFaceVerified: { type: Boolean, default: null },
+    checkOutFaceDistance: { type: Number, default: null },
     adjustedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     adjustmentReason: { type: String, trim: true }
   },

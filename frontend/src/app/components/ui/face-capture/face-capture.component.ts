@@ -13,8 +13,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { FaceRecognitionService } from '../../../services/face-recognition.service';
 
-export type FaceCaptureMode = 'check-in' | 'check-out';
+export type FaceCaptureMode = 'check-in' | 'check-out' | 'enroll';
+
+export interface FaceCaptureResult {
+  photo: Blob;
+  descriptor: number[];
+}
 
 @Component({
   selector: 'app-face-capture',
@@ -37,7 +43,7 @@ export type FaceCaptureMode = 'check-in' | 'check-out';
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <p class="text-[10px] uppercase tracking-[0.2em] text-text-muted font-bold mb-1">
-              {{ mode === 'check-in' ? ('faceCapture.checkIn' | translate) : ('faceCapture.checkOut' | translate) }}
+              {{ modeLabelKey() | translate }}
             </p>
             <h3 class="text-lg font-bold text-white">{{ 'faceCapture.title' | translate }}</h3>
             <p class="text-sm text-text-secondary mt-1">{{ 'faceCapture.hint' | translate }}</p>
@@ -116,13 +122,14 @@ export type FaceCaptureMode = 'check-in' | 'check-out';
 export class FaceCaptureComponent implements OnInit, OnDestroy {
   @Input({ required: true }) mode!: FaceCaptureMode;
   @Input() embedded = false;
-  @Output() captured = new EventEmitter<Blob>();
+  @Output() captured = new EventEmitter<FaceCaptureResult>();
   @Output() cancel = new EventEmitter<void>();
 
   @ViewChild('videoEl') videoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('canvasEl') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   readonly locale = inject(LocaleService);
+  private faceRecognition = inject(FaceRecognitionService);
 
   faceDetected = signal(false);
   streamReady = signal(false);
@@ -134,8 +141,15 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
   private faceDetector: { detect: (src: ImageBitmapSource) => Promise<{ boundingBox: DOMRectReadOnly }[]> } | null = null;
 
   ngOnInit(): void {
+    void this.faceRecognition.ensureModels().catch(() => {});
     void this.initDetector();
     void this.startCamera();
+  }
+
+  modeLabelKey(): string {
+    if (this.mode === 'enroll') return 'faceCapture.enroll';
+    if (this.mode === 'check-out') return 'faceCapture.checkOut';
+    return 'faceCapture.checkIn';
   }
 
   ngOnDestroy(): void {
@@ -236,11 +250,25 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
 
     canvas.toBlob(
       (blob) => {
-        this.capturing.set(false);
-        if (blob) {
-          this.stopCamera();
-          this.captured.emit(blob);
+        if (!blob) {
+          this.capturing.set(false);
+          return;
         }
+        void this.faceRecognition
+          .extractDescriptorFromBlob(blob)
+          .then((descriptor) => {
+            this.capturing.set(false);
+            if (!descriptor) {
+              this.cameraError.set(this.locale.t('faceCapture.noFaceInCapture'));
+              return;
+            }
+            this.stopCamera();
+            this.captured.emit({ photo: blob, descriptor });
+          })
+          .catch(() => {
+            this.capturing.set(false);
+            this.cameraError.set(this.locale.t('faceCapture.processingFailed'));
+          });
       },
       'image/jpeg',
       0.88

@@ -32,16 +32,25 @@ export class HRService {
   }
 
   // ─── Attendance ─────────────────────────────────────────────────────────────
-  checkIn(photo: Blob): Observable<ApiResponse<Attendance>> {
-    const form = new FormData();
-    form.append('photo', photo, 'check-in.jpg');
-    return this.http.post<ApiResponse<Attendance>>(`${this.baseUrl}/attendance/check-in`, form);
+  checkIn(photo: Blob, descriptor: number[]): Observable<ApiResponse<Attendance>> {
+    return this.http.post<ApiResponse<Attendance>>(
+      `${this.baseUrl}/attendance/check-in`,
+      this.attendanceFaceForm(photo, descriptor, 'check-in.jpg')
+    );
   }
 
-  checkOut(photo: Blob): Observable<ApiResponse<Attendance>> {
+  checkOut(photo: Blob, descriptor: number[]): Observable<ApiResponse<Attendance>> {
+    return this.http.post<ApiResponse<Attendance>>(
+      `${this.baseUrl}/attendance/check-out`,
+      this.attendanceFaceForm(photo, descriptor, 'check-out.jpg')
+    );
+  }
+
+  private attendanceFaceForm(photo: Blob, descriptor: number[], filename: string): FormData {
     const form = new FormData();
-    form.append('photo', photo, 'check-out.jpg');
-    return this.http.post<ApiResponse<Attendance>>(`${this.baseUrl}/attendance/check-out`, form);
+    form.append('photo', photo, filename);
+    form.append('faceDescriptor', JSON.stringify(descriptor));
+    return form;
   }
 
   startBreak(): Observable<ApiResponse<Attendance>> {

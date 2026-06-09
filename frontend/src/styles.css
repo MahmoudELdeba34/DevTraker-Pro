@@ -1401,7 +1401,22 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .show-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .show-scrollbar::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
 
-/* RTL */
+/* RTL — shell: sidebar on the right, main content on the left */
+html[dir='rtl'] .app-shell {
+  flex-direction: row;
+}
+
+@keyframes mobile-drawer-in-ltr {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes mobile-drawer-in-rtl {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+html[dir='ltr'] .mobile-drawer-in { animation: mobile-drawer-in-ltr 280ms ease both; }
+html[dir='rtl'] .mobile-drawer-in { animation: mobile-drawer-in-rtl 280ms ease both; }
+
 [dir='rtl'] .sidebar {
   border-right: none;
   border-left: 1px solid var(--border);
@@ -1412,6 +1427,11 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 @keyframes slide-left {
   from { opacity: 0; transform: translateX(16px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+/* RTL — flip icons that imply direction (chevrons, back arrows) */
+html[dir='rtl'] .icon-rtl-flip {
+  transform: scaleX(-1);
 }
 
 /* Pill chip for statuses across HR app */

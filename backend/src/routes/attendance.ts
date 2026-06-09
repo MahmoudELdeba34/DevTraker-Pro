@@ -2,7 +2,6 @@ import { Router, Response } from 'express';
 import mongoose from 'mongoose';
 import Attendance from '../models/Attendance';
 import EmployeeProfile from '../models/EmployeeProfile';
-import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uploadAttendancePhotoMiddleware } from '../middleware/uploadAttendancePhoto';
 import {
@@ -11,6 +10,7 @@ import {
   validateAttendancePhotoFile,
 } from '../utils/attendancePhotos';
 import { isValidAttendanceStatus } from '../utils/validation';
+import { verifyUserFace } from '../utils/verifyAttendanceFace';
 import fs from 'fs';
 
 const router = Router();
@@ -73,6 +73,16 @@ router.post(
         return;
       }
 
+      const faceCheck = await verifyUserFace(
+        req.userId!,
+        req.body?.faceDescriptor,
+        photoUrl
+      );
+      if (!faceCheck.ok) {
+        res.status(403).json({ success: false, error: faceCheck.error });
+        return;
+      }
+
       const profile = await EmployeeProfile.findOne({ userId: req.userId });
       if (profile?.status === 'suspended' || profile?.status === 'resigned') {
         deleteAttendancePhotoFile(photoUrl);
@@ -98,6 +108,8 @@ router.post(
         attendance.status = status;
         attendance.lateMinutes = lateMinutes;
         attendance.checkInPhotoUrl = photoUrl;
+        attendance.checkInFaceVerified = true;
+        attendance.checkInFaceDistance = faceCheck.distance;
       } else {
         attendance = new Attendance({
           userId: req.userId,
@@ -106,17 +118,12 @@ router.post(
           status,
           lateMinutes,
           checkInPhotoUrl: photoUrl,
+          checkInFaceVerified: true,
+          checkInFaceDistance: faceCheck.distance,
         });
       }
 
       await attendance.save();
-
-      const user = await User.findById(req.userId);
-      if (user && !user.facePhotoUrl) {
-        user.facePhotoUrl = photoUrl;
-        await user.save();
-      }
-
       res.json({ success: true, data: attendance });
     } catch (err) {
       if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -154,8 +161,20 @@ router.post(
         return;
       }
 
+      const faceCheck = await verifyUserFace(
+        req.userId!,
+        req.body?.faceDescriptor,
+        photoUrl
+      );
+      if (!faceCheck.ok) {
+        res.status(403).json({ success: false, error: faceCheck.error });
+        return;
+      }
+
       attendance.checkOut = now;
       attendance.checkOutPhotoUrl = photoUrl;
+      attendance.checkOutFaceVerified = true;
+      attendance.checkOutFaceDistance = faceCheck.distance;
 
       const profile = await EmployeeProfile.findOne({ userId: req.userId });
       const { endHour, endMin } = parseWorkHours(profile);

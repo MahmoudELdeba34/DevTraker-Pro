@@ -7,6 +7,8 @@ export interface IUser extends Document {
   role: 'employee' | 'manager' | 'admin' | 'hr' | 'accountant';
   avatarUrl?: string;
   facePhotoUrl?: string;
+  faceDescriptor?: number[];
+  faceEnrolledAt?: Date;
   currentPage?: string;
   lastActiveAt?: Date;
   sessionStart?: Date;
@@ -31,6 +33,8 @@ const UserSchema = new Schema<IUser>(
     },
     avatarUrl: { type: String, default: null },
     facePhotoUrl: { type: String, default: null },
+    faceDescriptor: { type: [Number], default: null },
+    faceEnrolledAt: { type: Date, default: null },
     currentPage: { type: String, default: '' },
     lastActiveAt: { type: Date, default: null },
     sessionStart: { type: Date, default: null },

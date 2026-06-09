@@ -79,7 +79,10 @@ export class LocaleService {
   private apply(locale: AppLocale, persist: boolean): void {
     this.locale.set(locale);
     if (persist) localStorage.setItem(STORAGE_KEY, locale);
+    const rtl = locale === 'ar';
     document.documentElement.lang = locale;
-    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+    document.body.classList.toggle('is-rtl', rtl);
+    document.body.classList.toggle('is-ltr', !rtl);
   }
 }

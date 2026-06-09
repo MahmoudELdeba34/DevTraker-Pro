@@ -29,10 +29,11 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
     UserAvatarComponent,
   ],
   template: `
-    <div class="flex h-screen bg-bg-base text-text-primary font-body overflow-hidden" [class.flex-row-reverse]="locale.isRtl()" [attr.data-locale]="locale.locale()">
-      <!-- DESKTOP SIDEBAR -->
-      <aside class="hidden md:flex flex-col w-[260px] glass h-full flex-shrink-0 relative z-20"
-             [class.border-r]="!locale.isRtl()" [class.border-l]="locale.isRtl()">
+    <div class="app-shell flex h-screen bg-bg-base text-text-primary font-body overflow-hidden"
+         [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
+         [attr.data-locale]="locale.locale()">
+      <!-- DESKTOP SIDEBAR (RTL: first flex item sits on the right) -->
+      <aside class="app-sidebar hidden md:flex flex-col w-[260px] glass h-full flex-shrink-0 relative z-20 border-e border-border">
         <!-- Logo -->
         <div class="h-20 flex items-center px-6">
           <span class="font-display font-bold text-2xl tracking-tight text-white">
@@ -66,7 +67,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               <div class="max-h-48 overflow-y-auto hide-scrollbar">
                 @for (ws of workspaceService.workspaces(); track ws._id) {
                   <button (click)="selectWorkspace(ws._id)" 
-                          class="w-full flex items-center gap-3 px-3 py-2 hover:bg-bg-hover transition-colors text-left"
+                          class="w-full flex items-center gap-3 px-3 py-2 hover:bg-bg-hover transition-colors text-start"
                           [class.bg-bg-hover]="ws._id === workspaceService.activeWorkspace()?._id">
                     <div class="w-6 h-6 rounded bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] uppercase">
                       {{ ws.name.substring(0,2) }}
@@ -115,10 +116,10 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                   </svg>
                 </button>
                 @if (projectsExpanded() || isProjectsRouteActive()) {
-                  <div class="flex flex-col pl-9 space-y-1 mt-1 animate-slide-down origin-top">
+                  <div class="flex flex-col ps-9 space-y-1 mt-1 animate-slide-down origin-top">
                     @for (project of projects(); track project._id) {
                       <a [routerLink]="['/projects', project._id]" 
-                         routerLinkActive="bg-accent/10 text-accent font-medium shadow-[inset_2px_0_0_0_rgba(99,102,241,1)]"
+                         routerLinkActive="bg-accent/10 text-accent font-medium border-s-2 border-s-accent"
                          class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-sm group">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-text-muted opacity-80 group-[.active]:text-accent">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -173,28 +174,26 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
       </aside>
 
       <!-- MAIN CONTENT WRAPPER -->
-      <div class="flex-1 flex flex-col min-w-0 h-full relative bg-bg-surface overflow-hidden"
-           [class.rounded-tl-2xl]="!locale.isRtl()" [class.rounded-tr-2xl]="locale.isRtl()"
-           [class.border-l]="!locale.isRtl()" [class.border-r]="locale.isRtl()" [class.border-t]="true" [class.border-border]="true">
+      <div class="app-main flex-1 flex flex-col min-w-0 h-full relative bg-bg-surface overflow-hidden rounded-ss-2xl border-t border-border">
         <!-- TOPBAR -->
         <header class="app-header h-20 flex items-center justify-between px-8 z-10">
           
           <!-- Global Search -->
           <div class="w-full max-w-md hidden md:block">
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+              <div class="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none text-text-muted">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </div>
-              <input type="text" [placeholder]="locale.t('shell.globalSearch')" class="w-full bg-bg-elevated border border-border rounded-lg pl-9 pr-4 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors">
+              <input type="text" [placeholder]="locale.t('shell.globalSearch')" class="w-full bg-bg-elevated border border-border rounded-lg ps-9 pe-4 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors">
             </div>
           </div>
 
           <!-- Mobile Menu Button & Logo -->
           <div class="flex items-center gap-3 md:hidden">
-            <button class="p-2 -ml-2 text-text-secondary hover:text-white" (click)="toggleMobileMenu()">
+            <button class="p-2 -ms-2 text-text-secondary hover:text-white" (click)="toggleMobileMenu()">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
@@ -203,7 +202,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
           </div>
 
           <!-- Right Actions -->
-          <div class="flex items-center gap-3 ml-auto">
+          <div class="flex items-center gap-3 ms-auto">
             <app-ui-preferences />
 
             <!-- Record Button (Global Timer) -->
@@ -223,7 +222,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
 
                 <!-- Time Tracking Popover (Active) -->
                 @if (showTaskSelector()) {
-                  <div class="absolute top-full right-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
+                  <div class="absolute top-full end-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
                     <div class="flex items-center justify-between mb-4">
                       <h3 class="text-sm font-bold text-white tracking-tight">{{ locale.t('shell.timeTracking') }}</h3>
                       <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-danger/20 text-danger border border-danger/30 uppercase tracking-widest animate-pulse-glow">{{ locale.t('shell.live') }}</span>
@@ -276,7 +275,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                             type="button"
                             (click)="startTimerForRecent(t)"
                             [disabled]="startingTaskId() === t._id || (activeTimerService.activeTask()?._id === t._id)"
-                            class="group flex items-center gap-2 px-2 py-1.5 rounded-md bg-bg-base/50 border border-border/40 hover:border-accent/40 hover:bg-accent/5 transition-all text-left disabled:opacity-60"
+                            class="group flex items-center gap-2 px-2 py-1.5 rounded-md bg-bg-base/50 border border-border/40 hover:border-accent/40 hover:bg-accent/5 transition-all text-start disabled:opacity-60"
                           >
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             <div class="flex-1 min-w-0">
@@ -309,12 +308,12 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
 
                 <!-- Task Selector Dropdown (When not tracking) -->
                 @if (showTaskSelector()) {
-                  <div class="absolute top-full right-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
+                  <div class="absolute top-full end-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
                     <!-- Header (changes based on drill-in state) -->
                     <div class="flex items-center justify-between mb-4">
                       @if (popoverProject(); as pp) {
                         <div class="flex items-center gap-2 min-w-0">
-                          <button (click)="backToProjects()" class="p-1 -ml-1 rounded text-text-muted hover:text-white hover:bg-bg-hover transition-colors shrink-0" [title]="locale.t('shell.title.back')">
+                          <button (click)="backToProjects()" class="p-1 -ms-1 rounded text-text-muted hover:text-white hover:bg-bg-hover transition-colors shrink-0" [title]="locale.t('shell.title.back')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
                           </button>
                           <div class="min-w-0">
@@ -389,7 +388,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                               <button
                                 (click)="startTimerForRecent(t)"
                                 [disabled]="startingTaskId() === t._id"
-                                class="group flex items-center gap-2 px-2 py-2 rounded-md bg-bg-base/60 border border-border/40 hover:border-accent/40 hover:bg-accent/5 transition-all text-left disabled:opacity-60"
+                                class="group flex items-center gap-2 px-2 py-2 rounded-md bg-bg-base/60 border border-border/40 hover:border-accent/40 hover:bg-accent/5 transition-all text-start disabled:opacity-60"
                               >
                                 <span class="w-6 h-6 rounded bg-accent/15 text-accent flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:text-white transition-colors">
                                   @if (startingTaskId() === t._id) {
@@ -415,7 +414,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                       </div>
                       <div class="max-h-44 overflow-y-auto flex flex-col gap-1 pb-2 hide-scrollbar">
                         @for (project of projects(); track project._id) {
-                          <button class="text-left text-xs px-3 py-2 hover:bg-bg-hover rounded-lg text-text-secondary hover:text-white transition-colors flex items-center gap-2 group" (click)="openPopoverProject(project)">
+                          <button class="text-start text-xs px-3 py-2 hover:bg-bg-hover rounded-lg text-text-secondary hover:text-white transition-colors flex items-center gap-2 group" (click)="openPopoverProject(project)">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted group-hover:text-accent"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
                             <span class="truncate flex-1">{{ project.title }}</span>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity"><polyline points="9 18 15 12 9 6"/></svg>
@@ -445,7 +444,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                             <button
                               (click)="startTimerForTask(t)"
                               [disabled]="startingTaskId() === t._id"
-                              class="group flex items-center gap-2 px-2 py-2 rounded-md bg-bg-base/40 hover:bg-accent/10 border border-transparent hover:border-accent/30 transition-all text-left disabled:opacity-60"
+                              class="group flex items-center gap-2 px-2 py-2 rounded-md bg-bg-base/40 hover:bg-accent/10 border border-transparent hover:border-accent/30 transition-all text-start disabled:opacity-60"
                             >
                               <span class="w-7 h-7 rounded-md bg-accent/15 text-accent flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:text-white transition-colors">
                                 @if (startingTaskId() === t._id) {
@@ -465,7 +464,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                                         [class.text-white]="true">
                                     {{ locale.statusLabel(t.status) }}
                                   </span>
-                                  <span class="text-[9px] text-text-muted ml-1 uppercase tracking-wider">{{ locale.priorityLabel(t.priority) }}</span>
+                                  <span class="text-[9px] text-text-muted ms-1 uppercase tracking-wider">{{ locale.priorityLabel(t.priority) }}</span>
                                 </div>
                               </div>
                             </button>
@@ -495,7 +494,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               
               <!-- Notifications Dropdown -->
               @if (showNotifications()) {
-                <div class="absolute right-0 mt-4 w-80 bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
+                <div class="absolute end-0 mt-4 w-80 bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
                   <div class="flex items-center justify-between mb-4">
                     <h3 class="font-display font-semibold text-sm">{{ locale.t('shell.notifications') }}</h3>
                     @if (unreadCount() > 0) {
@@ -504,7 +503,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                   </div>
                   <div class="max-h-64 overflow-y-auto space-y-2 hide-scrollbar">
                     @for (note of notifications(); track note._id) {
-                      <div class="p-3 rounded-lg border border-border bg-bg-base hover:bg-bg-hover transition-colors relative" [class.border-l-2]="!note.read" [class.border-l-accent]="!note.read">
+                      <div class="p-3 rounded-lg border border-border bg-bg-base hover:bg-bg-hover transition-colors relative" [class.border-s-2]="!note.read" [class.border-s-accent]="!note.read">
                         <div class="flex justify-between items-start mb-1">
                           <span class="text-xs font-semibold text-white">{{ note.title }}</span>
                           @if (!note.read) {
@@ -549,20 +548,20 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               </button>
               
               @if (showUserMenu()) {
-                <div class="absolute right-0 mt-4 w-48 bg-bg-elevated border border-border rounded-xl shadow-modal p-2 z-50 animate-scale-in">
+                <div class="absolute end-0 mt-4 w-48 bg-bg-elevated border border-border rounded-xl shadow-modal p-2 z-50 animate-scale-in">
                   <div class="px-3 py-2 border-b border-border mb-2">
                     <p class="text-sm font-semibold text-white truncate">{{ userName() }}</p>
                     <p class="text-xs text-text-muted truncate capitalize">{{ userRole() }}</p>
                   </div>
-                  <a routerLink="/account" class="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors flex items-center gap-2" (click)="toggleUserMenu()">
+                  <a routerLink="/account" class="w-full text-start px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors flex items-center gap-2" (click)="toggleUserMenu()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     {{ locale.t('shell.profile') }}
                   </a>
-                  <a routerLink="/support" class="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors flex items-center gap-2" (click)="toggleUserMenu()">
+                  <a routerLink="/support" class="w-full text-start px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors flex items-center gap-2" (click)="toggleUserMenu()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     {{ locale.t('nav.support') }}
                   </a>
-                  <button (click)="logout()" class="w-full text-left px-3 py-2 mt-1 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors flex items-center gap-2">
+                  <button (click)="logout()" class="w-full text-start px-3 py-2 mt-1 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                     </svg>
@@ -596,10 +595,10 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
       <!-- MOBILE SIDEBAR OVERLAY -->
       @if (showMobileMenu()) {
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" (click)="toggleMobileMenu()"></div>
-        <aside class="fixed inset-y-0 left-0 w-64 glass z-50 flex flex-col md:hidden transform transition-transform duration-300 animate-slide-right">
+        <aside class="fixed inset-y-0 start-0 w-64 glass z-50 flex flex-col md:hidden transform transition-transform duration-300 mobile-drawer-in">
           <div class="h-20 flex items-center justify-between px-6 border-b border-border">
             <span class="font-display font-bold text-xl">Pro<span class="text-accent">Track</span></span>
-            <button class="p-2 -mr-2 text-text-secondary" (click)="toggleMobileMenu()">
+            <button class="p-2 -me-2 text-text-secondary" (click)="toggleMobileMenu()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
