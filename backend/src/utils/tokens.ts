@@ -17,11 +17,24 @@ export interface AccessTokenPayload {
   role: string;
 }
 
+const WEAK_JWT_SECRETS = new Set([
+  'replace_me_with_a_long_random_string_at_least_32_chars',
+  'changeme',
+  'secret',
+  'jwt_secret',
+  'your_jwt_secret_here',
+]);
+
 export function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  const secret = process.env.JWT_SECRET?.trim();
   if (!secret || secret.length < 32) {
     throw new Error(
       'JWT_SECRET is missing or too short (must be at least 32 chars). Set it in your .env file.'
+    );
+  }
+  if (WEAK_JWT_SECRETS.has(secret.toLowerCase())) {
+    throw new Error(
+      'JWT_SECRET is a known weak/default value. Generate a strong random secret before starting the server.'
     );
   }
   return secret;

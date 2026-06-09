@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HRService } from '../../services/hr.service';
@@ -8,6 +8,13 @@ import { Leave, Permission, Overtime } from '../../models/types';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { dateRangeValidator, leaveAdvanceNoticeValidator } from '../../core/validators/leave.validators';
+import {
+  formatClockTime,
+  isPermissionWindowOpen,
+  todayDateString,
+} from '../../core/validators/permission.validators';
+import { Subscription, interval } from 'rxjs';
 
 type TabKey = 'leaves' | 'permissions' | 'overtime';
 
@@ -132,6 +139,15 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                   <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.reason' | translate }}</label>
                   <textarea formControlName="reason" rows="3" [placeholder]="'common.briefExplanation' | translate" class="field resize-none"></textarea>
                 </div>
+                @if (leaveForm.hasError('advanceNotice')) {
+                  <p class="text-xs text-warning font-medium">{{ 'requestCenter.validation.leaveAdvance' | translate }}</p>
+                }
+                @if (leaveForm.hasError('dateRange')) {
+                  <p class="text-xs text-danger font-medium">{{ 'requestCenter.validation.dateRange' | translate }}</p>
+                }
+                @if (leaveForm.hasError('pastDate')) {
+                  <p class="text-xs text-danger font-medium">{{ 'requestCenter.validation.pastDate' | translate }}</p>
+                }
                 <button type="submit" [disabled]="leaveForm.invalid || sending()" class="btn-accent w-full mt-2">
                   @if (sending()) {
                     <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -144,9 +160,25 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
             <!-- PERMISSIONS FORM -->
             @if (activeTab() === 'permissions') {
               <form [formGroup]="permissionForm" (ngSubmit)="submitPermission()" class="flex flex-col gap-4">
+                @if (!permissionWindowOpen()) {
+                  <div class="rounded-xl border border-danger/30 bg-danger-muted px-4 py-3 flex items-start gap-3">
+                    <svg class="shrink-0 mt-0.5 text-danger" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <div>
+                      <p class="text-sm font-semibold text-danger">{{ 'requestCenter.permission.closedTitle' | translate }}</p>
+                      <p class="text-xs text-text-secondary mt-1">{{ 'requestCenter.permission.closedHint' | translate }}</p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="rounded-xl border border-info/25 bg-info-muted px-4 py-3">
+                    <p class="text-xs text-text-secondary">{{ 'requestCenter.permission.autoTimeHint' | translate }}</p>
+                    <p class="text-sm font-mono font-bold text-white mt-1">{{ currentClock() }}</p>
+                  </div>
+                }
                 <div class="flex flex-col gap-1.5">
                   <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.requestType' | translate }}</label>
-                  <select formControlName="type" class="field">
+                  <select formControlName="type" class="field" [disabled]="!permissionWindowOpen()">
                     <option value="hourly">{{ 'common.hourlyPermission' | translate }}</option>
                     <option value="late_arrival">{{ 'common.waiveLateArrival' | translate }}</option>
                     <option value="early_leave">{{ 'common.earlyDismissal' | translate }}</option>
@@ -156,23 +188,13 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                 </div>
                 <div class="flex flex-col gap-1.5">
                   <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.date' | translate }}</label>
-                  <input type="date" formControlName="date" class="field font-mono" />
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.from' | translate }}</label>
-                    <input type="time" formControlName="fromTime" class="field font-mono" />
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.to' | translate }}</label>
-                    <input type="time" formControlName="toTime" class="field font-mono" />
-                  </div>
+                  <input type="date" formControlName="date" class="field font-mono" [disabled]="!permissionWindowOpen()" />
                 </div>
                 <div class="flex flex-col gap-1.5">
                   <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.reason' | translate }}</label>
-                  <textarea formControlName="reason" rows="3" [placeholder]="'common.provideJustification' | translate" class="field resize-none"></textarea>
+                  <textarea formControlName="reason" rows="3" [placeholder]="'common.provideJustification' | translate" class="field resize-none" [disabled]="!permissionWindowOpen()"></textarea>
                 </div>
-                <button type="submit" [disabled]="permissionForm.invalid || sending()" class="btn-accent w-full mt-2">
+                <button type="submit" [disabled]="permissionForm.invalid || sending() || !permissionWindowOpen()" class="btn-accent w-full mt-2">
                   @if (sending()) {
                     <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   }
@@ -397,7 +419,7 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
     </div>
   `,
 })
-export class RequestCenterComponent implements OnInit {
+export class RequestCenterComponent implements OnInit, OnDestroy {
   private hrService = inject(HRService);
   private fb = inject(FormBuilder);
   private toast = inject(ToastService);
@@ -414,6 +436,10 @@ export class RequestCenterComponent implements OnInit {
   leaveForm!: FormGroup;
   permissionForm!: FormGroup;
   overtimeForm!: FormGroup;
+
+  permissionWindowOpen = signal(true);
+  currentClock = signal('--:--');
+  private clockSub?: Subscription;
 
   requestCenterSteps = () => [
     { label: this.locale.t('requestCenter.step.pickType'), description: this.locale.t('requestCenter.step.pickTypeDesc'), tone: 'do' as const },
@@ -483,21 +509,34 @@ export class RequestCenterComponent implements OnInit {
     this.loadLeaves();
     this.loadPermissions();
     this.loadOvertime();
+    this.tickPermissionWindow();
+    this.clockSub = interval(30_000).subscribe(() => this.tickPermissionWindow());
+  }
+
+  ngOnDestroy() {
+    this.clockSub?.unsubscribe();
+  }
+
+  private tickPermissionWindow() {
+    const now = new Date();
+    this.permissionWindowOpen.set(isPermissionWindowOpen(now));
+    this.currentClock.set(formatClockTime(now));
   }
 
   initForms() {
-    this.leaveForm = this.fb.group({
-      leaveType: ['annual', Validators.required],
-      startDate: ['', Validators.required],
-      endDate:   ['', Validators.required],
-      reason:    ['', [Validators.required, Validators.minLength(5)]],
-    });
+    this.leaveForm = this.fb.group(
+      {
+        leaveType: ['annual', Validators.required],
+        startDate: ['', Validators.required],
+        endDate: ['', Validators.required],
+        reason: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(500)]],
+      },
+      { validators: [leaveAdvanceNoticeValidator(), dateRangeValidator()] }
+    );
     this.permissionForm = this.fb.group({
-      type:     ['hourly', Validators.required],
-      date:     ['', Validators.required],
-      fromTime: ['', Validators.required],
-      toTime:   ['', Validators.required],
-      reason:   ['', [Validators.required, Validators.minLength(5)]],
+      type: ['hourly', Validators.required],
+      date: [todayDateString(), Validators.required],
+      reason: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(500)]],
     });
     this.overtimeForm = this.fb.group({
       date:      ['', Validators.required],
@@ -533,18 +572,23 @@ export class RequestCenterComponent implements OnInit {
   }
 
   submitPermission() {
-    if (this.permissionForm.invalid) return;
+    if (this.permissionForm.invalid || !this.permissionWindowOpen()) return;
     this.sending.set(true);
-    this.hrService.requestPermission(this.permissionForm.value).subscribe({
+    const { type, date, reason } = this.permissionForm.value;
+    this.hrService.requestPermission({ type, date, reason }).subscribe({
       next: (res) => {
         this.sending.set(false);
         if (res.success) {
           this.toast.success(this.locale.t('requestCenter.toast.permissionSubmitted'));
-          this.permissionForm.reset({ type: 'hourly' });
+          this.permissionForm.reset({ type: 'hourly', date: todayDateString() });
           this.loadPermissions();
         }
       },
-      error: () => { this.sending.set(false); },
+      error: (err) => {
+        this.sending.set(false);
+        const msg = err?.error?.error;
+        this.toast.error(typeof msg === 'string' ? msg : this.locale.t('common.genericError'));
+      },
     });
   }
 

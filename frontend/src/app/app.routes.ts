@@ -97,6 +97,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'attendance/punch',
+        loadComponent: () =>
+          import('./pages/attendance-punch/attendance-punch.component').then(
+            (m) => m.AttendancePunchComponent
+          ),
+      },
+      {
         path: 'request-center',
         loadComponent: () =>
           import('./pages/request-center/request-center.component').then(

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -103,6 +104,7 @@ export class ForgotPasswordComponent {
   form: FormGroup;
   loading = signal(false);
   submitted = signal(false);
+  private auth = inject(AuthService);
   private toast = inject(ToastService);
   private fb = inject(FormBuilder);
   locale = inject(LocaleService);
@@ -120,10 +122,19 @@ export class ForgotPasswordComponent {
     }
     
     this.loading.set(true);
-    setTimeout(() => {
-      this.loading.set(false);
-      this.submitted.set(true);
-      this.toast.success(this.locale.t('forgotPassword.toast.resetLinkSent'));
-    }, 1500);
+    const email = this.form.get('email')?.value as string;
+    this.auth.requestPasswordReset(email.trim()).subscribe({
+      next: (res) => {
+        this.loading.set(false);
+        this.submitted.set(true);
+        this.toast.success(this.locale.t('forgotPassword.toast.resetLinkSent'));
+        if (res.data?.resetLink) {
+          console.info('[DevTracker] Password reset link (SMTP not configured):', res.data.resetLink);
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
   }
 }

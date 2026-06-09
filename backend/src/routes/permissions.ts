@@ -3,52 +3,105 @@ import Permission from '../models/Permission';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import mongoose from 'mongoose';
 import { createNotification } from '../utils/notify';
+import {
+  isPermissionWindowClosed,
+  permissionDurationMins,
+  resolvePermissionTimes,
+} from '../utils/permissionWindow';
+import { isValidPermissionType, sanitizeReason } from '../utils/validation';
 
 const router = Router();
 router.use(authMiddleware);
 
-// Helper: Calculate minutes duration between two HH:MM strings
-function getDurationMins(fromStr: string, toStr: string): number {
-  const [fromH, fromM] = fromStr.split(':').map(Number);
-  const [toH, toM] = toStr.split(':').map(Number);
-  
-  const fromVal = fromH * 60 + fromM;
-  const toVal = toH * 60 + toM;
-  
-  return Math.max(0, toVal - fromVal);
-}
+// GET /api/permissions/window — whether permission requests are open right now
+router.get('/window', async (_req: AuthRequest, res: Response): Promise<void> => {
+  const now = new Date();
+  const closed = isPermissionWindowClosed(now);
+  const times = closed ? null : resolvePermissionTimes('hourly', now);
+  res.json({
+    success: true,
+    data: {
+      open: !closed,
+      currentTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+      closesAt: '17:00',
+      ...(times ? { sampleWindow: times } : {}),
+    },
+  });
+});
 
-// POST /api/permissions/request - Submit a permission request
+// POST /api/permissions/request — times are set automatically from server clock
 router.post('/request', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { type, date, fromTime, toTime, reason } = req.body as {
-      type?: 'late_arrival' | 'early_leave' | 'hourly' | 'remote' | 'correction';
-      date?: string;
-      fromTime?: string;
-      toTime?: string;
-      reason?: string;
-    };
+    const now = new Date();
 
-    if (!type || !date || !fromTime || !toTime || !reason) {
-      res.status(400).json({ success: false, error: 'type, date, fromTime, toTime, and reason are required' });
+    if (isPermissionWindowClosed(now)) {
+      res.status(400).json({
+        success: false,
+        error: 'Permission requests are closed after 5:00 PM',
+      });
       return;
     }
 
-    const durationMinutes = getDurationMins(fromTime, toTime);
+    const { type, date, reason } = req.body as {
+      type?: string;
+      date?: string;
+      reason?: string;
+    };
+
+    if (!type || !date || !reason) {
+      res.status(400).json({ success: false, error: 'type, date, and reason are required' });
+      return;
+    }
+
+    if (!isValidPermissionType(type)) {
+      res.status(400).json({ success: false, error: 'Invalid permission type' });
+      return;
+    }
+
+    const trimmedReason = sanitizeReason(reason);
+    if (trimmedReason.length < 5) {
+      res.status(400).json({ success: false, error: 'Reason must be at least 5 characters' });
+      return;
+    }
+
+    const permDate = new Date(date);
+    if (Number.isNaN(permDate.getTime())) {
+      res.status(400).json({ success: false, error: 'Invalid date' });
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(permDate);
+    selected.setHours(0, 0, 0, 0);
+    if (selected < today) {
+      res.status(400).json({ success: false, error: 'Permission date cannot be in the past' });
+      return;
+    }
+
+    const { fromTime, toTime } = resolvePermissionTimes(
+      type as 'late_arrival' | 'early_leave' | 'hourly' | 'remote' | 'correction',
+      now
+    );
+
+    const durationMinutes = permissionDurationMins(fromTime, toTime);
     if (durationMinutes === 0) {
-      res.status(400).json({ success: false, error: 'Invalid time interval' });
+      res.status(400).json({
+        success: false,
+        error: 'Not enough working time left to submit this permission',
+      });
       return;
     }
 
     const perm = await Permission.create({
       userId: req.userId,
       type,
-      date: new Date(date),
+      date: permDate,
       fromTime,
       toTime,
       durationMinutes,
-      reason,
-      status: 'pending'
+      reason: trimmedReason,
+      status: 'pending',
     });
 
     res.status(201).json({ success: true, data: perm });
@@ -58,7 +111,6 @@ router.post('/request', async (req: AuthRequest, res: Response): Promise<void> =
   }
 });
 
-// GET /api/permissions/my-requests - List self requests
 router.get('/my-requests', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const requests = await Permission.find({ userId: req.userId }).sort({ createdAt: -1 });
@@ -69,7 +121,6 @@ router.get('/my-requests', async (req: AuthRequest, res: Response): Promise<void
   }
 });
 
-// GET /api/permissions/admin/pending - List all pending (Manager/HR/Admin only)
 router.get('/admin/pending', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const role = req.userRole;
@@ -88,7 +139,6 @@ router.get('/admin/pending', async (req: AuthRequest, res: Response): Promise<vo
   }
 });
 
-// PUT /api/permissions/admin/:id/approve - Approve request (Manager/HR/Admin only)
 router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const role = req.userRole;
@@ -109,7 +159,7 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
     }
 
     perm.status = 'approved';
-    perm.approvedBy = new mongoose.Types.ObjectId(req.userId) as any;
+    perm.approvedBy = new mongoose.Types.ObjectId(req.userId);
     await perm.save();
 
     res.json({ success: true, data: perm });
@@ -127,7 +177,6 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
   }
 });
 
-// PUT /api/permissions/admin/:id/reject - Reject request (Manager/HR/Admin only)
 router.put('/admin/:id/reject', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const role = req.userRole;
@@ -148,7 +197,7 @@ router.put('/admin/:id/reject', async (req: AuthRequest, res: Response): Promise
     }
 
     perm.status = 'rejected';
-    perm.approvedBy = new mongoose.Types.ObjectId(req.userId) as any;
+    perm.approvedBy = new mongoose.Types.ObjectId(req.userId);
     await perm.save();
 
     res.json({ success: true, data: perm });

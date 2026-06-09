@@ -7,63 +7,74 @@ import { environment } from '../../environments/environment';
 import { User, ApiResponse, AuthResponse } from '../models/types';
 
 const STORAGE = {
-  access: 'token',          // kept as 'token' for backwards compatibility
+  access: 'token',
   refresh: 'refreshToken',
   user: 'user',
 };
+
+/** Auth tokens live in sessionStorage (tab-scoped), not localStorage, to reduce XSS token theft persistence. */
+const authStore = sessionStorage;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   readonly currentUser = signal<User | null>(this.loadUserFromStorage());
-  readonly isLoggedIn = computed(() => this.currentUser() !== null);
+  readonly isLoggedIn = computed(
+    () => this.currentUser() !== null && !!this.getAccessToken()
+  );
 
-  /**
-   * Used by the JWT interceptor to coordinate concurrent 401s.
-   * - null      → no refresh in flight
-   * - non-null  → emits the new access token on success, or `null` on failure
-   */
   private refreshInProgress$: BehaviorSubject<string | null> | null = null;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    this.migrateLegacyLocalStorage();
+  }
 
-  /* ─── Public token getters/setters ──────────────────────────────────── */
+  /** One-time migration: move tokens out of localStorage into sessionStorage. */
+  private migrateLegacyLocalStorage(): void {
+    for (const key of Object.values(STORAGE)) {
+      const legacy = localStorage.getItem(key);
+      if (legacy && !authStore.getItem(key)) {
+        authStore.setItem(key, legacy);
+      }
+      localStorage.removeItem(key);
+    }
+  }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(STORAGE.access);
+    return authStore.getItem(STORAGE.access);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(STORAGE.refresh);
+    return authStore.getItem(STORAGE.refresh);
+  }
+
+  hasRole(...roles: string[]): boolean {
+    const role = this.currentUser()?.role;
+    return !!role && roles.includes(role);
   }
 
   private setSession(res: AuthResponse): void {
-    // Accept either { accessToken } (new) or { token } (back-compat)
     const access = res.accessToken || res.token;
-    if (access) localStorage.setItem(STORAGE.access, access);
-    if (res.refreshToken) localStorage.setItem(STORAGE.refresh, res.refreshToken);
+    if (access) authStore.setItem(STORAGE.access, access);
+    if (res.refreshToken) authStore.setItem(STORAGE.refresh, res.refreshToken);
     if (res.user) {
-      localStorage.setItem(STORAGE.user, JSON.stringify(res.user));
+      authStore.setItem(STORAGE.user, JSON.stringify(res.user));
       this.currentUser.set(res.user);
     }
   }
 
   private clearSession(): void {
-    localStorage.removeItem(STORAGE.access);
-    localStorage.removeItem(STORAGE.refresh);
-    localStorage.removeItem(STORAGE.user);
+    authStore.removeItem(STORAGE.access);
+    authStore.removeItem(STORAGE.refresh);
+    authStore.removeItem(STORAGE.user);
     this.currentUser.set(null);
   }
-
-  /* ─── Auth endpoints ────────────────────────────────────────────────── */
 
   login(email: string, password: string): Observable<ApiResponse<AuthResponse>> {
     return this.http
       .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, { email, password })
-      .pipe(
-        tap((r) => { if (r.success && r.data) this.setSession(r.data); })
-      );
+      .pipe(tap((r) => { if (r.success && r.data) this.setSession(r.data); }));
   }
 
   register(
@@ -74,18 +85,10 @@ export class AuthService {
   ): Observable<ApiResponse<AuthResponse>> {
     return this.http
       .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/register`, { name, email, password, role })
-      .pipe(
-        tap((r) => { if (r.success && r.data) this.setSession(r.data); })
-      );
+      .pipe(tap((r) => { if (r.success && r.data) this.setSession(r.data); }));
   }
 
-  /**
-   * Called by the HTTP interceptor when a request fails with 401.
-   * Coalesces concurrent calls so we only hit /refresh once.
-   * Resolves with the new access token, or null on failure.
-   */
   refreshAccessToken(): Observable<string | null> {
-    // A refresh is already running — subscribe to the same stream
     if (this.refreshInProgress$) return this.refreshInProgress$.asObservable();
 
     const refreshToken = this.getRefreshToken();
@@ -100,10 +103,10 @@ export class AuthService {
           if (res.success && res.data) {
             this.setSession(res.data);
             const newAccess = res.data.accessToken || res.data.token;
-            this.refreshInProgress$?.next(newAccess);
+            this.refreshInProgress$?.next(newAccess ?? null);
             this.refreshInProgress$?.complete();
             this.refreshInProgress$ = null;
-            return of(newAccess);
+            return of(newAccess ?? null);
           }
           this.refreshInProgress$?.next(null);
           this.refreshInProgress$?.complete();
@@ -119,10 +122,8 @@ export class AuthService {
       );
   }
 
-  /** Log out of the current device — revokes the refresh token server-side. */
   logout(navigate: boolean = true): void {
     const refreshToken = this.getRefreshToken();
-    // Fire-and-forget: don't block the UX if the network is dead
     if (refreshToken) {
       this.http.post(`${this.apiUrl}/logout`, { refreshToken })
         .pipe(catchError(() => of(null)))
@@ -132,7 +133,6 @@ export class AuthService {
     if (navigate) this.router.navigate(['/login']);
   }
 
-  /** Log out of every device — useful after password reset. */
   logoutAll(): Observable<unknown> {
     return this.http
       .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/logout-all`, {})
@@ -141,17 +141,46 @@ export class AuthService {
           this.clearSession();
           this.router.navigate(['/login']);
         }),
-        catchError((e) => { this.clearSession(); this.router.navigate(['/login']); return throwError(() => e); })
+        catchError((e) => {
+          this.clearSession();
+          this.router.navigate(['/login']);
+          return throwError(() => e);
+        })
       );
   }
 
   private loadUserFromStorage(): User | null {
     try {
-      const raw = localStorage.getItem(STORAGE.user);
+      const raw = authStore.getItem(STORAGE.user);
       return raw ? (JSON.parse(raw) as User) : null;
     } catch {
       return null;
     }
+  }
+
+  requestPasswordReset(email: string): Observable<ApiResponse<{ message: string; resetLink?: string }>> {
+    return this.http.post<ApiResponse<{ message: string; resetLink?: string }>>(
+      `${this.apiUrl}/forgot-password`,
+      { email }
+    );
+  }
+
+  validatePasswordReset(token: string, email: string): Observable<ApiResponse<{ email: string }>> {
+    return this.http.get<ApiResponse<{ email: string }>>(
+      `${this.apiUrl}/reset-password/validate`,
+      { params: { token, email } }
+    );
+  }
+
+  completePasswordReset(
+    token: string,
+    email: string,
+    password: string
+  ): Observable<ApiResponse<{ message: string }>> {
+    return this.http.post<ApiResponse<{ message: string }>>(
+      `${this.apiUrl}/reset-password`,
+      { token, email, password }
+    );
   }
 
   validateSetupAccount(token: string, email: string): Observable<ApiResponse<{ email: string; name: string }>> {
@@ -207,7 +236,7 @@ export class AuthService {
 
   private persistUserResponse(r: ApiResponse<{ user: User }>): void {
     if (r.success && r.data?.user) {
-      localStorage.setItem(STORAGE.user, JSON.stringify(r.data.user));
+      authStore.setItem(STORAGE.user, JSON.stringify(r.data.user));
       this.currentUser.set(r.data.user);
     }
   }
@@ -220,7 +249,7 @@ export class AuthService {
   }
 
   updateLocalUser(user: User): void {
-    localStorage.setItem(STORAGE.user, JSON.stringify(user));
+    authStore.setItem(STORAGE.user, JSON.stringify(user));
     this.currentUser.set(user);
   }
 }

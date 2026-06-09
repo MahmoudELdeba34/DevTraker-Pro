@@ -1,19 +1,13 @@
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 export const hrGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-  const userJson = localStorage.getItem('user');
 
-  if (userJson) {
-    try {
-      const user = JSON.parse(userJson);
-      if (user && ['admin', 'hr', 'manager'].includes(user.role)) {
-        return true;
-      }
-    } catch {
-      // Ignore JSON parsing errors
-    }
+  if (auth.isLoggedIn() && auth.hasRole('admin', 'hr', 'manager')) {
+    return true;
   }
 
   return router.createUrlTree(['/dashboard']);

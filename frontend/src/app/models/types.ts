@@ -142,6 +142,8 @@ export interface Attendance {
   workedMinutes: number;
   lateMinutes: number;
   earlyOutMinutes: number;
+  checkInPhotoUrl?: string;
+  checkOutPhotoUrl?: string;
   adjustedBy?: string;
   adjustmentReason?: string;
 }

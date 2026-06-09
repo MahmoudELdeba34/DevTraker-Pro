@@ -15,6 +15,8 @@ export interface IAttendance extends Document {
   workedMinutes: number;
   lateMinutes: number;
   earlyOutMinutes: number;
+  checkInPhotoUrl?: string;
+  checkOutPhotoUrl?: string;
   adjustedBy?: Types.ObjectId;
   adjustmentReason?: string;
 }
@@ -42,6 +44,8 @@ const AttendanceSchema = new Schema<IAttendance>(
     workedMinutes: { type: Number, default: 0 },
     lateMinutes: { type: Number, default: 0 },
     earlyOutMinutes: { type: Number, default: 0 },
+    checkInPhotoUrl: { type: String, default: null },
+    checkOutPhotoUrl: { type: String, default: null },
     adjustedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     adjustmentReason: { type: String, trim: true }
   },

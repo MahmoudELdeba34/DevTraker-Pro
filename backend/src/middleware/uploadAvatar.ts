@@ -1,11 +1,8 @@
+import crypto from 'crypto';
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
-import {
-  AVATARS_DIR,
-  ensureAvatarsDir,
-  sanitizeAvatarExtension,
-} from '../utils/avatar';
+import { AVATARS_DIR, ensureAvatarsDir } from '../utils/avatar';
 
 ensureAvatarsDir();
 
@@ -14,10 +11,12 @@ const storage = multer.diskStorage({
     ensureAvatarsDir();
     cb(null, AVATARS_DIR);
   },
-  filename: (req: Request, file, cb) => {
-    const userId = (req as AuthRequest).userId || 'unknown';
-    const ext = sanitizeAvatarExtension(file.originalname);
-    cb(null, `${userId}-${Date.now()}${ext}`);
+  filename: (_req, file, cb) => {
+    const ext = file.mimetype === 'image/png' ? '.png'
+      : file.mimetype === 'image/webp' ? '.webp'
+      : file.mimetype === 'image/gif' ? '.gif'
+      : '.jpg';
+    cb(null, `${crypto.randomUUID()}${ext}`);
   },
 });
 

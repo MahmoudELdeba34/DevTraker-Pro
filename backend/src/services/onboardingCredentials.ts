@@ -133,7 +133,6 @@ export function credentialsResponsePayload(
       email: invitedUser.email,
       name: invitedUser.name,
     },
-    tempPassword: delivery.tempPassword,
     setupLink: delivery.setupLink,
     shareMessage: delivery.shareMessage,
     setupExpiresAt: delivery.setupExpiresAt,

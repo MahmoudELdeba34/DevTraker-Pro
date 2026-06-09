@@ -5,15 +5,22 @@ import Attendance from '../models/Attendance';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import mongoose from 'mongoose';
 import { createNotification } from '../utils/notify';
+import {
+  isValidLeaveType,
+  leaveDurationDays,
+  meetsLeaveAdvanceNotice,
+  parseDate,
+  sanitizeReason,
+} from '../utils/validation';
 
 const router = Router();
 router.use(authMiddleware);
 
-// Helper: Get list of YYYY-MM-DD strings in date range
 function getDateRangeStrings(start: Date, end: Date): string[] {
   const dates: string[] = [];
-  let curr = new Date(start);
-  while (curr <= end) {
+  const curr = new Date(start);
+  const endCopy = new Date(end);
+  while (curr <= endCopy) {
     const yyyy = curr.getFullYear();
     const mm = String(curr.getMonth() + 1).padStart(2, '0');
     const dd = String(curr.getDate()).padStart(2, '0');
@@ -23,34 +30,74 @@ function getDateRangeStrings(start: Date, end: Date): string[] {
   return dates;
 }
 
-// POST /api/leaves/request - Submit a leave request
 router.post('/request', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { leaveType, startDate, endDate, reason } = req.body as {
-      leaveType?: 'annual' | 'sick' | 'unpaid' | 'emergency';
+      leaveType?: string;
       startDate?: string;
       endDate?: string;
       reason?: string;
     };
 
     if (!leaveType || !startDate || !endDate || !reason) {
-      res.status(400).json({ success: false, error: 'leaveType, startDate, endDate, and reason are required' });
+      res.status(400).json({
+        success: false,
+        error: 'leaveType, startDate, endDate, and reason are required',
+      });
       return;
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
+    if (!isValidLeaveType(leaveType)) {
+      res.status(400).json({ success: false, error: 'Invalid leave type' });
+      return;
+    }
+
+    const trimmedReason = sanitizeReason(reason);
+    if (trimmedReason.length < 5) {
+      res.status(400).json({ success: false, error: 'Reason must be at least 5 characters' });
+      return;
+    }
+
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+    if (!start || !end) {
+      res.status(400).json({ success: false, error: 'Invalid date format' });
+      return;
+    }
+
     if (end < start) {
       res.status(400).json({ success: false, error: 'End date cannot be before start date' });
       return;
     }
 
-    // Calculate duration in days
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (start < today) {
+      res.status(400).json({ success: false, error: 'Leave cannot start in the past' });
+      return;
+    }
 
-    // Check leave balance if annual leave
+    if (!meetsLeaveAdvanceNotice(start)) {
+      res.status(400).json({
+        success: false,
+        error: 'Leave requests must be submitted at least 24 hours before the start date',
+      });
+      return;
+    }
+
+    const durationDays = leaveDurationDays(start, end);
+
+    const overlapping = await Leave.findOne({
+      userId: req.userId,
+      status: { $in: ['pending', 'approved'] },
+      startDate: { $lte: end },
+      endDate: { $gte: start },
+    });
+    if (overlapping) {
+      res.status(400).json({ success: false, error: 'You already have a leave request for these dates' });
+      return;
+    }
+
     if (leaveType === 'annual') {
       const profile = await EmployeeProfile.findOne({ userId: req.userId });
       if (!profile || (profile.annualLeaveBalance || 0) < durationDays) {
@@ -65,8 +112,8 @@ router.post('/request', async (req: AuthRequest, res: Response): Promise<void> =
       startDate: start,
       endDate: end,
       durationDays,
-      reason,
-      status: 'pending'
+      reason: trimmedReason,
+      status: 'pending',
     });
 
     res.status(201).json({ success: true, data: leave });
@@ -76,7 +123,6 @@ router.post('/request', async (req: AuthRequest, res: Response): Promise<void> =
   }
 });
 
-// GET /api/leaves/my-requests - List self requests
 router.get('/my-requests', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const requests = await Leave.find({ userId: req.userId }).sort({ createdAt: -1 });
@@ -87,7 +133,6 @@ router.get('/my-requests', async (req: AuthRequest, res: Response): Promise<void
   }
 });
 
-// GET /api/leaves/balances - Get remaining balances
 router.get('/balances', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const profile = await EmployeeProfile.findOne({ userId: req.userId }, 'annualLeaveBalance');
@@ -98,7 +143,6 @@ router.get('/balances', async (req: AuthRequest, res: Response): Promise<void> =
   }
 });
 
-// GET /api/leaves/admin/pending - List all pending requests (Manager/HR/Admin only)
 router.get('/admin/pending', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const role = req.userRole;
@@ -117,7 +161,6 @@ router.get('/admin/pending', async (req: AuthRequest, res: Response): Promise<vo
   }
 });
 
-// PUT /api/leaves/admin/:id/approve - Approve a leave request (Manager/HR/Admin only)
 router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const role = req.userRole;
@@ -137,7 +180,6 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    // If annual leave, deduct from employee balance
     if (leave.leaveType === 'annual') {
       const profile = await EmployeeProfile.findOne({ userId: leave.userId });
       if (!profile || (profile.annualLeaveBalance || 0) < leave.durationDays) {
@@ -149,11 +191,10 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
     }
 
     leave.status = 'approved';
-    leave.approvedBy = new mongoose.Types.ObjectId(req.userId) as any;
+    leave.approvedBy = new mongoose.Types.ObjectId(req.userId);
     leave.approvedAt = new Date();
     await leave.save();
 
-    // Mark leave days in Attendance records automatically
     const dateRange = getDateRangeStrings(leave.startDate, leave.endDate);
     for (const dStr of dateRange) {
       await Attendance.findOneAndUpdate(
@@ -165,7 +206,6 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
 
     res.json({ success: true, data: leave });
 
-    // Notify the employee
     createNotification({
       userId: leave.userId.toString(),
       type: 'leave_approved',
@@ -179,7 +219,6 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
   }
 });
 
-// PUT /api/leaves/admin/:id/reject - Reject a leave request (Manager/HR/Admin only)
 router.put('/admin/:id/reject', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const role = req.userRole;
@@ -189,8 +228,9 @@ router.put('/admin/:id/reject', async (req: AuthRequest, res: Response): Promise
     }
 
     const { rejectionReason } = req.body as { rejectionReason?: string };
-    if (!rejectionReason || rejectionReason.trim().length === 0) {
-      res.status(400).json({ success: false, error: 'rejectionReason is required' });
+    const trimmed = rejectionReason?.trim() ?? '';
+    if (trimmed.length < 3) {
+      res.status(400).json({ success: false, error: 'rejectionReason is required (min 3 characters)' });
       return;
     }
 
@@ -206,19 +246,18 @@ router.put('/admin/:id/reject', async (req: AuthRequest, res: Response): Promise
     }
 
     leave.status = 'rejected';
-    leave.approvedBy = new mongoose.Types.ObjectId(req.userId) as any;
+    leave.approvedBy = new mongoose.Types.ObjectId(req.userId);
     leave.approvedAt = new Date();
-    leave.rejectionReason = rejectionReason.trim();
+    leave.rejectionReason = trimmed.slice(0, 500);
     await leave.save();
 
     res.json({ success: true, data: leave });
 
-    // Notify the employee
     createNotification({
       userId: leave.userId.toString(),
       type: 'leave_rejected',
       title: 'Leave Rejected ❌',
-      message: `Your ${leave.leaveType} leave request was rejected. Reason: ${rejectionReason}`,
+      message: `Your ${leave.leaveType} leave request was rejected. Reason: ${trimmed}`,
       link: '/request-center',
     });
   } catch (err) {

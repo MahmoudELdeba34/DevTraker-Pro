@@ -32,12 +32,16 @@ export class HRService {
   }
 
   // ─── Attendance ─────────────────────────────────────────────────────────────
-  checkIn(): Observable<ApiResponse<Attendance>> {
-    return this.http.post<ApiResponse<Attendance>>(`${this.baseUrl}/attendance/check-in`, {});
+  checkIn(photo: Blob): Observable<ApiResponse<Attendance>> {
+    const form = new FormData();
+    form.append('photo', photo, 'check-in.jpg');
+    return this.http.post<ApiResponse<Attendance>>(`${this.baseUrl}/attendance/check-in`, form);
   }
 
-  checkOut(): Observable<ApiResponse<Attendance>> {
-    return this.http.post<ApiResponse<Attendance>>(`${this.baseUrl}/attendance/check-out`, {});
+  checkOut(photo: Blob): Observable<ApiResponse<Attendance>> {
+    const form = new FormData();
+    form.append('photo', photo, 'check-out.jpg');
+    return this.http.post<ApiResponse<Attendance>>(`${this.baseUrl}/attendance/check-out`, form);
   }
 
   startBreak(): Observable<ApiResponse<Attendance>> {
@@ -105,11 +109,15 @@ export class HRService {
   requestPermission(data: {
     type: 'late_arrival' | 'early_leave' | 'hourly' | 'remote' | 'correction';
     date: string;
-    fromTime: string;
-    toTime: string;
     reason: string;
   }): Observable<ApiResponse<Permission>> {
     return this.http.post<ApiResponse<Permission>>(`${this.baseUrl}/permissions/request`, data);
+  }
+
+  getPermissionWindow(): Observable<ApiResponse<{ open: boolean; currentTime: string; closesAt: string }>> {
+    return this.http.get<ApiResponse<{ open: boolean; currentTime: string; closesAt: string }>>(
+      `${this.baseUrl}/permissions/window`
+    );
   }
 
   getMyPermissions(): Observable<ApiResponse<Permission[]>> {

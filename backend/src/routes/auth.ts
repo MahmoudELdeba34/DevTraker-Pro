@@ -2,13 +2,24 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import User from '../models/User';
+import EmployeeProfile from '../models/EmployeeProfile';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uploadAvatarMiddleware } from '../middleware/uploadAvatar';
+import fs from 'fs';
+import path from 'path';
 import {
+  AVATARS_DIR,
   buildLocalAvatarUrl,
   deleteLocalAvatarFile,
+  detectImageType,
   isValidExternalAvatarUrl,
+  safeAvatarFilename,
 } from '../utils/avatar';
+import {
+  issuePasswordReset,
+  verifyPasswordResetToken,
+  consumePasswordResetToken,
+} from '../utils/passwordReset';
 import { sendEmail, generatePassword, isSmtpConfigured } from '../utils/email';
 import {
   issueAccountSetup,
@@ -31,11 +42,25 @@ const SALT_ROUNDS = 10;
  * - admin-create-user: lighter
  */
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 12,                          // 12 attempts per 15min per IP
+  windowMs: 60 * 1000,
+  max: 5,                           // 5 attempts per minute per IP
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many login attempts. Try again later.' },
+});
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many reset requests. Try again later.' },
+});
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many reset attempts. Try again later.' },
 });
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -109,10 +134,9 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // First user becomes admin, otherwise use provided role or default to employee
     const isFirstUser = (await User.countDocuments({})) === 0;
-    const validRoles = ['employee', 'manager', 'admin', 'hr', 'accountant'];
-    const assignedRole = isFirstUser ? 'admin' : (role && validRoles.includes(role) ? role : 'employee');
+    const assignedRole = isFirstUser ? 'admin' : 'employee';
+    void role;
 
     const user = await User.create({ name, email, passwordHash, role: assignedRole });
 
@@ -153,6 +177,16 @@ router.post('/login', loginLimiter, async (req: Request, res: Response): Promise
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       res.status(401).json({ success: false, error: 'Invalid email or password' });
+      return;
+    }
+
+    const profile = await EmployeeProfile.findOne({ userId: user._id }, 'status');
+    if (profile?.status === 'suspended') {
+      res.status(403).json({ success: false, error: 'Your account has been suspended. Contact HR.' });
+      return;
+    }
+    if (profile?.status === 'resigned') {
+      res.status(403).json({ success: false, error: 'This account is no longer active.' });
       return;
     }
 
@@ -288,13 +322,28 @@ router.post(
         return;
       }
 
+      const detected = detectImageType(req.file.path);
+      if (!detected) {
+        fs.unlinkSync(req.file.path);
+        res.status(400).json({ success: false, error: 'Invalid image file' });
+        return;
+      }
+
+      let filename = req.file.filename;
+      if (!filename.endsWith(detected.ext)) {
+        const nextName = safeAvatarFilename(detected.ext);
+        fs.renameSync(req.file.path, path.join(AVATARS_DIR, nextName));
+        filename = nextName;
+      }
+
       const user = await User.findById(req.userId);
       if (!user) {
+        fs.unlinkSync(path.join(AVATARS_DIR, filename));
         res.status(404).json({ success: false, error: 'User not found' });
         return;
       }
 
-      const avatarUrl = buildLocalAvatarUrl(req.file.filename);
+      const avatarUrl = buildLocalAvatarUrl(filename);
       await replaceUserAvatar(user, avatarUrl);
 
       res.json({ success: true, data: { user: safeUser(user) } });
@@ -350,6 +399,122 @@ router.delete('/me/avatar', authMiddleware, async (req: AuthRequest, res: Respon
   } catch (err) {
     console.error('Remove avatar error:', err);
     res.status(500).json({ success: false, error: 'Failed to remove avatar' });
+  }
+});
+
+// POST /api/auth/forgot-password — request a password reset link
+router.post('/forgot-password', forgotPasswordLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body as { email?: string };
+    if (!email?.trim()) {
+      res.status(400).json({ success: false, error: 'email is required' });
+      return;
+    }
+
+    const issued = await issuePasswordReset(email);
+    if (issued && isSmtpConfigured()) {
+      try {
+        await sendEmail(
+          email.toLowerCase().trim(),
+          'DevTracker Pro — Reset your password',
+          `
+          <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0d0d0f;color:#f0f0f5;border-radius:16px;">
+            <h1 style="color:#818cf8;margin-bottom:8px;">Password reset</h1>
+            <p>Click the button below to set a new password. This link expires in 15 minutes and works once.</p>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${issued.resetLink}" style="display:inline-block;background:#6366f1;color:white;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;">Reset password</a>
+            </div>
+            <p style="color:#8b8b9e;font-size:13px;">If you did not request this, ignore this email.</p>
+          </div>
+          `
+        );
+      } catch (e: unknown) {
+        console.error('Password reset email failed:', e instanceof Error ? e.message : e);
+      }
+    }
+
+    // Always respond success — do not reveal whether the email exists
+    res.json({
+      success: true,
+      data: {
+        message: 'If an account exists for this email, a reset link has been sent.',
+        ...(issued && !isSmtpConfigured() ? { resetLink: issued.resetLink } : {}),
+      },
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// GET /api/auth/reset-password/validate?token=&email=
+router.get('/reset-password/validate', resetPasswordLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const token = String(req.query['token'] || '');
+    const email = String(req.query['email'] || '');
+    if (!token || !email) {
+      res.status(400).json({ success: false, error: 'token and email are required' });
+      return;
+    }
+    const verified = await verifyPasswordResetToken(email, token);
+    if (!verified) {
+      res.status(400).json({ success: false, error: 'This reset link is invalid or has expired.' });
+      return;
+    }
+    res.json({ success: true, data: { email: verified.email } });
+  } catch (err) {
+    console.error('Reset validate error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/reset-password — set new password via one-time link
+router.post('/reset-password', resetPasswordLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, email, password } = req.body as {
+      token?: string;
+      email?: string;
+      password?: string;
+    };
+
+    if (!token || !email || !password) {
+      res.status(400).json({ success: false, error: 'token, email, and password are required' });
+      return;
+    }
+    if (password.length < 8) {
+      res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+      return;
+    }
+
+    const verified = await verifyPasswordResetToken(email, token);
+    if (!verified) {
+      res.status(400).json({ success: false, error: 'This reset link is invalid or has expired.' });
+      return;
+    }
+
+    const consumed = await consumePasswordResetToken(verified.userId, token);
+    if (!consumed) {
+      res.status(400).json({ success: false, error: 'This reset link is invalid or has expired.' });
+      return;
+    }
+
+    const user = await User.findById(verified.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    await user.save();
+    await revokeAllUserTokens(verified.userId);
+
+    res.json({
+      success: true,
+      data: { message: 'Password updated. Please sign in with your new password.' },
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
@@ -497,8 +662,14 @@ router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: 
       return;
     }
 
-    const validRoles = ['employee', 'manager', 'admin', 'hr', 'accountant'];
-    const assignedRole = role && validRoles.includes(role) ? role : 'employee';
+    const employeeRoles = ['employee', 'manager'];
+    const adminRoles = ['admin', 'hr', 'accountant'];
+    const validRoles = [...employeeRoles, ...adminRoles];
+    let assignedRole = role && validRoles.includes(role) ? role : 'employee';
+    if (req.userRole === 'hr' && adminRoles.includes(assignedRole)) {
+      res.status(403).json({ success: false, error: 'HR cannot create admin, HR, or accountant accounts' });
+      return;
+    }
     const displayName = (name || lower.split('@')[0] || 'User').trim();
 
     const tempPassword = generatePassword(12);
@@ -550,7 +721,6 @@ router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: 
       data: {
         user: safeUser(user),
         emailSent,
-        tempPassword,
         setupLink: setup.setupLink,
         shareMessage: setup.shareMessage,
         message: emailSent

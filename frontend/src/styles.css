@@ -153,6 +153,28 @@ html[data-theme='light'] textarea.text-white {
   color: var(--text-primary);
 }
 
+html[data-theme='light'] .glass,
+html[data-theme='light'] .glass-card,
+html[data-theme='light'] .surface-card {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-md);
+}
+
+html[data-theme='light'] .page-ambient::before {
+  opacity: 0.35;
+}
+
+html[data-theme='light'] .modal-backdrop {
+  background: rgba(15, 15, 20, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+html[data-theme='light'] .tracking-banner {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.02));
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
 html[dir='rtl'] body {
   font-family: 'Cairo', 'DM Sans', sans-serif;
 }

@@ -73,7 +73,7 @@ app.use(
         return;
       }
 
-      if (!IS_PRODUCTION) {
+      if (!IS_PRODUCTION && process.env.CORS_ALLOW_LAN === 'true') {
         try {
           const host = new URL(origin).hostname;
           if (
@@ -105,7 +105,7 @@ const globalLimiter = rateLimit({
 });
 app.use('/api/', globalLimiter);
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '50kb' }));
 
 ensureAvatarsDir();
 app.use('/api/uploads', express.static(UPLOADS_DIR, { maxAge: '7d', index: false }));
@@ -161,7 +161,8 @@ async function start(): Promise<void> {
     getJwtSecret();
 
     await mongoose.connect(MONGODB_URI);
-    console.log(`✅ Connected to MongoDB: ${MONGODB_URI}`);
+    const dbHost = MONGODB_URI.replace(/\/\/([^@]+@)?/, '//').split('/')[0];
+    console.log(`✅ Connected to MongoDB (${dbHost})`);
 
     // Idempotent migration: bring legacy workspace.members arrays up to the
     // new {userId, role} subdocument shape. Safe to run on every startup.

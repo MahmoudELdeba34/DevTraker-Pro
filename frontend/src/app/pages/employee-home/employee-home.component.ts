@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HRService } from '../../services/hr.service';
 import { Attendance } from '../../models/types';
 import { Subscription, interval, startWith } from 'rxjs';
@@ -41,7 +41,13 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
 @Component({
   selector: 'app-employee-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, PageHeaderComponent, ConfirmDialogComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    RouterLink,
+    PageHeaderComponent,
+    ConfirmDialogComponent,
+    TranslatePipe,
+  ],
   template: `
     <div class="page-ambient pb-12 animate-fade-up" [attr.data-locale]="locale.locale()">
 
@@ -73,7 +79,7 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-bold text-white">{{ 'employeeHome.idle.title' | translate }}</p>
-            <p class="text-xs text-text-secondary">{{ 'employeeHome.idle.hint' | translate }}</p>
+            <p class="text-xs text-text-secondary">{{ 'employeeHome.idle.faceHint' | translate }}</p>
           </div>
         </div>
       }
@@ -81,7 +87,7 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <div class="lg:col-span-1">
-          <div class="bg-bg-elevated border border-border rounded-2xl p-6 flex flex-col items-center text-center gap-6 relative overflow-hidden">
+          <div class="surface-card glass-card rounded-2xl p-6 flex flex-col items-center text-center gap-6 relative overflow-hidden animate-scale-in">
             <div class="pointer-events-none absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl opacity-60 transition-opacity"
                  [style.background]="getGlowColor()"></div>
 
@@ -109,7 +115,7 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
 
             <div class="w-full border-t border-border pt-5 flex flex-col gap-2.5 relative z-10">
               @if (!attendance()?.checkIn) {
-                <button (click)="onCheckIn()" [disabled]="processing()"
+                <button (click)="goToPunch('check-in')" [disabled]="processing()"
                   class="group w-full py-3 rounded-xl bg-gradient-to-r from-success to-emerald-600 text-white font-bold text-sm shadow-[0_10px_30px_-12px_rgba(34,197,94,0.6)] hover:shadow-[0_14px_40px_-12px_rgba(34,197,94,0.75)] hover:-translate-y-px active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   {{ 'common.punchIn' | translate }}
@@ -256,12 +262,14 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
           (cancelled)="cancelConfirm()"
         />
       }
+
     </div>
   `,
 })
 export class EmployeeHomeComponent implements OnInit, OnDestroy {
   private hrService = inject(HRService);
   private toast = inject(ToastService);
+  private router = inject(Router);
   locale = inject(LocaleService);
 
   attendance = signal<Attendance | null>(null);
@@ -407,20 +415,8 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  onCheckIn() {
-    this.processing.set(true);
-    this.hrService.checkIn().subscribe({
-      next: (res) => {
-        this.processing.set(false);
-        if (res.success) {
-          this.attendance.set(res.data);
-          this.checkAndStartShiftTimer();
-          this.loadHistory();
-          this.toast.success(this.locale.t('employeeHome.toast.checkedIn'));
-        }
-      },
-      error: () => this.processing.set(false)
-    });
+  goToPunch(mode: 'check-in' | 'check-out'): void {
+    void this.router.navigate(['/attendance/punch'], { queryParams: { mode } });
   }
 
   promptCheckOut() {
@@ -431,23 +427,7 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
       cancelLabel: this.locale.t('common.keepWorking'),
       variant: 'danger',
       icon: 'clock',
-      onConfirm: () => this.onCheckOut()
-    });
-  }
-
-  onCheckOut() {
-    this.processing.set(true);
-    this.hrService.checkOut().subscribe({
-      next: (res) => {
-        this.processing.set(false);
-        if (res.success) {
-          this.attendance.set(res.data);
-          this.timerSub?.unsubscribe();
-          this.loadHistory();
-          this.toast.success(this.locale.t('employeeHome.toast.punchedOut'));
-        }
-      },
-      error: () => this.processing.set(false)
+      onConfirm: () => this.goToPunch('check-out')
     });
   }
 

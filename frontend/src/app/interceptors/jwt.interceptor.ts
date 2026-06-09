@@ -14,7 +14,13 @@ import { AuthService } from '../services/auth.service';
  * Refresh requests themselves must not loop, and login/register failures
  * should propagate normally.
  */
-const REFRESH_SKIP_URLS = ['/auth/login', '/auth/register', '/auth/refresh'];
+const REFRESH_SKIP_URLS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
 
 function attachAccessToken(req: HttpRequest<unknown>, token: string | null): HttpRequest<unknown> {
   if (!token) return req;

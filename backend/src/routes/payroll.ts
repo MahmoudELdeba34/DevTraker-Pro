@@ -9,6 +9,7 @@ import SalaryAdjustment from '../models/SalaryAdjustment';
 import Permission from '../models/Permission';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { PAYROLL_ROLES, requireRoles } from '../middleware/roles';
 import mongoose from 'mongoose';
 
 const router = Router();
@@ -508,7 +509,7 @@ router.post('/adjustments', async (req: AuthRequest, res: Response): Promise<voi
 });
 
 // GET /api/payroll/adjustments - Fetch list of adjustments for a specific month
-router.get('/adjustments', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/adjustments', requireRoles(...PAYROLL_ROLES), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { month } = req.query as { month?: string };
     if (!month) {

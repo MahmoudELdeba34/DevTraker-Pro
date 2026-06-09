@@ -4,6 +4,8 @@ export const EN: Record<string, string> = {
   'nav.projects': 'My Projects',
   'nav.members': 'Members',
   'nav.timesheet': 'My Timesheet',
+  'nav.workday': 'My Workday',
+  'nav.clockTerminal': 'Clock Terminal',
   'nav.requests': 'Request Center',
   'nav.hrPortal': 'HR Portal',
   'nav.teamActivity': 'Team Activity',
@@ -993,6 +995,33 @@ export const EN: Record<string, string> = {
   'employeeHome.toast.punchedOut': 'Punched out — have a great rest of your day.',
   'employeeHome.toast.breakStarted': 'Break started.',
   'employeeHome.toast.breakEnded': 'Break ended — welcome back.',
+  'employeeHome.idle.faceHint': 'Position your face in the frame — attendance is verified with a live photo.',
+
+  'faceCapture.title': 'Face verification',
+  'faceCapture.hint': 'Allow camera access and align your face inside the oval.',
+  'faceCapture.checkIn': 'Check-in',
+  'faceCapture.checkOut': 'Check-out',
+  'faceCapture.capture': 'Capture & confirm',
+  'faceCapture.retry': 'Try again',
+  'faceCapture.cameraDenied': 'Camera access is required for attendance. Enable it in your browser settings.',
+  'faceCapture.faceOk': 'Face detected — ready to capture',
+  'faceCapture.alignFace': 'Align your face in the frame',
+
+  'attendancePunch.eyebrow': 'Face verification',
+  'attendancePunch.back': 'Back to workday',
+  'attendancePunch.backToWorkday': 'Return to My Workday',
+  'attendancePunch.shiftComplete': 'Shift already completed',
+  'attendancePunch.shiftCompleteHint': 'You have already checked in and out today.',
+
+  'requestCenter.validation.leaveAdvance': 'Leave must be requested at least 24 hours before the start date.',
+  'requestCenter.validation.dateRange': 'End date cannot be before the start date.',
+  'requestCenter.validation.pastDate': 'Leave cannot start in the past.',
+
+  'requestCenter.permission.closedTitle': 'Permission requests are closed',
+  'requestCenter.permission.closedHint': 'You cannot submit a permission after 5:00 PM. Try again tomorrow during working hours.',
+  'requestCenter.permission.autoTimeHint': 'Time is recorded automatically from the system clock when you submit.',
+
+  'common.genericError': 'Something went wrong. Please try again.',
 
   // ─── Register ─────────────────────────────────────────────────────────────
   'register.title': 'DevTracker Pro',
@@ -1031,6 +1060,7 @@ export const EN: Record<string, string> = {
   'resetPassword.passwordMin8': 'Password must be at least 8 characters',
   'resetPassword.passwordsMustMatch': 'Passwords must match',
   'resetPassword.toast.success': 'Password reset successfully. Redirecting…',
+  'resetPassword.invalidLink': 'This reset link is invalid or has expired.',
 
   // ─── Setup Account ────────────────────────────────────────────────────────
   'setupAccount.activate': 'Activate your account',

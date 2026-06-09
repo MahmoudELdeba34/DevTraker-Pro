@@ -710,23 +710,25 @@ HR/Admin: members → onboard by email
 - عربي/إنجليزي + RTL
 - ثيم فاتح/داكن
 
-### ما هو UI فقط / غير مكتمل ⚠️
+### ما زال مفتوحًا / تحسينات مستقبلية ⚠️
 
 | العنصر | الحالة |
 |--------|--------|
-| `/forgot-password` | واجهة بدون API |
-| `/reset-password` | واجهة بدون API |
-| `WEBAUTHN_*` في `.env` | معلّق — غير مُنفّذ |
-| `Timelog` model | legacy |
 | `Policy` model | موجود لكن الحضور يستخدم 9:00–17:00 ثابت |
-| Payroll `GET /adjustments` | بدون فحص role صارم |
+| HttpOnly cookies | Tokens في `sessionStorage` (أفضل من localStorage) — للإنتاج الكامل استخدم cookies |
 
-### أمان — نقاط للمراجعة 🔒
+### أمان — ما تم إصلاحه ✅
 
-- Guards تقرأ `localStorage` مباشرة (ليس signals)
-- رابط Payroll يظهر للجميع في القائمة لكن الـ route محمي
-- رفع avatars في `uploads/` — غير متتبع في git
-- CORS في development يسمح بـ LAN IPs
+- Tokens في `sessionStorage` + Guards عبر `AuthService`
+- `GET /payroll/adjustments` محمي بـ `admin|hr|accountant`
+- رابط Payroll مخفي في Sidebar لغير المصرح لهم
+- Avatar: UUID filename + magic-byte validation
+- CORS LAN فقط مع `CORS_ALLOW_LAN=true` في التطوير
+- Forgot/Reset password API (15 دقيقة، single-use)
+- Login rate limit: 5 محاولات/دقيقة
+- JWT_SECRET يرفض القيم الافتراضية الضعيفة
+- `express.json` حد 50kb
+- حذف `Timelog` legacy model
 
 ### ملفات مرجعية إضافية
 
