@@ -34,7 +34,7 @@ function copyDir(src, dest) {
   }
 }
 
-console.log('=== DevTracker Pro — MonsterASP build ===\n');
+console.log('=== WorkTrack — MonsterASP build ===\n');
 
 run('npm run build', path.join(ROOT, 'backend'));
 run('npm run build -- --configuration production', path.join(ROOT, 'frontend'));

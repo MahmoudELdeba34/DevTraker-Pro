@@ -30,7 +30,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   });
 
   await transporter.sendMail({
-    from: `"DevTracker Pro" <${smtpUser}>`,
+    from: `"WorkTrack" <${smtpUser}>`,
     to,
     subject,
     html,

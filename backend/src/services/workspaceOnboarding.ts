@@ -133,7 +133,7 @@ export async function onboardEmployeeToWorkspace(
       email: lower,
       name: user.name,
       tempPassword,
-      emailSubject: 'DevTracker Pro — Your account credentials',
+      emailSubject: 'WorkTrack — Your account credentials',
       emailIntro: `${actor?.name || 'An administrator'} added you to <strong style="color:#e2e8f0;">${ws.name}</strong>.`,
       emailExtrasHtml: `
         <p style="margin:8px 0;"><strong>System role:</strong> ${assignedGlobalRole}</p>
@@ -198,7 +198,7 @@ export async function sendMemberCredentials(
   try {
     const result = await rotatePasswordAndDeliver({
       userId: targetUserId,
-      emailIntro: `${actor?.name || 'An administrator'} sent you updated DevTracker Pro login credentials.`,
+      emailIntro: `${actor?.name || 'An administrator'} sent you updated WorkTrack login credentials.`,
     });
 
     createNotification({

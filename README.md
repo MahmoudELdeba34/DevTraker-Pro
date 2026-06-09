@@ -1,8 +1,8 @@
-# DevTracker Pro
+# WorkTrack
 
-> A full-stack project management application for developers — track tasks, log time, manage priorities, and receive deadline reminders.
+> Workforce & project hub — attendance, HR, payroll, tasks, and time tracking in one platform.
 
-![DevTracker Pro](https://img.shields.io/badge/Angular-17-DD0031?logo=angular)
+![WorkTrack](https://img.shields.io/badge/Angular-17-DD0031?logo=angular)
 ![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=nodedotjs)
 ![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)

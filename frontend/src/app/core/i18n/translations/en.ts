@@ -39,8 +39,8 @@ export const EN: Record<string, string> = {
   'shell.quickSession': 'Quick session',
   'shell.live': 'Live',
   'shell.loading': 'Loading…',
-  'shell.brand': 'ProTrack',
-  'shell.brandTagline': 'Team Performance Tracking',
+  'shell.brand': 'WorkTrack',
+  'shell.brandTagline': 'Workforce & Project Hub',
   'shell.title.support': 'Support',
   'shell.title.settings': 'Settings',
   'shell.title.back': 'Back',
@@ -87,6 +87,7 @@ export const EN: Record<string, string> = {
   'toast.langEn': 'Language switched to English',
 
   // ─── Auth (login) ─────────────────────────────────────────────────────────
+  'auth.appName': 'WorkTrack',
   'auth.login': 'Sign in',
   'auth.email': 'Email',
   'auth.password': 'Password',
@@ -199,8 +200,8 @@ export const EN: Record<string, string> = {
   'common.share': 'Share',
   'common.members': 'members',
   'common.showingCount': 'Showing {{shown}} of {{total}} {{memberWord}}',
-  'common.devTrackerPro': 'DevTracker Pro',
-  'common.brandName': 'ProTrack',
+  'common.devTrackerPro': 'WorkTrack',
+  'common.brandName': 'WorkTrack',
   'common.brandTagline': 'Team Performance Tracking',
   'common.stillOnClock': 'still on clock',
   'common.inTime': 'In {{time}}',
@@ -648,7 +649,7 @@ export const EN: Record<string, string> = {
   // ─── Support ──────────────────────────────────────────────────────────────
   'support.eyebrow': 'Help Center',
   'support.title': 'Support',
-  'support.description': 'Find answers, contact your team, and get help with DevTracker Pro.',
+  'support.description': 'Find answers, contact your team, and get help with WorkTrack.',
   'support.tip.requestCenter': 'Submit leave, permission, or overtime requests from one place.',
   'support.tip.account': 'Update your name or password from Settings in the sidebar.',
   'support.tip.workspaceAdmins': 'Ask your workspace admin if you cannot access a project or workspace.',
@@ -1032,7 +1033,7 @@ export const EN: Record<string, string> = {
   'common.genericError': 'Something went wrong. Please try again.',
 
   // ─── Register ─────────────────────────────────────────────────────────────
-  'register.title': 'DevTracker Pro',
+  'register.title': 'WorkTrack',
   'register.subtitle': 'Create your account and start tracking',
   'register.fullName': 'Full name',
   'register.email': 'Email address',
@@ -1289,7 +1290,7 @@ export const EN: Record<string, string> = {
   'common.absence': 'Absence / unpaid leave',
   'common.penalty': 'Penalty',
   'common.cancelled': 'Cancelled',
-  'print.companyName': 'DevTracker Pro',
+  'print.companyName': 'WorkTrack',
   'print.payslip.title': 'Payslip',
   'print.payslip.period': 'Pay period',
   'print.payslip.reference': 'Reference',

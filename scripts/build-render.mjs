@@ -30,7 +30,7 @@ function copyDir(src, dest) {
   }
 }
 
-console.log('=== DevTracker Pro — Render production build ===\n');
+console.log('=== WorkTrack — Render production build ===\n');
 
 run('npm ci', BACKEND);
 run('npm run build', BACKEND);

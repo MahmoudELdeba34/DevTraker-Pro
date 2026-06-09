@@ -1,4 +1,4 @@
-# نشر DevTracker Pro على MonsterASP.NET
+# نشر WorkTrack على MonsterASP.NET
 
 دليل خطوة بخطوة لرفع المشروع (Angular + Node API + MongoDB Atlas) على [MonsterASP](https://www.monsterasp.net).
 
@@ -95,7 +95,7 @@ SMTP_USER=your@email.com
 SMTP_PASS=your_app_password
 
 # بصمة الموبايل (بعد تفعيل HTTPS)
-WEBAUTHN_RP_NAME=DevTracker Pro
+WEBAUTHN_RP_NAME=WorkTrack
 WEBAUTHN_RP_ID=siteXXXXX.monsterasp.net
 WEBAUTHN_ORIGIN=https://siteXXXXX.monsterasp.net
 ```

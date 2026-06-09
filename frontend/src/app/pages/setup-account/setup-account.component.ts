@@ -23,7 +23,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     <div class="auth-page flex flex-col items-center justify-center min-h-screen" [attr.data-locale]="locale.locale()">
       <div class="text-center mb-8 fade-in">
         <h1 class="text-3xl font-display font-bold tracking-tight text-white">
-          Pro<span class="text-accent">Track</span>
+          Work<span class="text-accent">Track</span>
         </h1>
         <p class="text-xs text-text-muted mt-1 font-medium tracking-wide">{{ 'common.brandTagline' | translate }}</p>
       </div>

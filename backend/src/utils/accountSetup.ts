@@ -21,7 +21,7 @@ export function buildCredentialsShareMessage(opts: {
   setupLink: string;
 }): string {
   return [
-    `Welcome to DevTracker Pro, ${opts.name}!`,
+    `Welcome to WorkTrack, ${opts.name}!`,
     '',
     `Email: ${opts.email}`,
     `Temporary password: ${opts.tempPassword}`,

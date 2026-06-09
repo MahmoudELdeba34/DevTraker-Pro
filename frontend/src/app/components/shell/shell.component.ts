@@ -37,7 +37,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
         <!-- Logo -->
         <div class="h-20 flex items-center px-6">
           <span class="font-display font-bold text-2xl tracking-tight text-white">
-            Pro<span class="text-accent">Track</span>
+            Work<span class="text-accent">Track</span>
           </span>
         </div>
 
@@ -198,7 +198,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                 <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
             </button>
-            <span class="font-display font-bold text-lg text-white">Pro<span class="text-accent">Track</span></span>
+            <span class="font-display font-bold text-lg text-white">Work<span class="text-accent">Track</span></span>
           </div>
 
           <!-- Right Actions -->

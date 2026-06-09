@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "DevTracker Pro API",
-    "description": "API Documentation for DevTracker Pro. Use the {{baseUrl}} and {{token}} variables to get started.",
+    "name": "WorkTrack API",
+    "description": "API Documentation for WorkTrack. Use the {{baseUrl}} and {{token}} variables to get started.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {

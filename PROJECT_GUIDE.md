@@ -1,4 +1,4 @@
-# DevTracker Pro — دليل المشروع الشامل
+# WorkTrack — دليل المشروع الشامل
 
 > وثيقة مرجعية لمراجعة المشروع بالكامل: Backend، Frontend، وواجهة المستخدم (UI).  
 > للتفاصيل الكاملة لكل endpoint راجع أيضًا: [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md)
@@ -24,7 +24,7 @@
 
 ## 1. نظرة عامة
 
-**DevTracker Pro** (يُعرض في الواجهة باسم **ProTrack**) هو نظام متكامل يجمع بين:
+**WorkTrack** هو نظام متكامل يجمع بين:
 
 | المجال | الوظائف |
 |--------|---------|
@@ -104,7 +104,7 @@ npm run dev
 ## 3. هيكل المجلدات
 
 ```
-DevTracker Pro/
+WorkTrack/
 ├── backend/                    # API + MongoDB
 │   ├── src/
 │   │   ├── server.ts           # نقطة الدخول
@@ -255,7 +255,7 @@ accessToken (JWT 15 دقيقة) + refreshToken (opaque 30 يوم)
 | المتغير | مطلوب؟ | الوصف |
 |---------|--------|-------|
 | `JWT_SECRET` | **نعم** (32+ حرف) | توقيع JWT |
-| `MONGODB_URI` | لا | افتراضي: `mongodb://localhost:27017/devtracker` |
+| `MONGODB_URI` | لا | افتراضي: `mongodb://localhost:27017/worktrack` |
 | `PORT` | لا | افتراضي: `5000` |
 | `FRONTEND_URL` | لا | CORS + روابط الإعداد |
 | `CORS_ORIGINS` | لا | أصول إضافية مفصولة بفاصلة |
@@ -358,7 +358,7 @@ accessToken (JWT 15 دقيقة) + refreshToken (opaque 30 يوم)
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Sidebar (260px)  │  Header (workspace, timer, notif, user) │
-│  - Logo ProTrack  ├─────────────────────────────────────────┤
+│  - Logo WorkTrack ├─────────────────────────────────────────┤
 │  - Workspace      │                                         │
 │  - Navigation     │         <router-outlet>                 │
 │  - Projects tree  │         (محتوى الصفحة)                  │

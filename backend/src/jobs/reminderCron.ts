@@ -51,7 +51,7 @@ async function sendReminderEmail(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 8px 8px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">⏰ DevTracker Pro</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">⏰ WorkTrack</h1>
         <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0;">Task Deadline Reminder</p>
       </div>
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
@@ -62,14 +62,14 @@ async function sendReminderEmail(
           <p style="margin: 0 0 4px; color: #666;">📁 Project: <strong>${projectTitle}</strong></p>
           <p style="margin: 0; color: #e74c3c;">📅 Deadline: <strong>${deadlineStr}</strong></p>
         </div>
-        <p style="color: #555;">Don't forget to complete this task on time. Log into DevTracker Pro to update its status.</p>
-        <a href="${process.env.FRONTEND_URL ?? 'http://localhost:4200'}" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Open DevTracker Pro →</a>
+        <p style="color: #555;">Don't forget to complete this task on time. Log into WorkTrack to update its status.</p>
+        <a href="${process.env.FRONTEND_URL ?? 'http://localhost:4200'}" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Open WorkTrack →</a>
       </div>
     </div>
   `;
 
   await transporter.sendMail({
-    from: `"DevTracker Pro" <${process.env.SMTP_USER}>`,
+    from: `"WorkTrack" <${process.env.SMTP_USER}>`,
     to: toEmail,
     subject: `⏰ Task Reminder: "${taskTitle}" due in ${threshold}`,
     html,

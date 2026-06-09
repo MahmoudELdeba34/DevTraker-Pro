@@ -1,7 +1,7 @@
 {
-  "name": "devtracker-pro-backend",
+  "name": "worktrack-backend",
   "version": "1.0.0",
-  "description": "DevTracker Pro Backend API",
+  "description": "WorkTrack Backend API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",

@@ -1,7 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import { AppLocale, TRANSLATIONS } from './translations/index';
 
-const STORAGE_KEY = 'protrack-locale';
+const STORAGE_KEY = 'worktrack-locale';
+const LEGACY_LOCALE_KEY = 'protrack-locale';
 
 const STATUS_KEYS: Record<string, string> = {
   not_started: 'task.status.notStarted',
@@ -30,7 +31,15 @@ export class LocaleService {
   readonly locale = signal<AppLocale>('en');
 
   init(): void {
-    const saved = localStorage.getItem(STORAGE_KEY) as AppLocale | null;
+    let saved = localStorage.getItem(STORAGE_KEY) as AppLocale | null;
+    if (!saved) {
+      const legacy = localStorage.getItem(LEGACY_LOCALE_KEY) as AppLocale | null;
+      if (legacy === 'en' || legacy === 'ar') {
+        saved = legacy;
+        localStorage.setItem(STORAGE_KEY, legacy);
+        localStorage.removeItem(LEGACY_LOCALE_KEY);
+      }
+    }
     if (saved === 'en' || saved === 'ar') {
       this.apply(saved, false);
     }

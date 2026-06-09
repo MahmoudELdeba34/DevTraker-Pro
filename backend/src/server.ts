@@ -33,7 +33,7 @@ const PORT = process.env.PORT ?? 5000;
 const NODE_ENV = process.env.NODE_ENV ?? 'development';
 const IS_PRODUCTION = NODE_ENV === 'production';
 const MONGODB_URI =
-  process.env.MONGODB_URI ?? 'mongodb://localhost:27017/devtracker';
+  process.env.MONGODB_URI ?? 'mongodb://localhost:27017/worktrack';
 
 /** Angular build copied next to compiled server: publish/public */
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');

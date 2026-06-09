@@ -32,7 +32,7 @@ function buildWelcomeEmailHtml(input: DeliverCredentialsInput, setupLink: string
   return `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#0f172a;color:#e2e8f0;border-radius:18px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h1 style="color:#a78bfa;margin:0 0 6px;font-size:24px;">Welcome to DevTracker Pro!</h1>
+        <h1 style="color:#a78bfa;margin:0 0 6px;font-size:24px;">Welcome to WorkTrack!</h1>
         <p style="margin:0;color:#94a3b8;font-size:14px;">${input.emailIntro || `Hello <strong style="color:#e2e8f0;">${input.name}</strong>, your account is ready.`}</p>
       </div>
       <div style="background:#1e293b;padding:22px;border-radius:14px;margin:24px 0;border:1px solid #334155;">
@@ -62,7 +62,7 @@ export async function deliverAccountCredentials(
     try {
       await sendEmail(
         input.email,
-        input.emailSubject || 'DevTracker Pro — Your account credentials',
+        input.emailSubject || 'WorkTrack — Your account credentials',
         buildWelcomeEmailHtml(input, setup.setupLink)
       );
       emailSent = true;
@@ -106,7 +106,7 @@ export async function rotatePasswordAndDeliver(opts: {
     email: user.email,
     name: user.name,
     tempPassword,
-    emailSubject: 'DevTracker Pro — Updated login credentials',
+    emailSubject: 'WorkTrack — Updated login credentials',
     emailIntro:
       opts.emailIntro ||
       `Hello <strong style="color:#e2e8f0;">${user.name}</strong>, here are your updated login details.`,

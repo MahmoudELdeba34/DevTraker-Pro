@@ -533,7 +533,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req: Request, res:
       try {
         await sendEmail(
           email.toLowerCase().trim(),
-          'DevTracker Pro — Reset your password',
+          'WorkTrack — Reset your password',
           `
           <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0d0d0f;color:#f0f0f5;border-radius:16px;">
             <h1 style="color:#818cf8;margin-bottom:8px;">Password reset</h1>
@@ -806,10 +806,10 @@ router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: 
       try {
         await sendEmail(
           lower,
-          'Welcome to DevTracker Pro — Your Account is Ready',
+          'Welcome to WorkTrack — Your Account is Ready',
           `
           <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0f172a;color:#e2e8f0;border-radius:16px;">
-            <h1 style="color:#a78bfa;margin-bottom:8px;">Welcome to DevTracker Pro!</h1>
+            <h1 style="color:#a78bfa;margin-bottom:8px;">Welcome to WorkTrack!</h1>
             <p>Hello <strong>${displayName}</strong>,</p>
             <p>Your account has been created. Set your password using the button below:</p>
             <div style="text-align:center;margin:24px 0;">
@@ -828,7 +828,7 @@ router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: 
     createNotification({
       userId: user._id.toString(),
       type: 'account_created',
-      title: 'Welcome to DevTracker Pro!',
+      title: 'Welcome to WorkTrack!',
       message: `Your account has been created with the role "${assignedRole}".`,
       link: '/employee-home',
     }).catch(() => {});
@@ -880,7 +880,7 @@ router.post('/admin/reset-password', authMiddleware, async (req: AuthRequest, re
 
     sendEmail(
       user.email,
-      'DevTracker Pro — Your Password Has Been Reset',
+      'WorkTrack — Your Password Has Been Reset',
       `
       <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0f172a;color:#e2e8f0;border-radius:16px;">
         <h1 style="color:#f472b6;margin-bottom:8px;">Password Reset</h1>

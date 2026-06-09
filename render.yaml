@@ -3,7 +3,7 @@
 
 services:
   - type: web
-    name: devtracker-pro
+    name: worktrack
     runtime: node
     plan: free
     buildCommand: npm run build:render
