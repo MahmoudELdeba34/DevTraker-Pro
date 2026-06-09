@@ -17,11 +17,12 @@ import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 import { User } from '../../../models/types';
+import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-workspace-members-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UserAvatarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-members-modal.component.html',
   styleUrls: ['./workspace-members-modal.component.css'],

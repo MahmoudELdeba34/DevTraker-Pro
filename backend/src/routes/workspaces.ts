@@ -33,6 +33,7 @@ function memberView(m: any, ownerId: string) {
     name: u?.name || '',
     email: u?.email || '',
     role: u?.role || '',                  // global role (employee/admin/etc.)
+    avatarUrl: u?.avatarUrl || undefined,
     workspaceRole: m.role as WorkspaceRole, // membership role
     isOwner: (u?._id?.toString?.() || u?.toString?.()) === ownerId.toString(),
     addedAt: m.addedAt,
@@ -66,8 +67,8 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
           };
 
     const workspaces = await Workspace.find(filter)
-      .populate('ownerId', 'name email role')
-      .populate('members.userId', 'name email role')
+      .populate('ownerId', 'name email role avatarUrl')
+      .populate('members.userId', 'name email role avatarUrl')
       .sort({ updatedAt: -1 });
 
     res.json({ success: true, data: workspaces.map(workspaceView) });
@@ -183,8 +184,8 @@ router.get('/:id/members', async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    await ws.populate({ path: 'members.userId', select: 'name email role' });
-    await ws.populate({ path: 'ownerId', select: 'name email role' });
+    await ws.populate({ path: 'members.userId', select: 'name email role avatarUrl' });
+    await ws.populate({ path: 'ownerId', select: 'name email role avatarUrl' });
 
     const ownerId = (ws.ownerId as any)._id;
     const list = ws.members.map((m) => memberView(m, ownerId));
@@ -197,6 +198,7 @@ router.get('/:id/members', async (req: AuthRequest, res: Response): Promise<void
         name: owner.name,
         email: owner.email,
         role: owner.role,
+        avatarUrl: owner.avatarUrl || undefined,
         workspaceRole: 'admin' as WorkspaceRole,
         isOwner: true,
         addedAt: ws.createdAt,
@@ -314,7 +316,7 @@ router.post('/:id/members', async (req: AuthRequest, res: Response): Promise<voi
       link: `/dashboard`,
     }).catch(() => {});
 
-    await ws.populate({ path: 'members.userId', select: 'name email role' });
+    await ws.populate({ path: 'members.userId', select: 'name email role avatarUrl' });
     res.status(201).json({ success: true, data: workspaceView(ws) });
   } catch (err: any) {
     console.error('Add member error:', err);

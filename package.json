@@ -6,7 +6,10 @@
     "dev": "concurrently \"npm run dev --prefix backend\" \"npm start --prefix frontend\"",
     "start": "npm run dev",
     "backend": "npm run dev --prefix backend",
-    "frontend": "npm start --prefix frontend"
+    "frontend": "npm start --prefix frontend",
+    "build:monsterasp": "node scripts/build-monsterasp.mjs",
+    "build:render": "node scripts/build-render.mjs",
+    "start:render": "node backend/dist/server.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

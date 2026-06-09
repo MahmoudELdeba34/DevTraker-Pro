@@ -10,6 +10,7 @@ node_modules/
 # Build outputs
 dist/
 **/dist/
+monsterasp-publish/
 
 # Angular cache
 .angular/
@@ -25,3 +26,7 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# User uploads
+uploads/
+backend/uploads/

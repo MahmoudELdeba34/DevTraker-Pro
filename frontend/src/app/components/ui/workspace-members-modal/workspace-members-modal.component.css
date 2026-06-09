@@ -69,9 +69,25 @@
 }
 
 /* Base size for trigger */
-.cu-avatar-stack .cu-avatar {
+.cu-avatar-stack .cu-avatar,
+.cu-avatar-stack .cu-avatar-stack-item {
   width: 24px;
   height: 24px;
+}
+
+.cu-avatar-stack-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--cu-bg-modal);
+  margin-left: -6px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.cu-avatar-stack .cu-avatar-stack-item:first-child {
+  margin-left: 0;
 }
 
 .cu-avatar-overflow {

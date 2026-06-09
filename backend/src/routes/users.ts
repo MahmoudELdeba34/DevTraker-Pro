@@ -13,7 +13,10 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const users = await User.find({}, '_id name email role lastActiveAt currentPage sessionStart').sort({ name: 1 });
+    const users = await User.find(
+      {},
+      '_id name email role avatarUrl lastActiveAt currentPage sessionStart'
+    ).sort({ name: 1 });
     res.json({ success: true, data: users });
   } catch (err) {
     console.error('List users error:', err);

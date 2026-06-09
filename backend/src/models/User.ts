@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   role: 'employee' | 'manager' | 'admin' | 'hr' | 'accountant';
+  avatarUrl?: string;
   currentPage?: string;
   lastActiveAt?: Date;
   sessionStart?: Date;
@@ -27,6 +28,7 @@ const UserSchema = new Schema<IUser>(
       enum: ['employee', 'manager', 'admin', 'hr', 'accountant'],
       default: 'employee',
     },
+    avatarUrl: { type: String, default: null },
     currentPage: { type: String, default: '' },
     lastActiveAt: { type: Date, default: null },
     sessionStart: { type: Date, default: null },

@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   role: 'employee' | 'manager' | 'admin' | 'hr' | 'accountant';
+  avatarUrl?: string;
   currentPage?: string;
   lastActiveAt?: string;
   sessionStart?: string;
@@ -63,6 +64,7 @@ export interface WorkspaceMember {
   name: string;
   email: string;
   role: string;                  // global role
+  avatarUrl?: string;
   workspaceRole: WorkspaceRole;  // role within the workspace
   isOwner: boolean;
   addedAt?: string;

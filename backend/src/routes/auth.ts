@@ -3,6 +3,12 @@ import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { uploadAvatarMiddleware } from '../middleware/uploadAvatar';
+import {
+  buildLocalAvatarUrl,
+  deleteLocalAvatarFile,
+  isValidExternalAvatarUrl,
+} from '../utils/avatar';
 import { sendEmail, generatePassword, isSmtpConfigured } from '../utils/email';
 import {
   issueAccountSetup,
@@ -55,7 +61,25 @@ const setupLimiter = rateLimit({
 
 // Helper: serialize a user for the client (never expose passwordHash)
 function safeUser(u: any) {
-  return { _id: u._id, name: u.name, email: u.email, role: u.role };
+  return {
+    _id: u._id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    avatarUrl: u.avatarUrl || undefined,
+  };
+}
+
+async function replaceUserAvatar(
+  user: InstanceType<typeof User>,
+  nextAvatarUrl: string | undefined
+): Promise<void> {
+  const previous = user.avatarUrl;
+  if (previous && previous !== nextAvatarUrl) {
+    deleteLocalAvatarFile(previous);
+  }
+  user.avatarUrl = nextAvatarUrl;
+  await user.save();
 }
 
 // POST /api/auth/register
@@ -249,6 +273,83 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response): Promi
   } catch (err) {
     console.error('Update profile error:', err);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+});
+
+// POST /api/auth/me/avatar — upload a profile image
+router.post(
+  '/me/avatar',
+  authMiddleware,
+  uploadAvatarMiddleware,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ success: false, error: 'No image file provided' });
+        return;
+      }
+
+      const user = await User.findById(req.userId);
+      if (!user) {
+        res.status(404).json({ success: false, error: 'User not found' });
+        return;
+      }
+
+      const avatarUrl = buildLocalAvatarUrl(req.file.filename);
+      await replaceUserAvatar(user, avatarUrl);
+
+      res.json({ success: true, data: { user: safeUser(user) } });
+    } catch (err) {
+      console.error('Upload avatar error:', err);
+      res.status(500).json({ success: false, error: 'Failed to upload avatar' });
+    }
+  }
+);
+
+// PUT /api/auth/me/avatar — set profile image from an external URL
+router.put('/me/avatar', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { avatarUrl } = req.body as { avatarUrl?: string };
+    const trimmed = avatarUrl?.trim();
+
+    if (!trimmed || !isValidExternalAvatarUrl(trimmed)) {
+      res.status(400).json({ success: false, error: 'A valid http(s) image URL is required' });
+      return;
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    await replaceUserAvatar(user, trimmed);
+
+    res.json({ success: true, data: { user: safeUser(user) } });
+  } catch (err) {
+    console.error('Set avatar URL error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update avatar' });
+  }
+});
+
+// DELETE /api/auth/me/avatar — remove profile image
+router.delete('/me/avatar', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    if (user.avatarUrl) {
+      deleteLocalAvatarFile(user.avatarUrl);
+      user.avatarUrl = undefined;
+      await user.save();
+    }
+
+    res.json({ success: true, data: { user: safeUser(user) } });
+  } catch (err) {
+    console.error('Remove avatar error:', err);
+    res.status(500).json({ success: false, error: 'Failed to remove avatar' });
   }
 });
 

@@ -63,3 +63,77 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.avatar-preview-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 2px solid #1a1d24;
+  background: #6366f1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.avatar-edit-btn:hover:not(:disabled) {
+  background: #5558e3;
+}
+
+.avatar-edit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #334155;
+  cursor: pointer;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #273449;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger-ghost {
+  background: transparent;
+  color: #f87171;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  cursor: pointer;
+}
+
+.btn-danger-ghost:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.btn-danger-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none;
+}

@@ -14,6 +14,7 @@ import { ToastService } from '../../services/toast.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { UiPreferencesComponent } from '../ui/ui-preferences/ui-preferences.component';
 import { WorkspaceMembersComponent } from '../workspace-members/workspace-members.component';
+import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-shell',
@@ -25,6 +26,7 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
     ReactiveFormsModule,
     WorkspaceMembersComponent,
     UiPreferencesComponent,
+    UserAvatarComponent,
   ],
   template: `
     <div class="flex h-screen bg-bg-base text-text-primary font-body overflow-hidden" [class.flex-row-reverse]="locale.isRtl()" [attr.data-locale]="locale.locale()">
@@ -538,8 +540,12 @@ import { WorkspaceMembersComponent } from '../workspace-members/workspace-member
 
             <!-- User Avatar & Dropdown -->
             <div class="relative">
-              <button class="w-8 h-8 rounded-full bg-accent/20 border border-accent/50 flex items-center justify-center text-xs font-bold text-accent cursor-pointer hover:bg-accent hover:text-white transition-all" (click)="toggleUserMenu()">
-                {{ userInitial() }}
+              <button class="cursor-pointer hover:opacity-90 transition-opacity" (click)="toggleUserMenu()">
+                <app-user-avatar
+                  [name]="userName()"
+                  [avatarUrl]="userAvatarUrl()"
+                  size="xs"
+                />
               </button>
               
               @if (showUserMenu()) {
@@ -762,7 +768,7 @@ export class ShellComponent implements OnInit {
 
   userName = () => this.authService.currentUser()?.name ?? 'Alex Rivera';
   userRole = () => this.authService.currentUser()?.role ?? 'Senior Product Designer';
-  userInitial = () => (this.userName())[0].toUpperCase();
+  userAvatarUrl = () => this.authService.currentUser()?.avatarUrl;
 
   activeWorkspaceInitials = computed(() => {
     const ws = this.workspaceService.activeWorkspace();

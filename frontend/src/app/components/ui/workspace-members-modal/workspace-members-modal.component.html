@@ -9,8 +9,8 @@
 >
   <div class="cu-avatar-stack">
     @for (member of displayMembers(); track member._id; let i = $index) {
-      <div class="cu-avatar" [ngClass]="avatarColor(i)">
-        {{ initials(member.name) }}
+      <div class="cu-avatar cu-avatar-stack-item">
+        <app-user-avatar [name]="member.name" [avatarUrl]="member.avatarUrl" size="sm" />
       </div>
     }
     @if (overflowCount() > 0) {
@@ -65,7 +65,7 @@
             <div class="cu-dropdown-title">Select a person to invite</div>
             @for (user of usersToAdd(); track user._id; let i = $index) {
               <div class="cu-dropdown-item" (click)="addMember(user, $event)">
-                <div class="cu-avatar cu-avatar-sm" [ngClass]="avatarColor(i)">{{ initials(user.name) }}</div>
+                <app-user-avatar [name]="user.name" [avatarUrl]="user.avatarUrl" size="sm" />
                 <div class="cu-dropdown-info">
                   <span class="cu-dropdown-name">{{ user.name }}</span>
                   <span class="cu-dropdown-email">{{ user.email }}</span>
@@ -92,9 +92,7 @@
         } @else {
           @for (member of members(); track member._id; let i = $index) {
             <div class="cu-member-row">
-              <div class="cu-avatar cu-avatar-md" [ngClass]="avatarColor(i)">
-                {{ initials(member.name) }}
-              </div>
+              <app-user-avatar [name]="member.name" [avatarUrl]="member.avatarUrl" size="md" />
               
               <div class="cu-member-info">
                 <div class="cu-member-name">

@@ -181,13 +181,35 @@ export class AuthService {
 
   updateProfile(name: string): Observable<ApiResponse<{ user: User }>> {
     return this.http.put<ApiResponse<{ user: User }>>(`${this.apiUrl}/me`, { name }).pipe(
-      tap((r) => {
-        if (r.success && r.data?.user) {
-          localStorage.setItem(STORAGE.user, JSON.stringify(r.data.user));
-          this.currentUser.set(r.data.user);
-        }
-      })
+      tap((r) => this.persistUserResponse(r))
     );
+  }
+
+  uploadAvatar(file: File): Observable<ApiResponse<{ user: User }>> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return this.http
+      .post<ApiResponse<{ user: User }>>(`${this.apiUrl}/me/avatar`, formData)
+      .pipe(tap((r) => this.persistUserResponse(r)));
+  }
+
+  setAvatarUrl(avatarUrl: string): Observable<ApiResponse<{ user: User }>> {
+    return this.http
+      .put<ApiResponse<{ user: User }>>(`${this.apiUrl}/me/avatar`, { avatarUrl })
+      .pipe(tap((r) => this.persistUserResponse(r)));
+  }
+
+  removeAvatar(): Observable<ApiResponse<{ user: User }>> {
+    return this.http
+      .delete<ApiResponse<{ user: User }>>(`${this.apiUrl}/me/avatar`)
+      .pipe(tap((r) => this.persistUserResponse(r)));
+  }
+
+  private persistUserResponse(r: ApiResponse<{ user: User }>): void {
+    if (r.success && r.data?.user) {
+      localStorage.setItem(STORAGE.user, JSON.stringify(r.data.user));
+      this.currentUser.set(r.data.user);
+    }
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<ApiResponse<{ message: string }>> {
