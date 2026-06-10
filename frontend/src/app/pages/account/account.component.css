@@ -17,9 +17,9 @@
 }
 
 .tab-btn.active {
-  color: #818cf8;
-  border-bottom-color: #6366f1;
-  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent);
+  background: var(--accent-muted);
 }
 
 /* btn-primary — inherited from global styles.css */
@@ -37,7 +37,7 @@
   height: 2rem;
   border-radius: 9999px;
   border: 2px solid #1a1d24;
-  background: #6366f1;
+  background: var(--accent);
   color: #fff;
   display: flex;
   align-items: center;

@@ -531,7 +531,7 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
       return 'radial-gradient(circle, rgba(34,197,94,0.20), transparent 70%)';
     if (this.isOnBreak())
       return 'radial-gradient(circle, rgba(245,158,11,0.18), transparent 70%)';
-    return 'radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%)';
+    return 'radial-gradient(circle, var(--ambient-1), transparent 70%)';
   }
 
   getStatusChipClass(status: string): string {

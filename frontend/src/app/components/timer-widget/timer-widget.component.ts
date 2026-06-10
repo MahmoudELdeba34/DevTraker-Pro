@@ -37,7 +37,7 @@ function formatMs(ms: number): string {
          [attr.data-locale]="locale.locale()"
          [ngClass]="{
            'bg-accent/10 border border-accent/20': !isRunning(),
-           'bg-accent/20 border border-accent/50 shadow-[0_0_10px_rgba(99,102,241,0.2)]': isRunning()
+           'bg-accent/20 border border-accent/50 shadow-glow-soft': isRunning()
          }">
       <span class="text-xs font-bold font-mono tracking-wider"
             [ngClass]="isRunning() ? 'text-white' : 'text-accent'">

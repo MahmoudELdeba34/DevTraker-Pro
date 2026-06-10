@@ -18,8 +18,8 @@
 
 .tab-pill--active {
   color: #fff;
-  background: rgba(99, 102, 241, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.4);
+  background: var(--accent-muted);
+  box-shadow: inset 0 0 0 1px var(--border-active);
 }
 
 .presence-card {

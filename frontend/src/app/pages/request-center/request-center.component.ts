@@ -490,7 +490,7 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
 
   topAccentGradient = computed(() => {
     switch (this.activeTab()) {
-      case 'leaves':      return 'linear-gradient(90deg, transparent, #6366F1, transparent)';
+      case 'leaves':      return 'linear-gradient(90deg, transparent, #2dd4bf, transparent)';
       case 'permissions': return 'linear-gradient(90deg, transparent, #38BDF8, transparent)';
       case 'overtime':    return 'linear-gradient(90deg, transparent, #F59E0B, transparent)';
     }

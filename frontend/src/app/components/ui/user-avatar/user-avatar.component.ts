@@ -35,9 +35,9 @@ import { getInitials, resolveAvatarUrl } from '../../../core/utils/avatar.util';
         border-radius: 9999px;
         overflow: hidden;
         flex-shrink: 0;
-        background: rgba(99, 102, 241, 0.2);
-        border: 1px solid rgba(99, 102, 241, 0.5);
-        color: #818cf8;
+        background: var(--accent-muted);
+        border: 1px solid var(--border-active);
+        color: var(--accent);
         font-weight: 700;
       }
 

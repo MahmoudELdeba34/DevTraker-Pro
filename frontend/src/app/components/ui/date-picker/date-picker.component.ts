@@ -116,9 +116,9 @@ interface CalendarCell {
     }
     .dp-trigger:hover, .dp-trigger--open {
       color: #fff;
-      border-color: rgba(99,102,241,0.45);
-      background: rgba(99,102,241,0.08);
-      box-shadow: 0 0 12px rgba(99,102,241,0.12);
+      border-color: var(--border-active);
+      background: var(--accent-muted);
+      box-shadow: var(--accent-glow);
     }
     .dp-trigger--filled { color: #e2e8f0; }
     .dp-clear {
@@ -144,7 +144,7 @@ interface CalendarCell {
       width: 17.5rem;
       padding: 0.75rem;
       border-radius: 0.875rem;
-      border: 1px solid rgba(99,102,241,0.25);
+      border: 1px solid var(--border-active);
       background: linear-gradient(165deg, #1a1d26 0%, #12141a 100%);
       box-shadow: 0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
     }
@@ -174,8 +174,8 @@ interface CalendarCell {
     }
     .dp-nav:hover {
       color: #fff;
-      background: rgba(99,102,241,0.15);
-      border-color: rgba(99,102,241,0.3);
+      background: var(--accent-muted);
+      border-color: var(--border-active);
     }
 
     .dp-grid {
@@ -206,18 +206,18 @@ interface CalendarCell {
       transition: all 0.12s ease;
     }
     .dp-day:hover:not(.dp-day--selected) {
-      background: rgba(99,102,241,0.18);
+      background: var(--accent-muted);
       color: #fff;
     }
     .dp-day--muted { color: #475569; }
     .dp-day--today:not(.dp-day--selected) {
-      box-shadow: inset 0 0 0 1px rgba(99,102,241,0.55);
-      color: #a5b4fc;
+      box-shadow: inset 0 0 0 1px var(--border-active);
+      color: var(--accent-hover);
     }
     .dp-day--selected {
-      background: linear-gradient(135deg, #6366f1, #818cf8);
+      background: var(--gradient-accent);
       color: #fff;
-      box-shadow: 0 4px 14px rgba(99,102,241,0.45);
+      box-shadow: var(--accent-glow);
     }
     .dp-day--overdue:not(.dp-day--selected) {
       color: #fbbf24;
@@ -233,12 +233,12 @@ interface CalendarCell {
     .dp-footer-btn {
       font-size: 0.7rem;
       font-weight: 700;
-      color: #818cf8;
+      color: var(--accent);
       padding: 0.25rem 0.4rem;
       border-radius: 0.35rem;
       transition: all 0.15s;
     }
-    .dp-footer-btn:hover { color: #fff; background: rgba(99,102,241,0.15); }
+    .dp-footer-btn:hover { color: #fff; background: var(--accent-muted); }
     .dp-footer-btn--muted { color: #64748b; }
     .dp-footer-btn--muted:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
   `],

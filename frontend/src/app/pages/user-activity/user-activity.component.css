@@ -11,13 +11,13 @@
 }
 .range-chip:hover {
   color: #fff;
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: var(--border-active);
 }
 .range-chip--active {
   color: #fff;
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+  background: var(--accent-muted);
+  border-color: var(--border-active);
+  box-shadow: var(--accent-glow);
 }
 
 .date-input {
@@ -33,7 +33,7 @@
   transition: border-color 0.2s ease;
 }
 .date-input:focus {
-  border-color: rgba(99, 102, 241, 0.6);
+  border-color: var(--border-active);
 }
 
 .print-only {

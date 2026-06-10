@@ -208,7 +208,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
             <!-- Record Button (Global Timer) -->
             @if (anyTimerRunning()) {
               <div class="relative">
-                <button class="flex items-center gap-3 px-3 py-1.5 bg-bg-elevated border border-accent/40 rounded-full hover:bg-bg-hover transition-colors group shadow-[0_0_12px_rgba(99,102,241,0.15)]"
+                <button class="flex items-center gap-3 px-3 py-1.5 bg-bg-elevated border border-accent/40 rounded-full hover:bg-bg-hover transition-colors group shadow-glow-soft"
                         title="{{ locale.t('shell.timeTracking') }}"
                         (click)="toggleTaskSelector()">
                   <span class="w-1.5 h-1.5 rounded-full bg-danger animate-pulse"></span>
@@ -356,7 +356,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                           <button
                             (click)="startQuickSession()"
                             [disabled]="startingQuickSession()"
-                            class="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-xs font-bold tracking-wide transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0 shadow-[0_0_10px_rgba(99,102,241,0.25)]"
+                            class="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-xs font-bold tracking-wide transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0 shadow-glow-soft"
                             [title]="locale.t('shell.title.startTracking')"
                           >
                             @if (startingQuickSession()) {
@@ -646,7 +646,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               </div>
               <div class="flex items-center justify-end gap-3 mt-2">
                 <button type="button" class="px-4 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-white hover:bg-bg-hover transition-colors" (click)="closeCreateWorkspace()">{{ locale.t('shell.cancel') }}</button>
-                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)]" [disabled]="creatingWs() || workspaceForm.invalid">
+                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors shadow-glow-soft" [disabled]="creatingWs() || workspaceForm.invalid">
                   {{ creatingWs() ? locale.t('shell.creatingWorkspace') : locale.t('shell.createWorkspace') }}
                 </button>
               </div>

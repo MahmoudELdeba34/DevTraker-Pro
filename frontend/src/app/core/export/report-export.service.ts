@@ -297,7 +297,7 @@ export class ReportExportService {
       'position:fixed;left:-9999px;top:0;width:794px;background:#fff;color:#0f172a;font-family:Cairo,Segoe UI,sans-serif;';
     wrapper.innerHTML = `
       <div dir="${dir}" style="padding:32px;text-align:${align};font-size:13px;line-height:1.5;">
-        <div style="border-bottom:3px solid #6366f1;padding-bottom:16px;margin-bottom:24px;">
+        <div style="border-bottom:3px solid #0d9488;padding-bottom:16px;margin-bottom:24px;">
           <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;">${this.escapeHtml(data.companyName)}</div>
           <h1 style="margin:8px 0 4px;font-size:22px;font-weight:800;color:#0f172a;">${this.escapeHtml(data.title)}</h1>
           <div style="font-size:12px;color:#475569;">${this.escapeHtml(data.employeeName)} · ${this.escapeHtml(data.employeeEmail)} · ${this.escapeHtml(data.employeeRole)}</div>
