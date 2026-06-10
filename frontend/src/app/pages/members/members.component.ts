@@ -26,6 +26,10 @@ import {
   ConfirmVariant,
 } from '../../components/ui/confirm-dialog/confirm-dialog.component';
 import { CredentialsBannerComponent } from '../../components/ui/credentials-banner/credentials-banner.component';
+import {
+  InviteMemberDialogComponent,
+  InviteMemberForm,
+} from '../../components/ui/invite-member-dialog/invite-member-dialog.component';
 import { ToastService } from '../../services/toast.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -42,7 +46,15 @@ interface PendingAction {
   selector: 'app-members',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, ConfirmDialogComponent, CredentialsBannerComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    ConfirmDialogComponent,
+    CredentialsBannerComponent,
+    InviteMemberDialogComponent,
+    TranslatePipe,
+  ],
   templateUrl: './members.component.html',
   styleUrls: ['./members.component.css'],
 })
@@ -61,10 +73,7 @@ export class MembersComponent {
   search = signal('');
   filterRole = signal<FilterRole>('all');
 
-  // Invite form
-  inviteEmail = signal('');
-  inviteRole = signal<WorkspaceRole>('member');
-  inviteGlobalRole = signal<User['role']>('employee');
+  inviteDialogOpen = signal(false);
   inviting = signal(false);
 
   // Add existing user to workspace
@@ -237,10 +246,20 @@ export class MembersComponent {
   }
 
   // ─── Invite ────────────────────────────────────────────────────────────
-  submitInvite(): void {
+  openInviteDialog(): void {
+    this.inviteDialogOpen.set(true);
+  }
+
+  closeInviteDialog(): void {
+    if (!this.inviting()) {
+      this.inviteDialogOpen.set(false);
+    }
+  }
+
+  submitInvite(form: InviteMemberForm): void {
     const ws = this.activeWs();
     if (!ws) return;
-    const email = this.inviteEmail().trim().toLowerCase();
+    const email = form.email.trim().toLowerCase();
     if (!email || !email.includes('@')) {
       this.flashMsg('err', this.locale.t('members.toast.invalidEmail'));
       return;
@@ -254,41 +273,40 @@ export class MembersComponent {
     this.onboardingSvc
       .onboardEmployee(ws._id, {
         email,
-        role: this.inviteRole(),
-        globalRole: this.canOnboardEmployees() ? this.inviteGlobalRole() : undefined,
+        name: this.canOnboardEmployees() ? form.name : undefined,
+        role: form.workspaceRole,
+        globalRole: this.canOnboardEmployees() ? form.globalRole : undefined,
       })
       .subscribe({
-      next: (res) => {
-        this.inviting.set(false);
-        this.inviteEmail.set('');
-        this.passwordCopied.set(false);
+        next: (res) => {
+          this.inviting.set(false);
+          this.inviteDialogOpen.set(false);
+          this.passwordCopied.set(false);
 
-        // Surface the temp credentials banner only if we got a tempPassword
-        // back from the server (means SMTP wasn't configured).
-        if (res.newAccount && (res.setupLink || res.tempPassword)) {
-          this.lastInvite.set(res);
-        } else {
-          this.lastInvite.set(null);
-        }
+          if (res.newAccount && !res.emailSent && (res.setupLink || res.tempPassword)) {
+            this.lastInvite.set(res);
+          } else {
+            this.lastInvite.set(null);
+          }
 
-        if (res.newAccount && res.emailSent) {
-          this.flashMsg('ok', this.locale.t('members.toast.accountEmailed', { email }));
-        } else if (res.newAccount) {
-          this.flashMsg('ok', this.locale.t('members.toast.accountCopyLink', { email }));
-        } else {
-          this.flashMsg(
-            'ok',
-            this.locale.t('members.toast.addedToWorkspace', {
-              name: res.invitedUser?.name || email,
-            })
-          );
-        }
-        this.loadMembers(ws._id);
-      },
-      error: () => {
-        this.inviting.set(false);
-      },
-    });
+          if (res.newAccount && res.emailSent) {
+            this.flashMsg('ok', this.locale.t('members.toast.accountEmailed', { email }));
+          } else if (res.newAccount) {
+            this.flashMsg('ok', this.locale.t('members.toast.accountCopyLink', { email }));
+          } else {
+            this.flashMsg(
+              'ok',
+              this.locale.t('members.toast.addedToWorkspace', {
+                name: res.invitedUser?.name || email,
+              })
+            );
+          }
+          this.loadMembers(ws._id);
+        },
+        error: () => {
+          this.inviting.set(false);
+        },
+      });
   }
 
   dismissLastInvite(): void {

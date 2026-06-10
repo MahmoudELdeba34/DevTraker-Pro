@@ -97,14 +97,19 @@ export class AuthService {
       .pipe(tap((r) => { if (r.success && r.data) this.setSession(r.data); }));
   }
 
+  getRegistrationStatus(): Observable<ApiResponse<{ open: boolean; bootstrap: boolean }>> {
+    return this.http.get<ApiResponse<{ open: boolean; bootstrap: boolean }>>(
+      `${this.apiUrl}/registration-status`
+    );
+  }
+
   register(
     name: string,
     email: string,
-    password: string,
-    role: string
+    password: string
   ): Observable<ApiResponse<AuthResponse>> {
     return this.http
-      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/register`, { name, email, password, role })
+      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/register`, { name, email, password })
       .pipe(tap((r) => { if (r.success && r.data) this.setSession(r.data); }));
   }
 

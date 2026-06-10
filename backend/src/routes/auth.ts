@@ -128,6 +128,27 @@ async function replaceUserAvatar(
   await user.save();
 }
 
+function isPublicRegistrationOpen(userCount: number): boolean {
+  return userCount === 0 || process.env.ALLOW_PUBLIC_REGISTER === 'true';
+}
+
+// GET /api/auth/registration-status — whether self-service sign-up is available
+router.get('/registration-status', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const userCount = await User.countDocuments({});
+    res.json({
+      success: true,
+      data: {
+        open: isPublicRegistrationOpen(userCount),
+        bootstrap: userCount === 0,
+      },
+    });
+  } catch (err) {
+    console.error('Registration status error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
 // POST /api/auth/register
 router.post('/register', registerLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -147,6 +168,15 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
       return;
     }
 
+    const userCount = await User.countDocuments({});
+    if (!isPublicRegistrationOpen(userCount)) {
+      res.status(403).json({
+        success: false,
+        error: 'Registration is closed. Ask your administrator to invite you by email.',
+      });
+      return;
+    }
+
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
       res.status(400).json({ success: false, error: 'Email already in use' });
@@ -155,7 +185,7 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const isFirstUser = (await User.countDocuments({})) === 0;
+    const isFirstUser = userCount === 0;
     const assignedRole = isFirstUser ? 'admin' : 'employee';
     void role;
 

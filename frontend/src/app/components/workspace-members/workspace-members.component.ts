@@ -25,6 +25,10 @@ import {
   ConfirmVariant,
 } from '../ui/confirm-dialog/confirm-dialog.component';
 import { CredentialsBannerComponent } from '../ui/credentials-banner/credentials-banner.component';
+import {
+  InviteMemberDialogComponent,
+  InviteMemberForm,
+} from '../ui/invite-member-dialog/invite-member-dialog.component';
 import { ToastService } from '../../services/toast.service';
 import { OnboardingCredentialsResult } from '../../services/onboarding.service';
 import { LocaleService } from '../../core/i18n/locale.service';
@@ -42,7 +46,14 @@ interface PendingAction {
   selector: 'app-workspace-members',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, CredentialsBannerComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ConfirmDialogComponent,
+    CredentialsBannerComponent,
+    InviteMemberDialogComponent,
+    TranslatePipe,
+  ],
   templateUrl: './workspace-members.component.html',
   styleUrls: ['./workspace-members.component.css'],
 })
@@ -59,10 +70,7 @@ export class WorkspaceMembersComponent implements OnInit {
   members = signal<WorkspaceMember[]>([]);
   loading = signal(true);
 
-  // Invite form
-  inviteEmail = signal('');
-  inviteRole = signal<WorkspaceRole>('member');
-  inviteGlobalRole = signal<User['role']>('employee');
+  inviteDialogOpen = signal(false);
   inviting = signal(false);
   lastInvite = signal<OnboardingCredentialsResult | null>(null);
 
@@ -146,8 +154,18 @@ export class WorkspaceMembersComponent implements OnInit {
   }
 
   // ─── Invite ───────────────────────────────────────────────────────────────
-  submitInvite(): void {
-    const email = this.inviteEmail().trim().toLowerCase();
+  openInviteDialog(): void {
+    this.inviteDialogOpen.set(true);
+  }
+
+  closeInviteDialog(): void {
+    if (!this.inviting()) {
+      this.inviteDialogOpen.set(false);
+    }
+  }
+
+  submitInvite(form: InviteMemberForm): void {
+    const email = form.email.trim().toLowerCase();
     if (!email || !email.includes('@')) {
       this.flashMsg('err', this.locale.t('members.toast.invalidEmail'));
       return;
@@ -161,18 +179,24 @@ export class WorkspaceMembersComponent implements OnInit {
     this.onboardingSvc
       .onboardEmployee(this.workspace._id, {
         email,
-        role: this.inviteRole(),
-        globalRole: this.canOnboardEmployees() ? this.inviteGlobalRole() : undefined,
+        name: this.canOnboardEmployees() ? form.name : undefined,
+        role: form.workspaceRole,
+        globalRole: this.canOnboardEmployees() ? form.globalRole : undefined,
       })
       .subscribe({
         next: (res) => {
           this.inviting.set(false);
-          this.inviteEmail.set('');
+          this.inviteDialogOpen.set(false);
+
+          if (res.newAccount && !res.emailSent && (res.setupLink || res.tempPassword)) {
+            this.lastInvite.set(res);
+          } else {
+            this.lastInvite.set(null);
+          }
 
           if (res.newAccount && res.emailSent) {
             this.flashMsg('ok', this.locale.t('members.toast.accountEmailed', { email }));
-          } else if (res.newAccount && (res.setupLink || res.tempPassword)) {
-            this.lastInvite.set(res);
+          } else if (res.newAccount) {
             this.flashMsg('ok', this.locale.t('members.toast.accountCopyLink', { email }));
           } else {
             this.flashMsg('ok', this.locale.t('members.toast.addedToWorkspace', { name: res.invitedUser?.name || email }));

@@ -42,6 +42,7 @@ function buildWelcomeEmailHtml(input: DeliverCredentialsInput, setupLink: string
           <code style="background:#0f172a;padding:6px 10px;border-radius:6px;color:#f472b6;">${input.tempPassword}</code>
         </p>
         ${input.emailExtrasHtml || ''}
+        <p style="margin:14px 0 0;color:#cbd5e1;font-size:13px;line-height:1.5;">Sign in at WorkTrack with your email and the temporary password above. You can change your password anytime using the button below.</p>
       </div>
       <div style="text-align:center;margin:28px 0;">
         <a href="${setupLink}" style="display:inline-block;background:#6366f1;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;">Set your password</a>

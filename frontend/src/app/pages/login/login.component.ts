@@ -5,6 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 import {
   ReactiveFormsModule,
@@ -23,7 +24,7 @@ import { UiPreferencesComponent } from '../../components/ui/ui-preferences/ui-pr
   selector: 'app-login',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, UiPreferencesComponent, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, UiPreferencesComponent, TranslatePipe],
   template: `
     <div class="auth-page flex flex-col items-center justify-center min-h-screen relative" [attr.data-locale]="locale.locale()">
       <div class="absolute top-6 right-6 z-10" [class.left-6]="locale.isRtl()" [class.right-auto]="locale.isRtl()">
@@ -114,6 +115,16 @@ import { UiPreferencesComponent } from '../../components/ui/ui-preferences/ui-pr
             }
           </button>
         </form>
+
+        <div class="mt-6 pt-6 border-t border-border text-center space-y-2">
+          <p class="text-xs text-text-muted leading-relaxed">{{ 'auth.invitedHint' | translate }}</p>
+          @if (registrationOpen()) {
+            <p class="text-sm text-text-secondary">
+              {{ 'auth.noAccount' | translate }}
+              <a routerLink="/register" class="text-accent font-semibold hover:text-accent-hover transition-colors">{{ 'auth.createAccount' | translate }}</a>
+            </p>
+          }
+        </div>
       </div>
     </div>
   `,
@@ -127,6 +138,7 @@ export class LoginComponent implements OnInit {
 
   form!: FormGroup;
   loading = signal(false);
+  registrationOpen = signal(false);
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -136,7 +148,16 @@ export class LoginComponent implements OnInit {
 
     if (this.authService.isLoggedIn()) {
       this.authService.navigateAfterAuth();
+      return;
     }
+
+    this.authService.getRegistrationStatus().subscribe({
+      next: (res) => {
+        if (res.success && res.data?.open) {
+          this.registrationOpen.set(true);
+        }
+      },
+    });
   }
 
   onSubmit(): void {

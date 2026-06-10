@@ -20,51 +20,20 @@
         <h2 class="text-lg font-bold text-white tracking-tight truncate">{{ workspace.name }}</h2>
         <p class="text-xs text-text-muted mt-0.5">{{ 'workspaceMembers.subtitle' | translate }}</p>
       </div>
-      <button class="text-text-muted hover:text-white transition-colors shrink-0" (click)="close()" [attr.aria-label]="'common.close' | translate">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-    </div>
-
-    @if (canInvite()) {
-    <div class="px-6 py-4 border-b border-border bg-bg-base/40">
-      <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider block mb-2">
-        @if (canOnboardEmployees()) { {{ 'workspaceMembers.inviteOnboard' | translate }} } @else { {{ 'workspaceMembers.inviteByEmail' | translate }} }
-      </label>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <input
-          type="email"
-          [ngModel]="inviteEmail()"
-          (ngModelChange)="inviteEmail.set($event)"
-          (keyup.enter)="submitInvite()"
-          [placeholder]="'members.placeholder.email' | translate"
-          class="flex-1 min-w-0 bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2 outline-none transition-all focus:border-accent focus:shadow-glow placeholder:text-text-muted/60"
-        />
-        @if (canOnboardEmployees()) {
-        <select [ngModel]="inviteGlobalRole()" (ngModelChange)="inviteGlobalRole.set($event)" class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-accent">
-          <option value="employee">{{ 'role.global.employee' | translate }}</option>
-          <option value="manager">{{ 'role.global.manager' | translate }}</option>
-          <option value="hr">{{ 'role.global.hr' | translate }}</option>
-          <option value="accountant">{{ 'role.global.accountant' | translate }}</option>
-          <option value="admin">{{ 'role.global.admin' | translate }}</option>
-        </select>
+      <div class="flex items-center gap-2 shrink-0">
+        @if (canInvite()) {
+          <button type="button" class="btn-accent px-3 py-2 rounded-lg text-sm font-semibold" (click)="openInviteDialog()">
+            {{ 'members.invite.btn' | translate }}
+          </button>
         }
-        <select [ngModel]="inviteRole()" (ngModelChange)="inviteRole.set($event)" class="bg-bg-base border border-border text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-accent">
-          <option value="member">{{ 'role.workspace.memberLabel' | translate }}</option>
-          <option value="admin">{{ 'role.workspace.adminLabel' | translate }}</option>
-          <option value="viewer">{{ 'role.workspace.viewerLabel' | translate }}</option>
-        </select>
-        <button (click)="submitInvite()" [disabled]="inviting() || !inviteEmail()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-hover transition-colors shadow-[0_0_15px_rgba(99,102,241,0.25)] disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ inviting() ? ('members.btn.sending' | translate) : (canOnboardEmployees() ? ('common.createAndEmail' | translate) : ('common.invite' | translate)) }}
+        <button class="text-text-muted hover:text-white transition-colors" (click)="close()" [attr.aria-label]="'common.close' | translate">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
       </div>
-      <p class="text-[11px] text-text-muted mt-2 leading-relaxed">
-        @if (canOnboardEmployees()) { {{ 'common.onboardNewHint' | translate }} } @else { {{ 'common.inviteExistingHint' | translate }} }
-      </p>
     </div>
-    }
 
     @if (lastInvite(); as li) {
     <div class="mx-6 mb-3">
@@ -136,4 +105,13 @@
     <app-confirm-dialog [open]="true" [title]="dialog.title" [message]="dialog.message" [confirmLabel]="dialog.confirmLabel" [variant]="dialog.variant" (confirmed)="confirmPending()" (cancelled)="cancelPending()" />
     }
   </div>
+
+  <app-invite-member-dialog
+    [open]="inviteDialogOpen()"
+    [loading]="inviting()"
+    [showName]="canOnboardEmployees()"
+    [showGlobalRole]="canOnboardEmployees()"
+    (submitted)="submitInvite($event)"
+    (cancelled)="closeInviteDialog()"
+  />
 </div>
