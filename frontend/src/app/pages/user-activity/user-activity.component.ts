@@ -13,6 +13,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActivityService } from '../../services/activity.service';
 import { AuthService } from '../../services/auth.service';
 import { ActivityReport, ActivityDay } from '../../models/types';
+import { ReportExportMenuComponent } from '../../components/ui/report-export-menu/report-export-menu.component';
+import { activityReportToExportable } from '../../core/export/report-export.adapters';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -26,7 +28,7 @@ type PresetRange = 'today' | 'week' | 'month' | 'custom';
   selector: 'app-user-activity',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink, ReportExportMenuComponent, TranslatePipe],
   styleUrls: ['./user-activity.component.css'],
   templateUrl: './user-activity.component.html',
 })
@@ -45,6 +47,18 @@ export class UserActivityComponent implements OnInit, OnDestroy {
   printPeriod = computed(() =>
     this.locale.t('userActivity.print.period', { from: this.fromDate(), to: this.toDate() })
   );
+
+  exportPayload = computed(() => {
+    const r = this.report();
+    if (!r) return null;
+    return activityReportToExportable(
+      r,
+      this.locale,
+      this.fromDate(),
+      this.toDate(),
+      this.printReportTitle()
+    );
+  });
 
   userId = signal<string>('');
   report = signal<ActivityReport | null>(null);
@@ -132,10 +146,6 @@ export class UserActivityComponent implements OnInit, OnDestroy {
   customRangeChanged() {
     this.preset.set('custom');
     this.load();
-  }
-
-  printReport() {
-    window.print();
   }
 
   formatHm(ms: number): string {

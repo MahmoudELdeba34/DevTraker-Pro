@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { faceEnrollGuard, faceEnrollPageGuard } from './guards/face-enroll.guard';
 import { adminGuard } from './guards/admin.guard';
 import { hrGuard } from './guards/hr.guard';
 import { accountantGuard } from './guards/accountant.guard';
@@ -40,12 +41,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'face-enroll',
+    canActivate: [faceEnrollPageGuard],
+    loadComponent: () =>
+      import('./pages/face-enroll/face-enroll.component').then(
+        (m) => m.FaceEnrollComponent
+      ),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./components/shell/shell.component').then(
         (m) => m.ShellComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, faceEnrollGuard],
     children: [
       {
         path: 'dashboard',

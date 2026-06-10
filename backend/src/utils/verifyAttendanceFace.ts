@@ -1,10 +1,10 @@
-import User from '../models/User';
 import {
   faceDistance,
   isFaceMatch,
   parseFaceDescriptor,
 } from './faceMatch';
 import { deleteAttendancePhotoFile } from './attendancePhotos';
+import { getFaceProfileSnapshot } from './faceProfileStore';
 
 export interface FaceVerifyResult {
   ok: boolean;
@@ -23,8 +23,8 @@ export async function verifyUserFace(
     return { ok: false, error: 'Invalid face data. Please capture your face again.' };
   }
 
-  const user = await User.findById(userId).select('faceDescriptor faceEnrolledAt');
-  if (!user?.faceDescriptor?.length) {
+  const stored = await getFaceProfileSnapshot(userId);
+  if (!stored.enrolled || !stored.descriptor?.length) {
     if (photoUrlToCleanupOnFail) deleteAttendancePhotoFile(photoUrlToCleanupOnFail);
     return {
       ok: false,
@@ -32,8 +32,8 @@ export async function verifyUserFace(
     };
   }
 
-  const distance = faceDistance(user.faceDescriptor, probe);
-  if (!isFaceMatch(user.faceDescriptor, probe)) {
+  const distance = faceDistance(stored.descriptor, probe);
+  if (!isFaceMatch(stored.descriptor, probe)) {
     if (photoUrlToCleanupOnFail) deleteAttendancePhotoFile(photoUrlToCleanupOnFail);
     return {
       ok: false,

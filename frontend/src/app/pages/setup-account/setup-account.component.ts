@@ -160,7 +160,7 @@ export class SetupAccountComponent implements OnInit {
       next: () => {
         this.submitting.set(false);
         this.toast.success(this.locale.t('setupAccount.toast.activated'));
-        this.router.navigate(['/dashboard']);
+        this.auth.navigateAfterAuth();
       },
       error: (err) => {
         this.submitting.set(false);

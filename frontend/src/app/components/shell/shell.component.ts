@@ -992,7 +992,7 @@ export class ShellComponent implements OnInit {
       next: (res) => {
         if (res?.data) {
           this.activeTimerService.setActiveTask(res.data);
-          this.timeEntryService.active.set(null);
+          this.timeEntryService.loadActive().subscribe();
           this.toast.success(this.locale.t('shell.toast.timerStarted', { title: task.title }));
         }
         this.startingTaskId.set(null);
@@ -1158,7 +1158,10 @@ export class ShellComponent implements OnInit {
       this.toast.info(this.locale.t('shell.toast.timerStopped'));
     } else if (this.timeEntryService.active()) {
       this.timeEntryService.stop().subscribe({
-        next: () => this.toast.info(this.locale.t('shell.toast.sessionStopped')),
+        next: () => {
+          this.activeTimerService.setActiveTask(null);
+          this.toast.info(this.locale.t('shell.toast.sessionStopped'));
+        },
       });
     }
     setTimeout(() => this.loadRecentAndDaily(), 400);

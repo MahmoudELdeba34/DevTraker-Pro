@@ -54,6 +54,26 @@ export class AuthService {
     return !!role && roles.includes(role);
   }
 
+  /** Employees and managers must enroll face before using the app. */
+  roleRequiresFaceEnrollment(role: string): boolean {
+    return role === 'employee' || role === 'manager';
+  }
+
+  needsFaceEnrollment(): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+    if (!this.roleRequiresFaceEnrollment(user.role)) return false;
+    return !user.faceEnrolled;
+  }
+
+  navigateAfterAuth(): void {
+    if (this.needsFaceEnrollment()) {
+      void this.router.navigate(['/face-enroll']);
+      return;
+    }
+    void this.router.navigate(['/dashboard']);
+  }
+
   private setSession(res: AuthResponse): void {
     const access = res.accessToken || res.token;
     if (access) authStore.setItem(STORAGE.access, access);

@@ -46,7 +46,8 @@ function buildWelcomeEmailHtml(input: DeliverCredentialsInput, setupLink: string
       <div style="text-align:center;margin:28px 0;">
         <a href="${setupLink}" style="display:inline-block;background:#6366f1;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;">Set your password</a>
       </div>
-      <p style="color:#64748b;font-size:12px;text-align:center;">Link expires in 7 days. Change your password after first sign-in.</p>
+      <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:20px 0 0;">After you sign in, you will be asked to <strong style="color:#e2e8f0;">register your face once</strong>. Attendance check-in and check-out use face verification every day.</p>
+      <p style="color:#64748b;font-size:12px;text-align:center;margin-top:16px;">Link expires in 7 days. Change your password after first sign-in.</p>
     </div>
   `;
 }

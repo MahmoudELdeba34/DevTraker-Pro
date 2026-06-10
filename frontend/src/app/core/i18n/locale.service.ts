@@ -85,6 +85,21 @@ export class LocaleService {
     return key ? this.t(key) : role;
   }
 
+  /** BCP-47 tag for date/time formatting (12-hour clock). */
+  dateLocale(): string {
+    return this.locale() === 'ar' ? 'ar-SA' : 'en-US';
+  }
+
+  /** Wall-clock time in 12-hour format with optional seconds. */
+  formatClockTime(date: Date, withSeconds = true): string {
+    return date.toLocaleTimeString(this.dateLocale(), {
+      hour: 'numeric',
+      minute: '2-digit',
+      ...(withSeconds ? { second: '2-digit' } : {}),
+      hour12: true,
+    });
+  }
+
   private apply(locale: AppLocale, persist: boolean): void {
     this.locale.set(locale);
     if (persist) localStorage.setItem(STORAGE_KEY, locale);

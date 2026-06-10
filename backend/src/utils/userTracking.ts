@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Workspace from '../models/Workspace';
+import Project from '../models/Project';
 import Task from '../models/Task';
 import TimeEntry from '../models/TimeEntry';
 import { isWorkspaceParticipant } from './workspaceAccess';
@@ -20,32 +21,99 @@ export interface StopTrackingResult {
   taskTimer: { taskId: string; title: string; duration: number } | null;
 }
 
+async function resolveProjectContext(projectId: mongoose.Types.ObjectId | string | null | undefined) {
+  if (!projectId) return { projectId: null, workspaceId: null };
+  const project = await Project.findById(projectId).select('_id workspaceId');
+  if (!project) return { projectId: null, workspaceId: null };
+  return {
+    projectId: project._id,
+    workspaceId: project.workspaceId ?? null,
+  };
+}
+
+function appendTaskTimeLog(
+  task: any,
+  userId: mongoose.Types.ObjectId | string,
+  start: Date,
+  end: Date,
+  duration: number
+): void {
+  task.timeLogs.push({
+    userId: typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId,
+    start,
+    end,
+    duration,
+  });
+}
+
+async function endRunningTimeEntry(
+  entry: any,
+  end: Date,
+  duration: number
+): Promise<void> {
+  entry.endedAt = end;
+  entry.duration = duration;
+  await entry.save();
+}
+
+/** Finalize a running task timer and its linked TimeEntry (if any). */
+async function finalizeTaskTimer(
+  task: any,
+  end: Date,
+  duration: number,
+  fallbackUserId?: string
+): Promise<StopTrackingResult['taskTimer']> {
+  if (!task?.activeTimerStart) return null;
+
+  const start = new Date(task.activeTimerStart);
+  const timerUserId =
+    task.activeTimerUserId?.toString() || fallbackUserId || '';
+  const taskId = task._id;
+
+  appendTaskTimeLog(task, task.activeTimerUserId || fallbackUserId || timerUserId, start, end, duration);
+  task.activeTimerStart = null;
+  task.activeTimerUserId = null;
+  await task.save();
+
+  const runningEntry = await TimeEntry.findOne({
+    userId: timerUserId,
+    endedAt: null,
+    taskId,
+  });
+  if (runningEntry) {
+    await endRunningTimeEntry(runningEntry, end, duration);
+  }
+
+  return { taskId: task._id.toString(), title: task.title, duration };
+}
+
 async function stopRunningTimeEntry(userId: string): Promise<StopTrackingResult['timeEntry']> {
   const running = await TimeEntry.findOne({ userId, endedAt: null });
   if (!running) return null;
 
   const now = new Date();
-  running.endedAt = now;
-  running.duration = Math.max(0, now.getTime() - running.startedAt.getTime());
-  await running.save();
-  return { _id: running._id.toString(), duration: running.duration };
+  const duration = Math.max(0, now.getTime() - running.startedAt.getTime());
+  await endRunningTimeEntry(running, now, duration);
+
+  if (running.taskId && running.source === 'task') {
+    const task = await Task.findById(running.taskId);
+    if (task?.activeTimerStart) {
+      await finalizeTaskTimer(task, now, duration, userId);
+    } else if (task) {
+      appendTaskTimeLog(task, running.userId, running.startedAt, now, duration);
+      await task.save();
+    }
+  }
+
+  return { _id: running._id.toString(), duration };
 }
 
-async function stopTaskTimer(task: any): Promise<StopTrackingResult['taskTimer']> {
+async function stopTaskTimer(task: any, userId?: string): Promise<StopTrackingResult['taskTimer']> {
   if (!task?.activeTimerStart) return null;
 
   const end = new Date();
   const duration = Math.max(0, end.getTime() - task.activeTimerStart.getTime());
-  task.timeLogs.push({
-    userId: task.activeTimerUserId,
-    start: task.activeTimerStart,
-    end,
-    duration,
-  });
-  task.activeTimerStart = null;
-  task.activeTimerUserId = null;
-  await task.save();
-  return { taskId: task._id.toString(), title: task.title, duration };
+  return finalizeTaskTimer(task, end, duration, userId);
 }
 
 /** Stop all active tracking for a user (quick session + task timers). */
@@ -72,7 +140,7 @@ export async function stopActiveTrackingForUser(
 
   const activeTasks = await Task.find(taskQuery);
   for (const task of activeTasks) {
-    const stopped = await stopTaskTimer(task);
+    const stopped = await stopTaskTimer(task, userId);
     if (stopped) {
       outcome.taskTimer = stopped;
       outcome.stopped = true;
@@ -80,6 +148,66 @@ export async function stopActiveTrackingForUser(
   }
 
   return outcome;
+}
+
+/**
+ * Start task timer tracking — single active session per user.
+ * Writes to both Task.activeTimer* and TimeEntry (source=task).
+ */
+export async function startTaskTimerTracking(task: any, userId: string): Promise<Date> {
+  await stopActiveTrackingForUser(userId, { excludeTaskId: task._id.toString() });
+
+  const now = new Date();
+  task.activeTimerStart = now;
+  task.activeTimerUserId = new mongoose.Types.ObjectId(userId);
+  await task.save();
+
+  const ctx = await resolveProjectContext(task.projectId);
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  await TimeEntry.create({
+    userId: userObjectId,
+    taskId: task._id,
+    projectId: ctx.projectId,
+    workspaceId: ctx.workspaceId,
+    description: (task.title || '').trim().slice(0, 280),
+    startedAt: now,
+    endedAt: null,
+    duration: 0,
+    source: 'task',
+  });
+
+  return now;
+}
+
+/** Stop a specific task timer and its linked TimeEntry. */
+export async function stopTaskTimerTracking(
+  task: any,
+  userId: string
+): Promise<StopTrackingResult['taskTimer']> {
+  if (!task?.activeTimerStart) {
+    const runningEntry = await TimeEntry.findOne({
+      userId,
+      endedAt: null,
+      taskId: task._id,
+      source: 'task',
+    });
+    if (!runningEntry) return null;
+
+    const now = new Date();
+    const duration = Math.max(0, now.getTime() - runningEntry.startedAt.getTime());
+    await endRunningTimeEntry(runningEntry, now, duration);
+    appendTaskTimeLog(task, runningEntry.userId, runningEntry.startedAt, now, duration);
+    await task.save();
+    return { taskId: task._id.toString(), title: task.title, duration };
+  }
+
+  const timerOwner = task.activeTimerUserId?.toString();
+  if (timerOwner && timerOwner !== userId) return null;
+
+  const end = new Date();
+  const duration = Math.max(0, end.getTime() - task.activeTimerStart.getTime());
+  return finalizeTaskTimer(task, end, duration, userId);
 }
 
 export async function canStopUserTracking(
@@ -125,13 +253,16 @@ export async function getActiveTrackingByUserIds(
     populate: { path: 'projectId', select: '_id title' },
   });
 
-  const entryByUser = new Map<string, ActiveTrackingSnapshot>();
   for (const e of activeEntries as any[]) {
-    entryByUser.set(String(e.userId), {
-      type: e.source === 'task' ? 'task' : 'quick',
-      label: e.description || e.taskId?.title || 'Quick session',
+    const uid = String(e.userId);
+    const isTask = e.source === 'task' && e.taskId;
+    result.set(uid, {
+      type: isTask ? 'task' : 'quick',
+      label: isTask
+        ? e.taskId?.title || e.description || 'Task'
+        : e.description || 'Quick session',
       startedAt: e.startedAt,
-      taskId: e.taskId?._id?.toString?.() || null,
+      taskId: isTask ? e.taskId?._id?.toString?.() || null : e.taskId?.toString?.() || null,
       project: e.taskId?.projectId
         ? {
             _id: e.taskId.projectId._id.toString(),
@@ -141,6 +272,7 @@ export async function getActiveTrackingByUserIds(
     });
   }
 
+  // Legacy: task timers without a TimeEntry row (pre-migration data)
   const activeTaskTimers = await Task.find({
     activeTimerStart: { $ne: null },
     activeTimerUserId: { $in: objectIds },
@@ -151,6 +283,7 @@ export async function getActiveTrackingByUserIds(
   for (const t of activeTaskTimers as any[]) {
     if (!t.activeTimerUserId) continue;
     const uid = String(t.activeTimerUserId);
+    if (result.has(uid)) continue;
     result.set(uid, {
       type: 'task',
       label: t.title,
@@ -160,10 +293,6 @@ export async function getActiveTrackingByUserIds(
         ? { _id: t.projectId._id.toString(), title: t.projectId.title }
         : null,
     });
-  }
-
-  for (const [userId, entry] of entryByUser) {
-    if (!result.has(userId)) result.set(userId, entry);
   }
 
   return result;

@@ -82,6 +82,47 @@
 
           <p class="text-[11px] text-text-muted">{{ 'account.avatar.hint' | translate }}</p>
         </div>
+
+        <div class="w-full mt-6 pt-6 border-t border-border flex flex-col gap-3 text-left">
+          <p class="text-xs font-semibold uppercase tracking-wide text-text-muted">
+            {{ 'account.face.title' | translate }}
+          </p>
+
+          @if (faceEnrolled()) {
+            <div class="flex items-center gap-3">
+              @if (facePhotoFullUrl(); as photo) {
+                <img [src]="photo" alt="" class="w-12 h-12 rounded-xl object-cover border border-border" />
+              }
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-success">{{ 'account.face.enrolled' | translate }}</p>
+                @if (faceEnrolledAt()) {
+                  <p class="text-[11px] text-text-muted truncate">
+                    {{ 'account.face.enrolledSince' | translate:{ date: formatEnrolledDate() } }}
+                  </p>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="text-sm text-warning font-medium">{{ 'account.face.notEnrolled' | translate }}</p>
+          }
+
+          <p class="text-[11px] text-text-muted">{{ 'account.face.hint' | translate }}</p>
+
+          <a routerLink="/attendance/punch" class="btn-secondary w-full text-center">
+            {{ faceEnrolled() ? ('account.face.reRegister' | translate) : ('account.face.register' | translate) }}
+          </a>
+
+          @if (faceEnrolled()) {
+            <button
+              type="button"
+              class="btn-danger-ghost w-full"
+              [disabled]="faceSaving()"
+              (click)="removeFaceProfile()"
+            >
+              {{ 'account.face.remove' | translate }}
+            </button>
+          }
+        </div>
       </div>
     </div>
 

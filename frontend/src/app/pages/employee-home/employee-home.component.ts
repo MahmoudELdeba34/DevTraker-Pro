@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HRService } from '../../services/hr.service';
+import { AuthService } from '../../services/auth.service';
 import { Attendance } from '../../models/types';
 import { Subscription, interval, startWith } from 'rxjs';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
@@ -73,14 +74,30 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
       </app-page-header>
 
       @if (!attendance()?.checkIn) {
-        <div class="mb-6 rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/10 to-transparent p-4 flex items-center gap-4 animate-fade-up">
-          <div class="w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <div class="mb-6 rounded-2xl border p-4 flex items-center gap-4 animate-fade-up"
+             [ngClass]="faceEnrolled()
+               ? 'border-accent/30 bg-gradient-to-r from-accent/10 to-transparent'
+               : 'border-warning/30 bg-warning/5'">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+               [ngClass]="faceEnrolled() ? 'bg-accent text-white' : 'bg-warning text-bg-base'">
+            @if (faceEnrolled()) {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            } @else {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-bold text-white">{{ 'employeeHome.idle.title' | translate }}</p>
-            <p class="text-xs text-text-secondary">{{ 'employeeHome.idle.faceHint' | translate }}</p>
+            @if (faceEnrolled()) {
+              <p class="text-sm font-bold text-white">{{ 'employeeHome.idle.title' | translate }}</p>
+              <p class="text-xs text-text-secondary">{{ 'employeeHome.idle.faceHint' | translate }}</p>
+            } @else {
+              <p class="text-sm font-bold text-white">{{ 'account.face.notEnrolled' | translate }}</p>
+              <p class="text-xs text-text-secondary">{{ 'account.face.hint' | translate }}</p>
+            }
           </div>
+          @if (!faceEnrolled()) {
+            <a routerLink="/attendance/punch" class="btn-accent text-xs shrink-0">{{ 'account.face.register' | translate }}</a>
+          }
         </div>
       }
 
@@ -220,8 +237,8 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
                   @for (item of historyLogs(); track item._id) {
                     <tr>
                       <td class="text-white font-medium">{{ item.date | date:'EEE, MMM d' }}</td>
-                      <td class="font-mono text-text-muted">{{ item.checkIn ? (item.checkIn | date:'HH:mm') : '—' }}</td>
-                      <td class="font-mono text-text-muted">{{ item.checkOut ? (item.checkOut | date:'HH:mm') : '—' }}</td>
+                      <td class="font-mono text-text-muted">{{ formatAttendanceTime(item.checkIn) }}</td>
+                      <td class="font-mono text-text-muted">{{ formatAttendanceTime(item.checkOut) }}</td>
                       <td class="font-mono text-white">{{ formatMinutes(item.workedMinutes) }}</td>
                       <td class="text-center">
                         <span class="chip" [ngClass]="getStatusChipClass(item.status)">
@@ -268,9 +285,12 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
 })
 export class EmployeeHomeComponent implements OnInit, OnDestroy {
   private hrService = inject(HRService);
+  private authService = inject(AuthService);
   private toast = inject(ToastService);
   private router = inject(Router);
   locale = inject(LocaleService);
+
+  faceEnrolled = signal(false);
 
   attendance = signal<Attendance | null>(null);
   historyLogs = signal<Attendance[]>([]);
@@ -339,6 +359,11 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
     this.loadTodayStatus();
     this.loadHistory();
     this.loadBalances();
+    this.authService.getFaceStatus().subscribe({
+      next: (res) => {
+        if (res.success) this.faceEnrolled.set(res.data.enrolled);
+      },
+    });
   }
 
   ngOnDestroy() {
@@ -351,9 +376,13 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
       .pipe(startWith(0))
       .subscribe(() => {
         const d = new Date();
-        const loc = this.locale.locale() === 'ar' ? 'ar-SA' : 'en-US';
-        this.tickingTime = d.toLocaleTimeString(loc, { hour12: false });
-        this.tickingDate = d.toLocaleDateString(loc, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+        this.tickingTime = this.locale.formatClockTime(d);
+        this.tickingDate = d.toLocaleDateString(this.locale.dateLocale(), {
+          weekday: 'long',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
       });
   }
 
@@ -519,6 +548,11 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
     const m = mins % 60;
     if (hrs === 0) return `${m}m`;
     return `${hrs}h ${m}m`;
+  }
+
+  formatAttendanceTime(iso?: string | null): string {
+    if (!iso) return '—';
+    return this.locale.formatClockTime(new Date(iso), false);
   }
 
   private formatMsToTimer(ms: number): string {

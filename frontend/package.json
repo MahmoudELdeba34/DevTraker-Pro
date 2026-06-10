@@ -23,9 +23,14 @@
     "@tensorflow/tfjs-core": "^4.22.0",
     "@vladmandic/face-api": "^1.7.15",
     "chart.js": "^4.5.1",
+    "docx": "^9.7.1",
+    "html2pdf.js": "^0.14.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "ng2-charts": "^6.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.14.3"
   },
   "devDependencies": {

@@ -86,7 +86,11 @@ export interface FaceCaptureResult {
 
         <div class="flex gap-3 mt-5">
           <button type="button" class="btn-soft flex-1" (click)="cancel.emit()">
-            {{ 'common.cancel' | translate }}
+            @if (mandatory) {
+              {{ 'faceEnroll.logout' | translate }}
+            } @else {
+              {{ 'common.cancel' | translate }}
+            }
           </button>
           <button
             type="button"
@@ -122,6 +126,8 @@ export interface FaceCaptureResult {
 export class FaceCaptureComponent implements OnInit, OnDestroy {
   @Input({ required: true }) mode!: FaceCaptureMode;
   @Input() embedded = false;
+  /** When true, user cannot skip — only logout is offered instead of cancel. */
+  @Input() mandatory = false;
   @Output() captured = new EventEmitter<FaceCaptureResult>();
   @Output() cancel = new EventEmitter<void>();
 

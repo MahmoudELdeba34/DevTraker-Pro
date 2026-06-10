@@ -1,8 +1,13 @@
 import { Router, Response } from 'express';
 import mongoose from 'mongoose';
 import TimeEntry from '../models/TimeEntry';
+import Task from '../models/Task';
+import Project from '../models/Project';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { stopActiveTrackingForUser } from '../utils/userTracking';
+import {
+  stopActiveTrackingForUser,
+  startTaskTimerTracking,
+} from '../utils/userTracking';
 
 const router = Router();
 router.use(authMiddleware);
@@ -68,19 +73,49 @@ router.post('/start', async (req: AuthRequest, res: Response): Promise<void> => 
       taskId?: string | null;
     };
 
-    // Stop any running task timer or quick session first
+    // Task-linked session: sync Task timer + TimeEntry
+    if (taskId && mongoose.Types.ObjectId.isValid(taskId)) {
+      const task = await Task.findById(taskId);
+      if (!task) {
+        res.status(404).json({ success: false, error: 'Task not found' });
+        return;
+      }
+
+      if (
+        task.activeTimerStart &&
+        task.activeTimerUserId?.toString() === req.userId
+      ) {
+        const running = await TimeEntry.findOne({ userId: req.userId, endedAt: null });
+        res.status(200).json({ success: true, data: running ? serialize(running) : null });
+        return;
+      }
+
+      await startTaskTimerTracking(task, req.userId!);
+      const running = await TimeEntry.findOne({ userId: req.userId, endedAt: null });
+      res.status(201).json({ success: true, data: running ? serialize(running) : null });
+      return;
+    }
+
+    // Quick session (no task)
     await stopActiveTrackingForUser(req.userId!);
+
+    let resolvedProjectId = projectId ? new mongoose.Types.ObjectId(projectId) : null;
+    let resolvedWorkspaceId = workspaceId ? new mongoose.Types.ObjectId(workspaceId) : null;
+    if (resolvedProjectId && !resolvedWorkspaceId) {
+      const project = await Project.findById(resolvedProjectId).select('workspaceId');
+      if (project?.workspaceId) resolvedWorkspaceId = project.workspaceId;
+    }
 
     const entry = await TimeEntry.create({
       userId: req.userId,
-      taskId: taskId ? new mongoose.Types.ObjectId(taskId) : null,
-      projectId: projectId ? new mongoose.Types.ObjectId(projectId) : null,
-      workspaceId: workspaceId ? new mongoose.Types.ObjectId(workspaceId) : null,
+      taskId: null,
+      projectId: resolvedProjectId,
+      workspaceId: resolvedWorkspaceId,
       description: (description || '').trim().slice(0, 280),
       startedAt: new Date(),
       endedAt: null,
       duration: 0,
-      source: taskId ? 'task' : 'quick',
+      source: 'quick',
     });
 
     res.status(201).json({ success: true, data: serialize(entry) });
@@ -99,8 +134,22 @@ router.post('/start', async (req: AuthRequest, res: Response): Promise<void> => 
 /* ─── POST /api/time-entries/stop — stop the running entry ──────────── */
 router.post('/stop', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const stopped = await stopRunningEntries(req.userId!);
-    res.json({ success: true, data: stopped ? serialize(stopped) : null });
+    const runningBefore = await TimeEntry.findOne({ userId: req.userId, endedAt: null });
+    const runningId = runningBefore?._id;
+
+    const outcome = await stopActiveTrackingForUser(req.userId!);
+    if (!outcome.stopped) {
+      res.json({ success: true, data: null });
+      return;
+    }
+
+    if (runningId) {
+      const stopped = await TimeEntry.findById(runningId);
+      res.json({ success: true, data: stopped ? serialize(stopped) : null });
+      return;
+    }
+
+    res.json({ success: true, data: null });
   } catch (err) {
     console.error('Stop time entry error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -157,15 +206,5 @@ router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => 
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
-
-async function stopRunningEntries(userId: string) {
-  const running = await TimeEntry.findOne({ userId, endedAt: null });
-  if (!running) return null;
-  const now = new Date();
-  running.endedAt = now;
-  running.duration = Math.max(0, now.getTime() - running.startedAt.getTime());
-  await running.save();
-  return running;
-}
 
 export default router;

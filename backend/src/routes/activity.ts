@@ -97,7 +97,56 @@ async function buildReport(userId: string, from: Date, to: Date) {
     date: { $gte: ymd(from), $lte: ymd(to) },
   }).sort({ date: 1 });
 
-  // ── 2) Task time logs that touched the range
+  // ── 2) Time entries in range (primary source of truth)
+  const entries = await TimeEntry.find({
+    userId: oid,
+    startedAt: { $lte: to },
+    $or: [{ endedAt: null }, { endedAt: { $gte: from } }],
+  })
+    .sort({ startedAt: 1 })
+    .populate({
+      path: 'taskId',
+      select: '_id title projectId',
+      populate: { path: 'projectId', select: '_id title' },
+    });
+
+  const taskLogRows: TaskLogRow[] = [];
+  const quickRows: QuickSessionRow[] = [];
+  const entryStartKeys = new Set<string>();
+
+  for (const e of entries as any[]) {
+    const start = new Date(e.startedAt);
+    const end = e.endedAt ? new Date(e.endedAt) : new Date();
+    const dur = clipDuration(start, end, from, to);
+    if (dur <= 0 && e.endedAt) continue;
+
+    if (e.source === 'task' && e.taskId) {
+      const task = e.taskId;
+      entryStartKeys.add(`${String(task._id)}:${start.getTime()}`);
+      taskLogRows.push({
+        taskId: String(task._id),
+        taskTitle: task.title || e.description || 'Task',
+        projectId: task.projectId?._id ? String(task.projectId._id) : null,
+        projectTitle: task.projectId?.title || 'Unknown project',
+        start,
+        end: e.endedAt ? end : end,
+        durationMs: dur,
+      });
+      continue;
+    }
+
+    quickRows.push({
+      _id: String(e._id),
+      description: e.description || '',
+      startedAt: start,
+      endedAt: e.endedAt ? end : null,
+      durationMs: dur,
+      taskId: e.taskId ? String(e.taskId) : null,
+      source: e.source,
+    });
+  }
+
+  // ── 3) Legacy task.timeLogs without a matching TimeEntry (pre-sync data)
   const tasks = await Task.find(
     {
       'timeLogs.userId': oid,
@@ -107,12 +156,13 @@ async function buildReport(userId: string, from: Date, to: Date) {
     '_id title projectId timeLogs'
   ).populate({ path: 'projectId', select: '_id title' });
 
-  const taskLogRows: TaskLogRow[] = [];
   for (const t of tasks as any[]) {
     for (const log of t.timeLogs || []) {
       if (String(log.userId) !== userId) continue;
       const start = new Date(log.start);
       const end = new Date(log.end);
+      const key = `${String(t._id)}:${start.getTime()}`;
+      if (entryStartKeys.has(key)) continue;
       if (end < from || start > to) continue;
       const dur = clipDuration(start, end, from, to);
       if (dur <= 0) continue;
@@ -127,27 +177,6 @@ async function buildReport(userId: string, from: Date, to: Date) {
       });
     }
   }
-
-  // ── 3) Quick sessions (TimeEntry) in range
-  const entries = await TimeEntry.find({
-    userId: oid,
-    startedAt: { $lte: to },
-    $or: [{ endedAt: null }, { endedAt: { $gte: from } }],
-  }).sort({ startedAt: 1 });
-
-  const quickRows: QuickSessionRow[] = entries.map((e) => {
-    const start = new Date(e.startedAt);
-    const end = e.endedAt ? new Date(e.endedAt) : new Date();
-    return {
-      _id: String(e._id),
-      description: e.description || '',
-      startedAt: start,
-      endedAt: e.endedAt ? end : null,
-      durationMs: clipDuration(start, end, from, to),
-      taskId: e.taskId ? String(e.taskId) : null,
-      source: e.source,
-    };
-  });
 
   // ── 4) Group everything into daily buckets
   const days: Record<string, DayBucket> = {};

@@ -135,7 +135,7 @@ export class LoginComponent implements OnInit {
     });
 
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/dashboard']);
+      this.authService.navigateAfterAuth();
     }
   }
 
@@ -155,7 +155,7 @@ export class LoginComponent implements OnInit {
     this.authService.login(email, password).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/dashboard']);
+        this.authService.navigateAfterAuth();
       },
       error: (err: { error?: { error?: string } }) => {
         this.loading.set(false);

@@ -135,7 +135,7 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
         this.task = res.data;
         this.isRunning.set(true);
         this.activeTimerService.setActiveTask(res.data);
-        this.timeEntryService.active.set(null);
+        this.timeEntryService.loadActive().subscribe();
         this.toast.success(this.locale.t('timerWidget.started'));
         this.startTick();
         this.timerUpdated.emit(res.data);

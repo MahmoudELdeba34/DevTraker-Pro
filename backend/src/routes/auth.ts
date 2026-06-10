@@ -23,6 +23,11 @@ import {
 } from '../utils/facePhotos';
 import { parseFaceDescriptor } from '../utils/faceMatch';
 import {
+  deleteFaceProfile,
+  getFaceProfileSnapshot,
+  saveFaceProfile,
+} from '../utils/faceProfileStore';
+import {
   issuePasswordReset,
   verifyPasswordResetToken,
   consumePasswordResetToken,
@@ -92,15 +97,22 @@ const setupLimiter = rateLimit({
 });
 
 // Helper: serialize a user for the client (never expose passwordHash)
-function safeUser(u: any) {
+async function asyncSafeUser(u: {
+  _id: unknown;
+  name: string;
+  email: string;
+  role: string;
+  avatarUrl?: string | null;
+}) {
+  const snapshot = await getFaceProfileSnapshot(String(u._id));
   return {
     _id: u._id,
     name: u.name,
     email: u.email,
     role: u.role,
     avatarUrl: u.avatarUrl || undefined,
-    faceEnrolled: Array.isArray(u.faceDescriptor) && u.faceDescriptor.length > 0,
-    facePhotoUrl: u.facePhotoUrl || undefined,
+    faceEnrolled: snapshot.enrolled,
+    facePhotoUrl: snapshot.facePhotoUrl || undefined,
   };
 }
 
@@ -158,7 +170,7 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
         refreshToken,
         // Back-compat alias for older clients still reading `token`
         token: accessToken,
-        user: safeUser(user),
+        user: await asyncSafeUser(user),
       },
     });
   } catch (err) {
@@ -211,7 +223,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response): Promise
         accessToken,
         refreshToken,
         token: accessToken,                // back-compat alias
-        user: safeUser(user),
+        user: await asyncSafeUser(user),
       },
     });
   } catch (err) {
@@ -243,7 +255,7 @@ router.post('/refresh', refreshLimiter, async (req: Request, res: Response): Pro
         accessToken: rotated.accessToken,
         refreshToken: rotated.refreshToken,
         token: rotated.accessToken,           // back-compat
-        user: userDoc ? safeUser(userDoc) : rotated.user,
+        user: userDoc ? await asyncSafeUser(userDoc) : rotated.user,
       },
     });
   } catch (err) {
@@ -287,7 +299,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response): Promi
       res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
-    res.json({ success: true, data: { user: safeUser(user) } });
+    res.json({ success: true, data: { user: await asyncSafeUser(user) } });
   } catch (err) {
     console.error('Me error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -312,7 +324,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response): Promi
     user.name = name.trim();
     await user.save();
 
-    res.json({ success: true, data: { user: safeUser(user) } });
+    res.json({ success: true, data: { user: await asyncSafeUser(user) } });
   } catch (err) {
     console.error('Update profile error:', err);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
@@ -355,7 +367,7 @@ router.post(
       const avatarUrl = buildLocalAvatarUrl(filename);
       await replaceUserAvatar(user, avatarUrl);
 
-      res.json({ success: true, data: { user: safeUser(user) } });
+      res.json({ success: true, data: { user: await asyncSafeUser(user) } });
     } catch (err) {
       console.error('Upload avatar error:', err);
       res.status(500).json({ success: false, error: 'Failed to upload avatar' });
@@ -382,7 +394,7 @@ router.put('/me/avatar', authMiddleware, async (req: AuthRequest, res: Response)
 
     await replaceUserAvatar(user, trimmed);
 
-    res.json({ success: true, data: { user: safeUser(user) } });
+    res.json({ success: true, data: { user: await asyncSafeUser(user) } });
   } catch (err) {
     console.error('Set avatar URL error:', err);
     res.status(500).json({ success: false, error: 'Failed to update avatar' });
@@ -404,28 +416,23 @@ router.delete('/me/avatar', authMiddleware, async (req: AuthRequest, res: Respon
       await user.save();
     }
 
-    res.json({ success: true, data: { user: safeUser(user) } });
+    res.json({ success: true, data: { user: await asyncSafeUser(user) } });
   } catch (err) {
     console.error('Remove avatar error:', err);
     res.status(500).json({ success: false, error: 'Failed to remove avatar' });
   }
 });
 
-// GET /api/auth/me/face — face enrollment status
+// GET /api/auth/me/face — face enrollment status (FaceProfile collection)
 router.get('/me/face', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.userId).select('facePhotoUrl faceDescriptor faceEnrolledAt');
-    if (!user) {
-      res.status(404).json({ success: false, error: 'User not found' });
-      return;
-    }
-    const enrolled = Array.isArray(user.faceDescriptor) && user.faceDescriptor.length > 0;
+    const snapshot = await getFaceProfileSnapshot(req.userId!);
     res.json({
       success: true,
       data: {
-        enrolled,
-        facePhotoUrl: user.facePhotoUrl || null,
-        enrolledAt: user.faceEnrolledAt || null,
+        enrolled: snapshot.enrolled,
+        facePhotoUrl: snapshot.facePhotoUrl,
+        enrolledAt: snapshot.enrolledAt,
       },
     });
   } catch (err) {
@@ -470,21 +477,14 @@ router.post(
       }
 
       const photoUrl = buildFacePhotoUrl(req.file.filename);
-      if (user.facePhotoUrl) {
-        deleteFacePhotoFile(user.facePhotoUrl);
-      }
-
-      user.facePhotoUrl = photoUrl;
-      user.faceDescriptor = descriptor;
-      user.faceEnrolledAt = new Date();
-      await user.save();
+      const profile = await saveFaceProfile(req.userId!, photoUrl, descriptor);
 
       res.json({
         success: true,
         data: {
           enrolled: true,
-          facePhotoUrl: user.facePhotoUrl,
-          enrolledAt: user.faceEnrolledAt,
+          facePhotoUrl: profile.facePhotoUrl,
+          enrolledAt: profile.enrolledAt,
         },
       });
     } catch (err) {
@@ -495,23 +495,10 @@ router.post(
   }
 );
 
-// DELETE /api/auth/me/face — remove enrolled face (self or admin/hr later)
+// DELETE /api/auth/me/face — remove enrolled face profile
 router.delete('/me/face', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.userId);
-    if (!user) {
-      res.status(404).json({ success: false, error: 'User not found' });
-      return;
-    }
-
-    if (user.facePhotoUrl) {
-      deleteFacePhotoFile(user.facePhotoUrl);
-    }
-    user.facePhotoUrl = undefined;
-    user.faceDescriptor = undefined;
-    user.faceEnrolledAt = undefined;
-    await user.save();
-
+    await deleteFaceProfile(req.userId!);
     res.json({ success: true, data: { enrolled: false } });
   } catch (err) {
     console.error('Face remove error:', err);
@@ -745,7 +732,7 @@ router.post('/setup-account', setupLimiter, async (req: Request, res: Response):
         accessToken,
         refreshToken,
         token: accessToken,
-        user: safeUser(user),
+        user: await asyncSafeUser(user),
         message: 'Account ready. Welcome!',
       },
     });
@@ -836,7 +823,7 @@ router.post('/admin/create-user', authMiddleware, async (req: AuthRequest, res: 
     res.status(201).json({
       success: true,
       data: {
-        user: safeUser(user),
+        user: await asyncSafeUser(user),
         emailSent,
         setupLink: setup.setupLink,
         shareMessage: setup.shareMessage,

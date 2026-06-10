@@ -16,6 +16,8 @@ import { ToastService } from '../../services/toast.service';
 import { TaskService } from '../../services/task.service';
 import { ActivityReport, ActivityDay } from '../../models/types';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
+import { ReportExportMenuComponent } from '../../components/ui/report-export-menu/report-export-menu.component';
+import { activityReportToExportable } from '../../core/export/report-export.adapters';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -25,7 +27,7 @@ type PresetRange = 'today' | 'week' | 'month' | 'custom';
   selector: 'app-my-timesheet',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DatePipe, PageHeaderComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, PageHeaderComponent, ReportExportMenuComponent, TranslatePipe],
   styleUrls: ['./my-timesheet.component.css'],
   templateUrl: './my-timesheet.component.html',
 })
@@ -52,6 +54,18 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
   printReportTitle = computed(() => {
     const name = this.report()?.user?.name ?? '';
     return this.locale.t('timesheet.print.reportTitle', { userName: name });
+  });
+
+  exportPayload = computed(() => {
+    const r = this.report();
+    if (!r) return null;
+    return activityReportToExportable(
+      r,
+      this.locale,
+      this.fromDate(),
+      this.toDate(),
+      this.printReportTitle()
+    );
   });
   report = signal<ActivityReport | null>(null);
   loading = signal(true);
@@ -82,8 +96,10 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.applyPreset('week', false);
+    this.timeEntryService.loadActive().subscribe();
+    this.activeTimerService.loadActive().subscribe();
     this.load();
-    this.tickInterval = setInterval(() => this.nowMs.set(Date.now()), 60_000);
+    this.tickInterval = setInterval(() => this.nowMs.set(Date.now()), 1_000);
   }
 
   ngOnDestroy() {
@@ -133,12 +149,6 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
     this.load();
   }
 
-  /* ─── Print ─────────────────────────────────────────────────────────── */
-
-  printReport() {
-    window.print();
-  }
-
   /* ─── Active timer controls ─────────────────────────────────────────── */
 
   stopActive() {
@@ -147,6 +157,7 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
       this.taskService.stopTimer(taskTimer._id).subscribe({
         next: () => {
           this.activeTimerService.setActiveTask(null);
+          this.timeEntryService.active.set(null);
           this.toast.info(this.locale.t('timesheet.toast.timerStopped'));
           this.load();
         },
@@ -156,6 +167,7 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
     if (this.timeEntryService.active()) {
       this.timeEntryService.stop().subscribe({
         next: () => {
+          this.activeTimerService.setActiveTask(null);
           this.toast.info(this.locale.t('timesheet.toast.sessionStopped'));
           this.load();
         },
@@ -178,19 +190,34 @@ export class MyTimesheetComponent implements OnInit, OnDestroy {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
-  /** Total ms for a day including a still-running quick session. */
+  /** Total ms for a day including still-running quick sessions and task timers. */
   dayLiveTotal(day: ActivityDay): number {
-    let extra = 0;
+    let total = day.trackedMs;
+    const dayStart = new Date(day.date + 'T00:00:00').getTime();
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+    const now = this.nowMs();
+
     for (const q of day.quickSessions) {
       if (!q.endedAt) {
         const sAt = new Date(q.startedAt).getTime();
-        const dayStart = new Date(day.date + 'T00:00:00').getTime();
-        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-        extra += Math.max(0, Math.min(this.nowMs(), dayEnd) - Math.max(sAt, dayStart));
-        extra -= q.durationMs; // already counted as 0 server-side
+        const live = Math.max(0, Math.min(now, dayEnd) - Math.max(sAt, dayStart));
+        total += live - q.durationMs;
       }
     }
-    return day.trackedMs + Math.max(0, extra);
+
+    const activeTask = this.activeTimerService.activeTask();
+    if (activeTask?.activeTimerStart) {
+      const sAt = new Date(activeTask.activeTimerStart).getTime();
+      const listed = day.taskLogs.find(
+        (log) =>
+          log.taskId === activeTask._id &&
+          Math.abs(new Date(log.start).getTime() - sAt) < 5_000
+      );
+      const live = Math.max(0, Math.min(now, dayEnd) - Math.max(sAt, dayStart));
+      total += listed ? live - listed.durationMs : live;
+    }
+
+    return Math.max(0, total);
   }
 
   /** Overtime ms for a day with live tick. */

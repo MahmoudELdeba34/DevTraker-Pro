@@ -8,8 +8,10 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 import { ToastService } from '../../services/toast.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -24,7 +26,7 @@ const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
   selector: 'app-account',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, UserAvatarComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, TranslatePipe, UserAvatarComponent],
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.css'],
 })
@@ -42,6 +44,10 @@ export class AccountComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   avatarSaving = signal(false);
+  faceEnrolled = signal(false);
+  facePhotoUrl = signal<string | null>(null);
+  faceEnrolledAt = signal<string | null>(null);
+  faceSaving = signal(false);
 
   profileForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
@@ -67,6 +73,47 @@ export class AccountComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadFaceStatus();
+  }
+
+  formatEnrolledDate(): string {
+    const at = this.faceEnrolledAt();
+    if (!at) return '';
+    return new Date(at).toLocaleDateString(this.locale.dateLocale(), { dateStyle: 'medium' });
+  }
+
+  facePhotoFullUrl(): string | null {
+    const url = this.facePhotoUrl();
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${base}${url}`;
+  }
+
+  loadFaceStatus(): void {
+    this.authSvc.getFaceStatus().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.faceEnrolled.set(res.data.enrolled);
+          this.facePhotoUrl.set(res.data.facePhotoUrl);
+          this.faceEnrolledAt.set(res.data.enrolledAt);
+        }
+      },
+    });
+  }
+
+  removeFaceProfile(): void {
+    this.faceSaving.set(true);
+    this.authSvc.removeFaceProfile().subscribe({
+      next: () => {
+        this.faceSaving.set(false);
+        this.faceEnrolled.set(false);
+        this.facePhotoUrl.set(null);
+        this.faceEnrolledAt.set(null);
+        this.toast.success(this.locale.t('account.face.removed'));
+      },
+      error: () => this.faceSaving.set(false),
+    });
   }
 
   setTab(tab: AccountTab): void {

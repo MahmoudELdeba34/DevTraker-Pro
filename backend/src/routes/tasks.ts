@@ -6,7 +6,7 @@ import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { createNotification } from '../utils/notify';
 import { getWorkspaceIfMember, isWorkspaceParticipant } from '../utils/workspaceAccess';
-import { stopActiveTrackingForUser } from '../utils/userTracking';
+import { startTaskTimerTracking, stopTaskTimerTracking } from '../utils/userTracking';
 import Workspace from '../models/Workspace';
 
 const router = Router();
@@ -359,11 +359,7 @@ router.post(
         return;
       }
 
-      await stopActiveTrackingForUser(userId);
-
-      task.activeTimerStart = new Date();
-      task.activeTimerUserId = new mongoose.Types.ObjectId(userId);
-      await task.save();
+      await startTaskTimerTracking(task, userId);
       const populatedTask = await task.populate('assignedTo', 'name email role');
       res.json({ success: true, data: populatedTask });
     } catch (err) {
@@ -394,25 +390,11 @@ router.post(
         return;
       }
 
-      if (!task.activeTimerStart) {
-        res
-          .status(400)
-          .json({ success: false, error: 'No timer running' });
+      const stopped = await stopTaskTimerTracking(task, req.userId!);
+      if (!stopped) {
+        res.status(400).json({ success: false, error: 'No timer running' });
         return;
       }
-
-      const end = new Date();
-      const duration = end.getTime() - task.activeTimerStart.getTime();
-
-      task.timeLogs.push({
-        userId: task.activeTimerUserId || new mongoose.Types.ObjectId(req.userId),
-        start: task.activeTimerStart,
-        end,
-        duration,
-      });
-      task.activeTimerStart = null;
-      task.activeTimerUserId = null;
-      await task.save();
 
       const populatedTask = await task.populate('assignedTo', 'name email role');
       res.json({ success: true, data: populatedTask });

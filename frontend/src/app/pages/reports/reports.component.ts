@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -9,11 +9,13 @@ import { User } from '../../models/types';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ToastService } from '../../services/toast.service';
+import { ReportExportMenuComponent } from '../../components/ui/report-export-menu/report-export-menu.component';
+import { summaryReportToExportable } from '../../core/export/report-export.adapters';
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ReportExportMenuComponent],
   template: `
     <div class="h-full flex flex-col gap-6" [attr.data-locale]="locale.locale()">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -21,7 +23,13 @@ import { ToastService } from '../../services/toast.service';
           <h1 class="text-2xl font-display font-bold text-white tracking-tight">{{ 'reports.title' | translate }}</h1>
           <p class="text-sm text-text-secondary mt-1">{{ 'reports.subtitle' | translate }}</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap justify-end">
+          @if (reportData()) {
+            <app-report-export-menu
+              [payload]="exportPayload()"
+              [disabled]="!reportData()"
+            />
+          }
           @if (isAdmin()) {
             <a routerLink="/admin" class="px-4 py-2 text-sm bg-bg-elevated border border-border hover:bg-bg-hover text-text-secondary hover:text-white rounded-lg transition duration-200">
               {{ 'common.adminPanel' | translate }}
@@ -219,6 +227,14 @@ export class ReportsComponent implements OnInit {
 
   systemUsers = signal<User[]>([]);
   reportData = signal<ReportSummaryResponse | null>(null);
+
+  exportPayload = computed(() => {
+    const data = this.reportData();
+    if (!data) return null;
+    const name = data.user?.name ?? '';
+    const title = this.locale.t('reports.export.title', { userName: name });
+    return summaryReportToExportable(data, this.locale, this.startDate, this.endDate, title);
+  });
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
