@@ -1,0 +1,245 @@
+<div class="page-ambient max-w-7xl mx-auto pb-12 flex flex-col gap-6" [attr.data-locale]="locale.locale()">
+
+  <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 animate-fade-up">
+    <div>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-1">{{ 'reports.eyebrow' | translate }}</p>
+      <h1 class="text-3xl font-display font-bold text-white tracking-tight">{{ 'reports.title' | translate }}</h1>
+      <p class="text-sm text-text-secondary mt-1 max-w-2xl">{{ 'reports.subtitle' | translate }}</p>
+      @if (periodLabel()) {
+        <p class="text-xs text-text-muted mt-2 font-mono">{{ periodLabel() }}</p>
+      }
+    </div>
+    <div class="flex items-center gap-2 flex-wrap justify-end">
+      @if (exportPayload()) {
+        <app-report-export-menu [payload]="exportPayload()" [disabled]="loading()" />
+      }
+      @if (isAdmin()) {
+        <a routerLink="/admin" class="btn-soft px-4 py-2 rounded-lg text-sm">{{ 'common.adminPanel' | translate }}</a>
+      }
+      <a routerLink="/my-timesheet" class="btn-soft px-4 py-2 rounded-lg text-sm">{{ 'timesheet.title' | translate }}</a>
+    </div>
+  </div>
+
+  <div class="surface-card border border-border rounded-2xl p-5 animate-fade-up">
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <span class="text-[10px] font-bold uppercase tracking-widest text-text-muted">{{ 'reports.presets' | translate }}</span>
+      <button type="button" class="range-chip" [class.range-chip--active]="preset() === 'week'" (click)="applyPreset('week')">{{ 'common.thisWeek' | translate }}</button>
+      <button type="button" class="range-chip" [class.range-chip--active]="preset() === 'month'" (click)="applyPreset('month')">{{ 'common.thisMonth' | translate }}</button>
+      <button type="button" class="range-chip" [class.range-chip--active]="preset() === 'last30'" (click)="applyPreset('last30')">{{ 'reports.preset.last30' | translate }}</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      @if (isPrivileged()) {
+        <div class="flex flex-col gap-2">
+          <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'reports.filter.employee' | translate }}</label>
+          <select
+            [ngModel]="selectedUserId"
+            (ngModelChange)="selectedUserId = $event; onFilterChange()"
+            class="field w-full text-sm"
+          >
+            @for (u of systemUsers(); track u._id) {
+              <option [value]="u._id">{{ employeeOptionLabel(u) }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="flex flex-col gap-2">
+        <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'common.startDate' | translate }}</label>
+        <input type="date" class="field w-full text-sm color-scheme-dark" [ngModel]="startDate" (ngModelChange)="startDate = $event; preset.set('custom'); onFilterChange()" />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{{ 'common.endDate' | translate }}</label>
+        <input type="date" class="field w-full text-sm color-scheme-dark" [ngModel]="endDate" (ngModelChange)="endDate = $event; preset.set('custom'); onFilterChange()" />
+      </div>
+
+      <button type="button" class="btn-soft w-full py-2.5 rounded-lg text-sm" (click)="resetFilters()">
+        {{ 'common.resetFilters' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center p-16 text-text-muted">
+      <div class="flex flex-col items-center gap-3">
+        <svg class="animate-spin h-6 w-6 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+        </svg>
+        <span class="text-sm font-medium">{{ 'reports.loading' | translate }}</span>
+      </div>
+    </div>
+  }
+
+  @if (!loading() && report(); as r) {
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 stagger">
+    <div class="stat-tile surface-card border border-border rounded-2xl p-5">
+      <p class="text-[10px] uppercase font-bold tracking-widest text-text-muted mb-2">{{ 'reports.kpi.totalWorked' | translate }}</p>
+      <p class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ formatHm(r.summary.totalTrackedMs) }}</p>
+      <p class="text-[11px] text-text-muted mt-1">{{ 'reports.kpi.totalWorkedHint' | translate }}</p>
+    </div>
+    <div class="stat-tile surface-card border border-border rounded-2xl p-5">
+      <p class="text-[10px] uppercase font-bold tracking-widest text-accent mb-2">{{ 'reports.kpi.regular' | translate }}</p>
+      <p class="text-3xl font-display font-extrabold text-accent font-mono tabular-nums">{{ formatHm(regularMs()) }}</p>
+      <p class="text-[11px] text-text-muted mt-1">{{ 'reports.kpi.regularHint' | translate }}</p>
+    </div>
+    <div class="stat-tile surface-card border border-border rounded-2xl p-5">
+      <p class="text-[10px] uppercase font-bold tracking-widest text-warning mb-2">{{ 'common.overtime' | translate }}</p>
+      <p class="text-3xl font-display font-extrabold text-warning font-mono tabular-nums">{{ formatHm(r.summary.totalOvertimeMs) }}</p>
+      <p class="text-[11px] text-text-muted mt-1">{{ 'reports.kpi.overtimeHint' | translate }}</p>
+    </div>
+    <div class="stat-tile surface-card border border-border rounded-2xl p-5">
+      <p class="text-[10px] uppercase font-bold tracking-widest text-info mb-2">{{ 'reports.kpi.avgDaily' | translate }}</p>
+      <p class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ r.summary.averageDailyHours.toFixed(1) }}h</p>
+      <p class="text-[11px] text-text-muted mt-1">{{ locale.t('reports.kpi.daysWorked', { count: r.summary.daysWorked }) }}</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2 surface-card border border-border rounded-2xl p-6">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-white">{{ 'reports.chart.dailyHours' | translate }}</h2>
+          <p class="text-xs text-text-muted mt-1">{{ 'reports.chart.dailyHoursHint' | translate }}</p>
+        </div>
+        <div class="flex flex-wrap gap-4 text-[10px] text-text-muted">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-accent"></span>{{ 'common.regularHoursLegend' | translate }}</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-warning"></span>{{ 'common.overtimeHoursLegend' | translate }}</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 border-t border-dashed border-text-muted"></span>{{ 'reports.chart.goal7h' | translate }}</span>
+        </div>
+      </div>
+
+      @if (dailyBars().length === 0) {
+        <div class="py-16 text-center text-text-muted border border-dashed border-border rounded-xl">{{ 'common.noTimesheetData' | translate }}</div>
+      } @else {
+        <div class="relative h-72 flex gap-2 items-end border-b border-l border-border pb-2 pl-2">
+          @for (day of dailyBars(); track day.date) {
+            <div class="flex-1 flex flex-col justify-end items-center h-full min-w-0 group relative">
+              <div class="absolute bottom-full mb-2 bg-bg-elevated border border-border text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 shadow-modal pointer-events-none z-20 w-36 flex flex-col gap-1 transition-opacity">
+                <span class="font-bold text-white">{{ day.dateLabel }}</span>
+                <span class="text-accent">{{ locale.t('common.regularPopover', { hours: day.regularH.toFixed(1) }) }}</span>
+                @if (day.overtimeH > 0) {
+                  <span class="text-warning">{{ locale.t('common.overtimePopover', { hours: day.overtimeH.toFixed(1) }) }}</span>
+                }
+                <span class="border-t border-border pt-1 text-white font-bold">{{ locale.t('common.totalPopover', { hours: day.totalH.toFixed(1) }) }}</span>
+              </div>
+              <div class="w-full max-w-[44px] flex flex-col justify-end rounded-t overflow-hidden bg-bg-base border border-border/50 h-full relative">
+                <div class="bg-gradient-to-t from-warning to-amber-400 w-full transition-all"
+                     [style.height.%]="barHeightPercent(day.overtimeH)"></div>
+                <div class="bg-gradient-to-t from-accent to-indigo-400 w-full border-t border-accent/20 transition-all"
+                     [style.height.%]="barHeightPercent(day.regularH)"></div>
+                <div class="absolute left-0 right-0 border-t border-dashed border-text-muted/50 pointer-events-none"
+                     [style.bottom.%]="barHeightPercent(7)"></div>
+              </div>
+              <span class="text-[9px] text-text-muted mt-2 font-mono truncate w-full text-center">{{ day.shortLabel }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="flex flex-col gap-6">
+      <div class="surface-card border border-border rounded-2xl p-6">
+        <h2 class="text-lg font-bold text-white mb-4">{{ 'reports.insights.title' | translate }}</h2>
+        <ul class="space-y-3 text-sm">
+          <li class="flex justify-between gap-3 border-b border-border/60 pb-3">
+            <span class="text-text-secondary">{{ 'reports.insights.attendance' | translate }}</span>
+            <span class="font-mono font-bold text-white">{{ r.summary.daysPresent }} / {{ r.daily.length }}</span>
+          </li>
+          <li class="flex justify-between gap-3 border-b border-border/60 pb-3">
+            <span class="text-text-secondary">{{ 'export.daysLate' | translate }}</span>
+            <span class="font-mono font-bold text-warning">{{ r.summary.daysLate }}</span>
+          </li>
+          <li class="flex justify-between gap-3 border-b border-border/60 pb-3">
+            <span class="text-text-secondary">{{ 'export.daysAbsent' | translate }}</span>
+            <span class="font-mono font-bold text-danger">{{ r.summary.daysAbsent }}</span>
+          </li>
+          <li class="flex justify-between gap-3 border-b border-border/60 pb-3">
+            <span class="text-text-secondary">{{ 'common.tasksQuick' | translate }}</span>
+            <span class="font-mono font-bold text-white">{{ r.summary.tasksWorked }} / {{ r.summary.quickSessionsCount }}</span>
+          </li>
+          <li class="flex justify-between gap-3">
+            <span class="text-text-secondary">{{ 'reports.insights.overtimeShare' | translate }}</span>
+            <span class="font-mono font-bold text-warning">{{ overtimeShare() }}%</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="surface-card border border-border rounded-2xl p-6 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-accent/15 text-accent flex items-center justify-center font-black text-lg shrink-0">
+          {{ r.user.name.substring(0, 2).toUpperCase() }}
+        </div>
+        <div class="min-w-0">
+          <div class="font-bold text-white truncate">{{ r.user.name }}</div>
+          <div class="text-text-muted text-xs mt-0.5 truncate">{{ r.user.email }}</div>
+          <span class="inline-block px-2 py-0.5 mt-2 bg-accent/10 border border-accent/20 text-[10px] text-accent rounded uppercase tracking-wider font-semibold">
+            {{ locale.roleLabel(r.user.role) }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="surface-card border border-border rounded-2xl overflow-hidden">
+    <div class="px-6 py-4 border-b border-border flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold text-white">{{ 'reports.dailyBreakdown' | translate }}</h2>
+        <p class="text-xs text-text-muted mt-0.5">{{ 'reports.dailyBreakdownHint' | translate }}</p>
+      </div>
+      @if (canOpenUserDrilldown()) {
+        <a [routerLink]="['/team/users', selectedUserId]" class="text-xs font-semibold text-accent hover:text-accent-hover">{{ 'reports.openFullReport' | translate }}</a>
+      }
+    </div>
+
+    @if (r.daily.length === 0) {
+      <div class="text-center py-12 text-text-muted m-6 border border-dashed border-border rounded-xl">{{ 'common.noLogsInPeriod' | translate }}</div>
+    } @else {
+      <div class="divide-y divide-border">
+        @for (day of r.daily; track day.date) {
+          <article class="p-5 hover:bg-bg-base/30 transition-colors">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 class="font-bold text-white text-sm">{{ formatDayLabel(day.date) }}</h3>
+                <p class="text-[11px] text-text-muted mt-0.5">
+                  {{ day.taskLogs.length + day.quickSessions.length }} {{ 'export.col.tasks' | translate }}
+                  @if (day.attendance?.status) {
+                    · <span class="text-text-secondary">{{ day.attendance.status }}</span>
+                  }
+                </p>
+              </div>
+              <div class="text-right">
+                <div class="font-black text-white font-mono">{{ formatHm(dayTrackedMs(day)) }}</div>
+                <div class="text-[10px] text-text-muted mt-0.5 flex gap-2 justify-end">
+                  <span>{{ 'common.regShort' | translate }} <strong class="text-accent font-mono">{{ formatHm(dayRegularMs(day)) }}</strong></span>
+                  @if (day.overtimeMs > 0) {
+                    <span>{{ 'common.otShort' | translate }} <strong class="text-warning font-mono">{{ formatHm(day.overtimeMs) }}</strong></span>
+                  }
+                </div>
+              </div>
+            </div>
+            @if (day.taskLogs.length + day.quickSessions.length > 0) {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                @for (log of day.taskLogs; track log.taskId + log.start) {
+                  <div class="rounded-lg border border-border/60 bg-bg-base/40 px-3 py-2 text-xs">
+                    <div class="font-semibold text-white truncate">{{ log.taskTitle }}</div>
+                    <div class="text-text-muted mt-0.5 truncate">{{ log.projectTitle }}</div>
+                    <div class="text-accent font-mono font-bold mt-1">{{ formatHm(log.durationMs) }}</div>
+                  </div>
+                }
+                @for (q of day.quickSessions; track q._id) {
+                  <div class="rounded-lg border border-border/60 bg-bg-base/40 px-3 py-2 text-xs">
+                    <div class="font-semibold text-white truncate">{{ q.description || ('export.quickSession' | translate) }}</div>
+                    <div class="text-text-muted mt-0.5">{{ 'common.quick' | translate }}</div>
+                    <div class="text-accent font-mono font-bold mt-1">{{ formatHm(q.durationMs) }}</div>
+                  </div>
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  </div>
+  }
+</div>

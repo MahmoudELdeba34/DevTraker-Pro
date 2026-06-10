@@ -39,31 +39,41 @@
   </div>
   
   <!-- Analytics Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 stagger">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger">
     <div class="stat-tile surface-card p-6 border border-border">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.projects' | translate }}</div>
-      <div class="text-3xl font-display font-bold text-white">{{ totalProjects() }}</div>
+      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.weekHours' | translate }}</div>
+      <div class="text-3xl font-display font-bold text-white font-mono tabular-nums">{{ formatHm(weekHoursMs()) }}</div>
+      <p class="text-[11px] text-text-muted mt-2">{{ locale.t('dashboard.daysWorkedShort', { count: weekDaysWorked() }) }}</p>
+    </div>
+    <div class="stat-tile surface-card p-6 border border-border">
+      <div class="text-xs font-bold text-warning tracking-widest uppercase mb-4">{{ 'common.overtime' | translate }}</div>
+      <div class="text-3xl font-display font-bold text-warning font-mono tabular-nums">{{ formatHm(weekOvertimeMs()) }}</div>
+      <p class="text-[11px] text-text-muted mt-2">{{ 'dashboard.overtimeWeekHint' | translate }}</p>
     </div>
     <div class="stat-tile surface-card p-6 border border-border">
       <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.tasks' | translate }}</div>
-      <div class="text-3xl font-display font-bold text-white">{{ totalTasks() }}</div>
+      <div class="text-3xl font-display font-bold text-white">{{ completedTasks() }}<span class="text-text-muted text-lg">/{{ totalTasks() }}</span></div>
+      <p class="text-[11px] text-text-muted mt-2">{{ 'dashboard.taskDoneHint' | translate }}</p>
     </div>
-    <div class="stat-tile surface-card p-6 border border-border">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.completed' | translate }}</div>
-      <div class="text-3xl font-display font-bold text-success">{{ completedTasks() }}</div>
-    </div>
-    <div class="stat-tile surface-card p-6 border border-border">
-      <div class="text-xs font-bold text-text-muted tracking-widest uppercase mb-4">{{ 'dashboard.progress' | translate }}</div>
+    <a routerLink="/reports" class="stat-tile surface-card p-6 border border-border hover:border-accent/40 transition-colors block">
+      <div class="text-xs font-bold text-accent tracking-widest uppercase mb-4">{{ 'nav.reports' | translate }}</div>
       <div class="text-3xl font-display font-bold text-accent">{{ overallProgress() }}%</div>
-    </div>
+      <p class="text-[11px] text-text-muted mt-2">{{ 'dashboard.openAnalysis' | translate }}</p>
+    </a>
   </div>
 
   <!-- Charts Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     <div class="lg:col-span-2 surface-card p-6">
-      <div class="flex items-center gap-2 mb-6">
-        <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
-        <h3 class="text-sm font-bold text-white tracking-tight">{{ 'dashboard.timeTrackingOverview' | translate }}</h3>
+      <div class="flex items-center justify-between gap-3 mb-6">
+        <div class="flex items-center gap-2">
+          <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
+          <div>
+            <h3 class="text-sm font-bold text-white tracking-tight">{{ 'dashboard.timeTrackingOverview' | translate }}</h3>
+            <p class="text-[11px] text-text-muted mt-0.5">{{ 'dashboard.chartWeekHint' | translate }}</p>
+          </div>
+        </div>
+        <a routerLink="/reports" class="text-[11px] font-semibold text-accent hover:text-accent-hover">{{ 'dashboard.viewReports' | translate }}</a>
       </div>
       <div class="h-[250px] w-full">
         <canvas baseChart

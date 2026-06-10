@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { TaskService } from '../../services/task.service';
 import { ActiveTimerService } from '../../services/active-timer.service';
@@ -27,6 +27,8 @@ import { ProjectListComponent } from '../../components/projects/project-list/pro
 import { WorkspaceMember } from '../../services/workspace.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ActivityService } from '../../services/activity.service';
+import { ActivityReport } from '../../models/types';
 
 interface ProjectWithStats extends Project {
   taskCount: number;
@@ -46,6 +48,7 @@ interface WorkspaceTask extends Task {
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
+    RouterLink,
     BaseChartDirective,
     ConfirmDialogComponent,
     ProjectFormModalComponent,
@@ -68,8 +71,10 @@ export class DashboardComponent implements OnInit {
   private timeEntryService = inject(TimeEntryService);
   locale = inject(LocaleService);
   private toast = inject(ToastService);
+  private activityService = inject(ActivityService);
 
   projects = signal<ProjectWithStats[]>([]);
+  weekReport = signal<ActivityReport | null>(null);
   workspaceTasks = signal<WorkspaceTask[]>([]);
   loading = signal(true);
   creating = signal(false);
@@ -156,6 +161,17 @@ export class DashboardComponent implements OnInit {
     return Math.round((this.completedTasks() / total) * 100);
   });
 
+  weekHoursMs = computed(() => this.weekReport()?.summary.totalTrackedMs ?? 0);
+  weekOvertimeMs = computed(() => this.weekReport()?.summary.totalOvertimeMs ?? 0);
+  weekDaysWorked = computed(() => this.weekReport()?.summary.daysWorked ?? 0);
+
+  formatHm = (ms: number): string => {
+    const totalMin = Math.max(0, Math.floor(ms / 60_000));
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}h ${String(m).padStart(2, '0')}m`;
+  };
+
   // Chart Data
   public doughnutChartData = computed<ChartConfiguration<'doughnut'>['data']>(() => {
     this.locale.locale();
@@ -199,21 +215,17 @@ export class DashboardComponent implements OnInit {
 
   public lineChartData = computed<ChartConfiguration<'line'>['data']>(() => {
     this.locale.locale();
+    const weekDays = this.buildWeekDaySeries();
+    const labels = weekDays.map((d) => d.label);
+    const actual = weekDays.map((d) => d.hours);
+    const goal = weekDays.map((d) => (d.isWeekend ? 0 : 7));
     return {
-      labels: [
-        this.locale.t('common.chartMon'),
-        this.locale.t('common.chartTue'),
-        this.locale.t('common.chartWed'),
-        this.locale.t('common.chartThu'),
-        this.locale.t('common.chartFri'),
-        this.locale.t('common.chartSat'),
-        this.locale.t('common.chartSun'),
-      ],
+      labels,
       datasets: [
         {
-          data: [7.5, 8.2, 8.0, 8.5, 7.0, 4.0, 2.0],
+          data: actual,
           label: this.locale.t('common.actualHours'),
-          borderColor: '#6366F1', // accent
+          borderColor: '#6366F1',
           backgroundColor: 'rgba(99, 102, 241, 0.1)',
           fill: true,
           tension: 0.4,
@@ -223,20 +235,20 @@ export class DashboardComponent implements OnInit {
           pointHoverBackgroundColor: '#111318',
           pointHoverBorderColor: '#6366F1',
           pointRadius: 4,
-          pointHoverRadius: 6
+          pointHoverRadius: 6,
         },
         {
-          data: [8, 8, 8, 8, 8, 0, 0],
-          label: this.locale.t('common.expectedHours'),
-          borderColor: '#3B4048', // text-muted or border
+          data: goal,
+          label: this.locale.t('reports.chart.goal7h'),
+          borderColor: '#F59E0B',
           backgroundColor: 'transparent',
           borderDash: [5, 5],
           tension: 0,
           borderWidth: 2,
           pointRadius: 0,
-          pointHoverRadius: 0
-        }
-      ]
+          pointHoverRadius: 0,
+        },
+      ],
     };
   });
 
@@ -303,6 +315,7 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.activeTimerService.loadActive().subscribe();
     this.timeEntryService.loadActive().subscribe();
+    this.loadWeekAnalytics();
 
     this.projectForm = this.fb.group({
       title: ['', Validators.required],
@@ -337,6 +350,52 @@ export class DashboardComponent implements OnInit {
   isAdmin = () => this.authService.currentUser()?.role === 'admin';
   isHRManagerAdmin = () => ['admin', 'hr', 'manager'].includes(this.authService.currentUser()?.role || '');
   isAccountantHRAdmin = () => ['admin', 'hr', 'accountant'].includes(this.authService.currentUser()?.role || '');
+
+  private loadWeekAnalytics(): void {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dow = (today.getDay() + 6) % 7;
+    const from = new Date(today);
+    from.setDate(today.getDate() - dow);
+    const to = new Date(from);
+    to.setDate(from.getDate() + 6);
+    this.activityService
+      .getMyReport({ from: this.toYmd(from), to: this.toYmd(to) })
+      .subscribe({
+        next: (report) => this.weekReport.set(report),
+        error: () => this.weekReport.set(null),
+      });
+  }
+
+  private buildWeekDaySeries(): { label: string; hours: number; isWeekend: boolean }[] {
+    const r = this.weekReport();
+    const byDate = new Map(
+      (r?.daily ?? []).map((d) => [d.date, (d.trackedMs || d.attendanceMs || 0) / 3_600_000])
+    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dow = (today.getDay() + 6) % 7;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dow);
+    const dayKeys = ['common.chartMon', 'common.chartTue', 'common.chartWed', 'common.chartThu', 'common.chartFri', 'common.chartSat', 'common.chartSun'];
+    return dayKeys.map((key, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const ymd = this.toYmd(d);
+      return {
+        label: this.locale.t(key),
+        hours: Number((byDate.get(ymd) ?? 0).toFixed(2)),
+        isWeekend: i >= 5,
+      };
+    });
+  }
+
+  private toYmd(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
 
   loadProjects(): void {
     this.loading.set(true);
