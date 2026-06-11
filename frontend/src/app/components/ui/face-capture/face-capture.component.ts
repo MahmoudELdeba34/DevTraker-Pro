@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { FaceRecognitionService } from '../../../services/face-recognition.service';
+import { FaceLivenessService, LivenessTracker } from '../../../services/face-liveness.service';
 
 export type FaceCaptureMode = 'check-in' | 'check-out' | 'enroll';
 
@@ -68,18 +69,28 @@ export interface FaceCaptureResult {
           } @else {
             <video #videoEl class="w-full h-full object-cover mirror" autoplay playsinline muted></video>
             <canvas #canvasEl class="hidden"></canvas>
-            <div class="face-guide" [class.face-detected]="faceDetected()"></div>
-            <div class="absolute bottom-3 left-0 right-0 text-center">
+            <div class="face-guide"
+              [class.face-detected]="livenessPassed()"
+              [class.face-pending]="faceDetected() && !livenessPassed()"></div>
+            <div class="absolute bottom-3 left-0 right-0 text-center px-3">
               <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold border backdrop-blur-md"
-                [class.bg-success-muted]="faceDetected()"
-                [class.text-success]="faceDetected()"
-                [class.border-success]="faceDetected()"
+                [class.bg-success-muted]="livenessPassed()"
+                [class.text-success]="livenessPassed()"
+                [class.border-success]="livenessPassed()"
+                [class.bg-warning-muted]="faceDetected() && !livenessPassed()"
+                [class.text-warning]="faceDetected() && !livenessPassed()"
+                [class.border-warning]="faceDetected() && !livenessPassed()"
                 [class.bg-bg-glass]="!faceDetected()"
                 [class.text-text-secondary]="!faceDetected()"
                 [class.border-border]="!faceDetected()">
-                <span class="live-dot" [style.background]="faceDetected() ? '#22c55e' : '#8b8b9e'"></span>
-                {{ faceDetected() ? ('faceCapture.faceOk' | translate) : ('faceCapture.alignFace' | translate) }}
+                <span class="live-dot" [style.background]="statusDotColor()"></span>
+                {{ statusMessageKey() | translate }}
               </span>
+              @if (faceDetected() && !livenessPassed()) {
+                <div class="mt-2 h-1 max-w-[200px] mx-auto rounded-full bg-white/10 overflow-hidden">
+                  <div class="h-full bg-warning transition-all duration-300" [style.width.%]="livenessProgress() * 100"></div>
+                </div>
+              }
             </div>
           }
         </div>
@@ -95,7 +106,7 @@ export interface FaceCaptureResult {
           <button
             type="button"
             class="btn-accent flex-1"
-            [disabled]="!streamReady() || !!cameraError() || capturing()"
+            [disabled]="!streamReady() || !!cameraError() || capturing() || !livenessPassed()"
             (click)="capture()">
             @if (capturing()) {
               <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -117,6 +128,10 @@ export interface FaceCaptureResult {
       pointer-events: none;
       transition: border-color 0.25s, box-shadow 0.25s;
     }
+    .face-guide.face-pending {
+      border-color: rgba(245,158,11,0.85);
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.12);
+    }
     .face-guide.face-detected {
       border-color: rgba(34,197,94,0.85);
       box-shadow: 0 0 0 4px rgba(34,197,94,0.15);
@@ -136,20 +151,37 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
 
   readonly locale = inject(LocaleService);
   private faceRecognition = inject(FaceRecognitionService);
+  private faceLiveness = inject(FaceLivenessService);
 
   faceDetected = signal(false);
+  livenessPassed = signal(false);
+  livenessProgress = signal(0);
   streamReady = signal(false);
   cameraError = signal<string | null>(null);
   capturing = signal(false);
 
   private stream: MediaStream | null = null;
   private detectTimer: ReturnType<typeof setInterval> | null = null;
-  private faceDetector: { detect: (src: ImageBitmapSource) => Promise<{ boundingBox: DOMRectReadOnly }[]> } | null = null;
+  private livenessTracker: LivenessTracker | null = null;
+  private faceLostFrames = 0;
+  private analyzing = false;
 
   ngOnInit(): void {
     void this.faceRecognition.ensureModels().catch(() => {});
-    void this.initDetector();
+    this.livenessTracker = this.faceLiveness.createTracker();
     void this.startCamera();
+  }
+
+  statusMessageKey(): string {
+    if (this.livenessPassed()) return 'faceCapture.faceOk';
+    if (this.faceDetected()) return 'faceCapture.livenessBlink';
+    return 'faceCapture.alignFace';
+  }
+
+  statusDotColor(): string {
+    if (this.livenessPassed()) return '#22c55e';
+    if (this.faceDetected()) return '#f59e0b';
+    return '#8b8b9e';
   }
 
   modeLabelKey(): string {
@@ -168,20 +200,10 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async initDetector(): Promise<void> {
-    const w = globalThis as typeof globalThis & {
-      FaceDetector?: new (opts?: { fastMode?: boolean }) => {
-        detect: (src: ImageBitmapSource) => Promise<{ boundingBox: DOMRectReadOnly }[]>;
-      };
-    };
-    if (w.FaceDetector) {
-      this.faceDetector = new w.FaceDetector({ fastMode: true });
-    }
-  }
-
   async startCamera(): Promise<void> {
     this.cameraError.set(null);
     this.streamReady.set(false);
+    this.resetLiveness();
     this.stopCamera();
 
     try {
@@ -201,45 +223,51 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
   }
 
   private startDetectionLoop(): void {
-    this.detectTimer = setInterval(() => void this.detectFace(), 400);
+    this.detectTimer = setInterval(() => void this.detectFaceAndLiveness(), 320);
   }
 
-  private async detectFace(): Promise<void> {
+  private resetLiveness(): void {
+    this.livenessTracker?.reset();
+    this.livenessPassed.set(false);
+    this.livenessProgress.set(0);
+    this.faceLostFrames = 0;
+  }
+
+  private async detectFaceAndLiveness(): Promise<void> {
     const video = this.videoRef?.nativeElement;
-    if (!video || video.readyState < 2) return;
+    if (!video || video.readyState < 2 || this.analyzing || !this.livenessTracker) return;
 
-    if (this.faceDetector) {
-      try {
-        const faces = await this.faceDetector.detect(video);
-        this.faceDetected.set(faces.length > 0);
+    this.analyzing = true;
+    try {
+      const detection = await this.faceLiveness.detectLandmarks(video);
+      if (!detection?.landmarks) {
+        this.faceLostFrames++;
+        this.faceDetected.set(false);
+        if (this.faceLostFrames >= 4) {
+          this.resetLiveness();
+        } else {
+          const frame = this.livenessTracker.emptyFrame();
+          this.livenessProgress.set(frame.progress);
+        }
         return;
-      } catch {
-        /* fallback below */
       }
-    }
 
-    const canvas = this.canvasRef?.nativeElement;
-    if (!canvas) return;
-    const w = 80;
-    const h = 60;
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, w, h);
-    const { data } = ctx.getImageData(0, 0, w, h);
-    let sum = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      sum += data[i] + data[i + 1] + data[i + 2];
+      this.faceLostFrames = 0;
+      this.faceDetected.set(true);
+      const frame = this.livenessTracker.update(detection.landmarks);
+      this.livenessProgress.set(frame.progress);
+      this.livenessPassed.set(frame.passed);
+    } catch {
+      this.faceDetected.set(false);
+    } finally {
+      this.analyzing = false;
     }
-    const avg = sum / (data.length / 4) / 3;
-    this.faceDetected.set(avg > 25 && avg < 220);
   }
 
   capture(): void {
     const video = this.videoRef?.nativeElement;
     const canvas = this.canvasRef?.nativeElement;
-    if (!video || !canvas || this.capturing()) return;
+    if (!video || !canvas || this.capturing() || !this.livenessPassed()) return;
 
     this.capturing.set(true);
     canvas.width = video.videoWidth || 640;
