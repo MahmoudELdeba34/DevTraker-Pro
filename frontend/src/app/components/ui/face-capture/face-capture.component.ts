@@ -14,7 +14,12 @@ import { CommonModule } from '@angular/common';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { FaceRecognitionService } from '../../../services/face-recognition.service';
-import { FaceLivenessService, LivenessTracker } from '../../../services/face-liveness.service';
+import {
+  FaceLivenessService,
+  HeadTurnDirection,
+  LivenessStep,
+  LivenessTracker,
+} from '../../../services/face-liveness.service';
 
 export type FaceCaptureMode = 'check-in' | 'check-out' | 'enroll';
 
@@ -87,6 +92,11 @@ export interface FaceCaptureResult {
                 {{ statusMessageKey() | translate }}
               </span>
               @if (faceDetected() && !livenessPassed()) {
+                @if (livenessStep() === 'turn') {
+                  <p class="mt-2 text-[10px] font-bold uppercase tracking-wider text-warning/90">
+                    {{ turnChallenge() === 'left' ? '←' : '→' }}
+                  </p>
+                }
                 <div class="mt-2 h-1 max-w-[200px] mx-auto rounded-full bg-white/10 overflow-hidden">
                   <div class="h-full bg-warning transition-all duration-300" [style.width.%]="livenessProgress() * 100"></div>
                 </div>
@@ -156,6 +166,8 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
   faceDetected = signal(false);
   livenessPassed = signal(false);
   livenessProgress = signal(0);
+  livenessStep = signal<LivenessStep>('blink');
+  turnChallenge = signal<HeadTurnDirection>('left');
   streamReady = signal(false);
   cameraError = signal<string | null>(null);
   capturing = signal(false);
@@ -174,8 +186,13 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
 
   statusMessageKey(): string {
     if (this.livenessPassed()) return 'faceCapture.faceOk';
-    if (this.faceDetected()) return 'faceCapture.livenessBlink';
-    return 'faceCapture.alignFace';
+    if (!this.faceDetected()) return 'faceCapture.alignFace';
+    if (this.livenessStep() === 'turn') {
+      return this.turnChallenge() === 'left'
+        ? 'faceCapture.livenessTurnLeft'
+        : 'faceCapture.livenessTurnRight';
+    }
+    return 'faceCapture.livenessBlink';
   }
 
   statusDotColor(): string {
@@ -230,7 +247,16 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
     this.livenessTracker?.reset();
     this.livenessPassed.set(false);
     this.livenessProgress.set(0);
+    this.livenessStep.set('blink');
+    this.turnChallenge.set(this.livenessTracker?.emptyFrame().turnChallenge ?? 'left');
     this.faceLostFrames = 0;
+  }
+
+  private applyLivenessFrame(frame: ReturnType<LivenessTracker['update']>): void {
+    this.livenessProgress.set(frame.progress);
+    this.livenessPassed.set(frame.passed);
+    this.livenessStep.set(frame.step);
+    this.turnChallenge.set(frame.turnChallenge);
   }
 
   private async detectFaceAndLiveness(): Promise<void> {
@@ -246,17 +272,14 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
         if (this.faceLostFrames >= 4) {
           this.resetLiveness();
         } else {
-          const frame = this.livenessTracker.emptyFrame();
-          this.livenessProgress.set(frame.progress);
+          this.applyLivenessFrame(this.livenessTracker.emptyFrame());
         }
         return;
       }
 
       this.faceLostFrames = 0;
       this.faceDetected.set(true);
-      const frame = this.livenessTracker.update(detection.landmarks);
-      this.livenessProgress.set(frame.progress);
-      this.livenessPassed.set(frame.passed);
+      this.applyLivenessFrame(this.livenessTracker.update(detection.landmarks));
     } catch {
       this.faceDetected.set(false);
     } finally {

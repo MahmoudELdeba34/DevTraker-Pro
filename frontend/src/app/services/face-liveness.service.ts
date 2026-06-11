@@ -9,39 +9,70 @@ const NOSE_TIP = 30;
 
 const EAR_CLOSED = 0.22;
 const EAR_OPEN = 0.26;
-/** Minimum nose movement relative to face width (blocks flat/static photos). */
 const MIN_HEAD_SHIFT = 0.025;
-/** Minimum EAR variance across frames (live skin vs static print/screen). */
 const MIN_EAR_VARIANCE = 0.0008;
+/** Normalized yaw delta required for head-turn challenge. */
+const TURN_YAW_THRESHOLD = 0.14;
+const TURN_HOLD_FRAMES = 3;
+const BASELINE_FRAMES = 4;
+
+export type HeadTurnDirection = 'left' | 'right';
+export type LivenessStep = 'blink' | 'turn';
 
 export interface LivenessFrame {
   faceDetected: boolean;
   passed: boolean;
-  blinkDetected: boolean;
-  /** Normalized 0–1 progress toward liveness pass. */
+  step: LivenessStep;
+  turnChallenge: HeadTurnDirection;
+  blinkDone: boolean;
+  turnDone: boolean;
   progress: number;
 }
 
+function randomTurn(): HeadTurnDirection {
+  return Math.random() < 0.5 ? 'left' : 'right';
+}
+
 /**
- * Tracks blink + micro-movement on consecutive video frames to block photo-on-screen attacks.
+ * Two-step liveness: natural blink, then a random head-turn challenge.
+ * Blocks static photos and makes screen/video replay attacks much harder.
  */
 export class LivenessTracker {
+  private step: LivenessStep = 'blink';
+  private turnChallenge: HeadTurnDirection = randomTurn();
+
   private eyesWereOpen = false;
   private eyesWereClosed = false;
   private blinkCount = 0;
+  private blinkDone = false;
+  private turnDone = false;
   private frameCount = 0;
   private passed = false;
+
   private noseSamples: { x: number; y: number }[] = [];
   private earSamples: number[] = [];
 
+  private turnBaselineYaw: number | null = null;
+  private turnBaselineSum = 0;
+  private turnBaselineSamples = 0;
+  private turnHeldFrames = 0;
+
   reset(): void {
+    this.step = 'blink';
+    this.turnChallenge = randomTurn();
     this.eyesWereOpen = false;
     this.eyesWereClosed = false;
     this.blinkCount = 0;
+    this.blinkDone = false;
+    this.turnDone = false;
     this.frameCount = 0;
     this.passed = false;
     this.noseSamples = [];
     this.earSamples = [];
+    this.turnBaselineYaw = null;
+    this.turnBaselineSum = 0;
+    this.turnBaselineSamples = 0;
+    this.turnHeldFrames = 0;
   }
 
   isPassed(): boolean {
@@ -60,6 +91,40 @@ export class LivenessTracker {
     this.noseSamples.push({ x: nose.x / faceWidth, y: nose.y / faceWidth });
     if (this.noseSamples.length > 24) this.noseSamples.shift();
 
+    if (this.step === 'blink') {
+      this.updateBlink(ear);
+    } else {
+      this.updateTurn(positions);
+    }
+
+    if (this.blinkDone && this.turnDone) {
+      this.passed = true;
+    }
+
+    return {
+      faceDetected: true,
+      passed: this.passed,
+      step: this.step,
+      turnChallenge: this.turnChallenge,
+      blinkDone: this.blinkDone,
+      turnDone: this.turnDone,
+      progress: this.computeProgress(),
+    };
+  }
+
+  emptyFrame(): LivenessFrame {
+    return {
+      faceDetected: false,
+      passed: this.passed,
+      step: this.step,
+      turnChallenge: this.turnChallenge,
+      blinkDone: this.blinkDone,
+      turnDone: this.turnDone,
+      progress: this.passed ? 1 : this.computeProgress(),
+    };
+  }
+
+  private updateBlink(ear: number): void {
     if (ear >= EAR_OPEN) {
       this.eyesWereOpen = true;
       if (this.eyesWereClosed) {
@@ -76,31 +141,81 @@ export class LivenessTracker {
     const warmedUp = this.frameCount >= 6;
 
     if (warmedUp && hasBlink && (hasMotion || hasLiveVariation)) {
-      this.passed = true;
+      this.blinkDone = true;
+      this.step = 'turn';
+      this.turnBaselineYaw = null;
+      this.turnBaselineSum = 0;
+      this.turnBaselineSamples = 0;
+      this.turnHeldFrames = 0;
     }
-
-    let progress = 0;
-    if (this.eyesWereOpen) progress += 0.25;
-    if (this.eyesWereClosed || hasBlink) progress += 0.35;
-    if (hasBlink) progress += 0.25;
-    if (hasMotion || hasLiveVariation) progress += 0.15;
-    if (this.passed) progress = 1;
-
-    return {
-      faceDetected: true,
-      passed: this.passed,
-      blinkDetected: hasBlink,
-      progress: Math.min(1, progress),
-    };
   }
 
-  emptyFrame(): LivenessFrame {
-    return {
-      faceDetected: false,
-      passed: this.passed,
-      blinkDetected: this.blinkCount >= 1,
-      progress: this.passed ? 1 : 0,
-    };
+  private updateTurn(positions: faceapi.Point[]): void {
+    const yaw = this.computeHeadYaw(positions);
+
+    if (this.turnBaselineYaw === null) {
+      this.turnBaselineSum += yaw;
+      this.turnBaselineSamples++;
+      if (this.turnBaselineSamples >= BASELINE_FRAMES) {
+        this.turnBaselineYaw = this.turnBaselineSum / BASELINE_FRAMES;
+      }
+      return;
+    }
+
+    const delta = yaw - this.turnBaselineYaw;
+    const turnedLeft = delta > TURN_YAW_THRESHOLD;
+    const turnedRight = delta < -TURN_YAW_THRESHOLD;
+    const matched =
+      (this.turnChallenge === 'left' && turnedLeft) ||
+      (this.turnChallenge === 'right' && turnedRight);
+
+    if (matched) {
+      this.turnHeldFrames++;
+      if (this.turnHeldFrames >= TURN_HOLD_FRAMES) {
+        this.turnDone = true;
+      }
+    } else {
+      this.turnHeldFrames = 0;
+    }
+  }
+
+  private computeProgress(): number {
+    if (this.passed) return 1;
+
+    if (this.step === 'blink') {
+      let p = 0;
+      if (this.eyesWereOpen) p += 0.2;
+      if (this.eyesWereClosed || this.blinkCount > 0) p += 0.25;
+      if (this.blinkCount >= 1) p += 0.25;
+      if (this.noseSpread() >= MIN_HEAD_SHIFT || this.earVariance() >= MIN_EAR_VARIANCE) p += 0.1;
+      if (this.blinkDone) p = 0.5;
+      return Math.min(0.5, p);
+    }
+
+    let p = 0.5;
+    if (this.turnBaselineYaw !== null) p += 0.15;
+    if (this.turnHeldFrames > 0) p += 0.15 * this.turnHeldFrames;
+    if (this.turnDone) p = 1;
+    return Math.min(1, p);
+  }
+
+  private computeHeadYaw(positions: faceapi.Point[]): number {
+    const leftEye = this.eyeCenter(positions, LEFT_EYE);
+    const rightEye = this.eyeCenter(positions, RIGHT_EYE);
+    const nose = positions[NOSE_TIP];
+    const eyeMidX = (leftEye.x + rightEye.x) / 2;
+    const eyeDist = this.distance(leftEye, rightEye) || 1;
+    return (nose.x - eyeMidX) / eyeDist;
+  }
+
+  private eyeCenter(positions: faceapi.Point[], indices: readonly number[]): { x: number; y: number } {
+    let x = 0;
+    let y = 0;
+    for (const i of indices) {
+      x += positions[i].x;
+      y += positions[i].y;
+    }
+    return { x: x / indices.length, y: y / indices.length };
   }
 
   private faceWidth(positions: faceapi.Point[]): number {
@@ -109,11 +224,10 @@ export class LivenessTracker {
     return width > 1 ? width : 1;
   }
 
-  private distance(a: faceapi.Point, b: faceapi.Point): number {
+  private distance(a: { x: number; y: number }, b: { x: number; y: number }): number {
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
-  /** Eye aspect ratio — drops when the eye closes. */
   private eyeAspectRatio(positions: faceapi.Point[], indices: readonly number[]): number {
     const p1 = positions[indices[0]];
     const p2 = positions[indices[1]];
