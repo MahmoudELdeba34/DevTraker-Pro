@@ -13,6 +13,7 @@ export interface IEmployeeProfile extends Document {
   salaryType?: 'monthly' | 'daily' | 'hourly';
   workingDays?: number;
   workingHours?: number;
+  annualLeaveEntitlement?: number;
   annualLeaveBalance?: number;
   attendancePolicyId?: Types.ObjectId;
   overtimePolicyId?: Types.ObjectId;
@@ -44,6 +45,7 @@ const EmployeeProfileSchema = new Schema<IEmployeeProfile>(
     },
     workingDays: { type: Number, default: 26 },
     workingHours: { type: Number, default: 8 },
+    annualLeaveEntitlement: { type: Number, default: 21 },
     annualLeaveBalance: { type: Number, default: 21 },
     attendancePolicyId: { type: Schema.Types.ObjectId, ref: 'Policy', default: null },
     overtimePolicyId: { type: Schema.Types.ObjectId, ref: 'Policy', default: null }

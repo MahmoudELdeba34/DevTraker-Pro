@@ -1,6 +1,5 @@
 import { Router, Response } from 'express';
 import Leave from '../models/Leave';
-import EmployeeProfile from '../models/EmployeeProfile';
 import Attendance from '../models/Attendance';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import mongoose from 'mongoose';
@@ -8,10 +7,14 @@ import { createNotification } from '../utils/notify';
 import {
   isValidLeaveType,
   leaveDurationDays,
-  meetsLeaveAdvanceNotice,
   parseDate,
   sanitizeReason,
 } from '../utils/validation';
+import {
+  ensureEmployeeProfile,
+  getAnnualLeaveSummary,
+  hasSufficientAnnualLeave,
+} from '../utils/leaveBalance';
 
 const router = Router();
 router.use(authMiddleware);
@@ -77,14 +80,6 @@ router.post('/request', async (req: AuthRequest, res: Response): Promise<void> =
       return;
     }
 
-    if (!meetsLeaveAdvanceNotice(start)) {
-      res.status(400).json({
-        success: false,
-        error: 'Leave requests must be submitted at least 24 hours before the start date',
-      });
-      return;
-    }
-
     const durationDays = leaveDurationDays(start, end);
 
     const overlapping = await Leave.findOne({
@@ -99,9 +94,13 @@ router.post('/request', async (req: AuthRequest, res: Response): Promise<void> =
     }
 
     if (leaveType === 'annual') {
-      const profile = await EmployeeProfile.findOne({ userId: req.userId });
-      if (!profile || (profile.annualLeaveBalance || 0) < durationDays) {
-        res.status(400).json({ success: false, error: 'Insufficient annual leave balance' });
+      const balanceCheck = await hasSufficientAnnualLeave(req.userId!, durationDays);
+      if (!balanceCheck.ok) {
+        const { available, remaining, pendingDays } = balanceCheck.summary;
+        res.status(400).json({
+          success: false,
+          error: `Insufficient annual leave balance. Available: ${available} day(s) (${remaining} remaining, ${pendingDays} pending).`,
+        });
         return;
       }
     }
@@ -135,8 +134,14 @@ router.get('/my-requests', async (req: AuthRequest, res: Response): Promise<void
 
 router.get('/balances', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const profile = await EmployeeProfile.findOne({ userId: req.userId }, 'annualLeaveBalance');
-    res.json({ success: true, data: { annualLeaveBalance: profile?.annualLeaveBalance ?? 0 } });
+    const summary = await getAnnualLeaveSummary(req.userId!);
+    res.json({
+      success: true,
+      data: {
+        ...summary,
+        annualLeaveBalance: summary.remaining,
+      },
+    });
   } catch (err) {
     console.error('Get balances error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -181,12 +186,17 @@ router.put('/admin/:id/approve', async (req: AuthRequest, res: Response): Promis
     }
 
     if (leave.leaveType === 'annual') {
-      const profile = await EmployeeProfile.findOne({ userId: leave.userId });
-      if (!profile || (profile.annualLeaveBalance || 0) < leave.durationDays) {
+      const balanceCheck = await hasSufficientAnnualLeave(
+        leave.userId,
+        leave.durationDays,
+        leave._id.toString()
+      );
+      if (!balanceCheck.ok) {
         res.status(400).json({ success: false, error: 'Insufficient annual leave balance for employee' });
         return;
       }
-      profile.annualLeaveBalance = (profile.annualLeaveBalance || 0) - leave.durationDays;
+      const profile = await ensureEmployeeProfile(leave.userId);
+      profile.annualLeaveBalance = Math.max(0, (profile.annualLeaveBalance || 0) - leave.durationDays);
       await profile.save();
     }
 

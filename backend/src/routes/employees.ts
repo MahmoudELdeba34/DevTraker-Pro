@@ -110,6 +110,9 @@ router.put('/:userId', async (req: AuthRequest, res: Response): Promise<void> =>
     if (updateData.salaryType !== undefined) profile.salaryType = updateData.salaryType;
     if (updateData.workingDays !== undefined) profile.workingDays = Number(updateData.workingDays);
     if (updateData.workingHours !== undefined) profile.workingHours = Number(updateData.workingHours);
+    if (updateData.annualLeaveEntitlement !== undefined) {
+      profile.annualLeaveEntitlement = Number(updateData.annualLeaveEntitlement);
+    }
     if (updateData.annualLeaveBalance !== undefined) profile.annualLeaveBalance = Number(updateData.annualLeaveBalance);
     if (updateData.attendancePolicyId !== undefined) profile.attendancePolicyId = updateData.attendancePolicyId || null;
     if (updateData.overtimePolicyId !== undefined) profile.overtimePolicyId = updateData.overtimePolicyId || null;

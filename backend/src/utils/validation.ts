@@ -20,7 +20,6 @@ const ATTENDANCE_STATUSES = new Set([
   'Missing Check-out',
 ]);
 
-export const MIN_LEAVE_ADVANCE_MS = 24 * 60 * 60 * 1000;
 export const MAX_REASON_LENGTH = 500;
 
 export function parseDate(value: string): Date | null {
@@ -49,9 +48,3 @@ export function leaveDurationDays(start: Date, end: Date): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 }
 
-/** Leave must be requested at least 24 hours before the start date (start of day). */
-export function meetsLeaveAdvanceNotice(start: Date, now = new Date()): boolean {
-  const startOfLeave = new Date(start);
-  startOfLeave.setHours(0, 0, 0, 0);
-  return startOfLeave.getTime() - now.getTime() >= MIN_LEAVE_ADVANCE_MS;
-}

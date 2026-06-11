@@ -14,6 +14,7 @@ import {
 import { ToastService } from '../../services/toast.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TrackingBannerComponent } from '../../components/ui/tracking-banner/tracking-banner.component';
 
 interface ConfirmRequest {
   title: string;
@@ -48,6 +49,7 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
     PageHeaderComponent,
     ConfirmDialogComponent,
     TranslatePipe,
+    TrackingBannerComponent,
   ],
   template: `
     <div class="page-ambient pb-12 animate-fade-up" [attr.data-locale]="locale.locale()">
@@ -72,6 +74,10 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
           </a>
         </div>
       </app-page-header>
+
+      <div class="mb-6">
+        <app-tracking-banner />
+      </div>
 
       @if (!attendance()?.checkIn) {
         <div class="mb-6 rounded-2xl border p-4 flex items-center gap-4 animate-fade-up"
@@ -197,9 +203,16 @@ const ATTENDANCE_STATUS_KEYS: Record<string, string> = {
                 </div>
               </div>
               <div class="flex items-baseline gap-1.5">
-                <span class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ annualLeavesRemaining() }}</span>
+                <span class="text-3xl font-display font-extrabold text-white font-mono tabular-nums">{{ annualLeavesAvailable() }}</span>
                 <span class="text-xs text-text-muted">{{ 'common.daysAvailable' | translate }}</span>
               </div>
+              <p class="text-[11px] text-text-muted mt-2 font-mono">
+                {{ 'leaveBalance.summaryShort' | translate:{
+                  used: annualLeavesUsed(),
+                  total: annualLeaveEntitlement(),
+                  pending: annualLeavesPending()
+                } }}
+              </p>
             </div>
 
             <div class="stat-tile bg-bg-elevated border border-border rounded-xl p-5">
@@ -304,7 +317,10 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
   private timerSub?: Subscription;
 
   totalLateMinutes = signal(0);
-  annualLeavesRemaining = signal(21);
+  annualLeaveEntitlement = signal(21);
+  annualLeavesAvailable = signal(21);
+  annualLeavesUsed = signal(0);
+  annualLeavesPending = signal(0);
   presentCount = signal(0);
 
   confirmRequest = signal<ConfirmRequest | null>(null);
@@ -419,7 +435,10 @@ export class EmployeeHomeComponent implements OnInit, OnDestroy {
     this.hrService.getLeaveBalances().subscribe({
       next: (res) => {
         if (res.success) {
-          this.annualLeavesRemaining.set(res.data.annualLeaveBalance);
+          this.annualLeaveEntitlement.set(res.data.annualLeaveEntitlement);
+          this.annualLeavesAvailable.set(res.data.available);
+          this.annualLeavesUsed.set(res.data.used);
+          this.annualLeavesPending.set(res.data.pendingDays);
         }
       }
     });

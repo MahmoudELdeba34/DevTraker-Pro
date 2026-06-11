@@ -1,26 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-const MIN_ADVANCE_MS = 24 * 60 * 60 * 1000;
-
-export function leaveAdvanceNoticeValidator(): ValidatorFn {
-  return (group: AbstractControl): ValidationErrors | null => {
-    const start = group.get('startDate')?.value;
-    if (!start) return null;
-
-    const startDate = new Date(start);
-    if (Number.isNaN(startDate.getTime())) return { invalidDate: true };
-
-    const startOfLeave = new Date(startDate);
-    startOfLeave.setHours(0, 0, 0, 0);
-
-    const diff = startOfLeave.getTime() - Date.now();
-    if (diff < MIN_ADVANCE_MS) {
-      return { advanceNotice: true };
-    }
-    return null;
-  };
-}
-
 export function dateRangeValidator(): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
     const start = group.get('startDate')?.value;

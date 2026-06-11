@@ -4,11 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { HRService } from '../../services/hr.service';
 import { ToastService } from '../../services/toast.service';
 import { PrintDocumentService } from '../../services/print-document.service';
-import { Leave, Permission, Overtime } from '../../models/types';
+import { AnnualLeaveSummary, Leave, Permission, Overtime } from '../../models/types';
+import { leaveDurationDays } from '../../core/utils/leave';
 import { PageHeaderComponent } from '../../components/ui/page-header/page-header.component';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
-import { dateRangeValidator, leaveAdvanceNoticeValidator } from '../../core/validators/leave.validators';
+import { dateRangeValidator } from '../../core/validators/leave.validators';
 import {
   formatClockTime,
   isPermissionWindowOpen,
@@ -116,6 +117,28 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
             <!-- LEAVES FORM -->
             @if (activeTab() === 'leaves') {
               <form [formGroup]="leaveForm" (ngSubmit)="submitLeave()" class="flex flex-col gap-4">
+                @if (leaveBalance(); as balance) {
+                  <div class="rounded-xl border border-accent/20 bg-accent-muted/40 px-4 py-3 space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-text-secondary">{{ 'leaveBalance.entitlement' | translate }}</span>
+                      <span class="font-mono font-bold text-white">{{ balance.annualLeaveEntitlement }} {{ 'common.days' | translate }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-text-secondary">{{ 'leaveBalance.used' | translate }}</span>
+                      <span class="font-mono font-bold text-warning">{{ balance.used }} {{ 'common.days' | translate }}</span>
+                    </div>
+                    @if (balance.pendingDays > 0) {
+                      <div class="flex items-center justify-between text-xs">
+                        <span class="text-text-secondary">{{ 'leaveBalance.pending' | translate }}</span>
+                        <span class="font-mono font-bold text-warning">{{ balance.pendingDays }} {{ 'common.days' | translate }}</span>
+                      </div>
+                    }
+                    <div class="flex items-center justify-between text-xs pt-1 border-t border-border/60">
+                      <span class="text-text-secondary font-semibold">{{ 'leaveBalance.available' | translate }}</span>
+                      <span class="font-mono font-extrabold text-accent text-sm">{{ balance.available }} {{ 'common.days' | translate }}</span>
+                    </div>
+                  </div>
+                }
                 <div class="flex flex-col gap-1.5">
                   <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.leaveType' | translate }}</label>
                   <select formControlName="leaveType" class="field">
@@ -139,16 +162,32 @@ type TabKey = 'leaves' | 'permissions' | 'overtime';
                   <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.reason' | translate }}</label>
                   <textarea formControlName="reason" rows="3" [placeholder]="'common.briefExplanation' | translate" class="field resize-none"></textarea>
                 </div>
-                @if (leaveForm.hasError('advanceNotice')) {
-                  <p class="text-xs text-warning font-medium">{{ 'requestCenter.validation.leaveAdvance' | translate }}</p>
-                }
                 @if (leaveForm.hasError('dateRange')) {
                   <p class="text-xs text-danger font-medium">{{ 'requestCenter.validation.dateRange' | translate }}</p>
                 }
                 @if (leaveForm.hasError('pastDate')) {
                   <p class="text-xs text-danger font-medium">{{ 'requestCenter.validation.pastDate' | translate }}</p>
                 }
-                <button type="submit" [disabled]="leaveForm.invalid || sending()" class="btn-accent w-full mt-2">
+                @if (isAnnualLeaveRequest() && leaveRequestedDays() > 0) {
+                  <div class="rounded-xl border px-4 py-3"
+                    [class.border-success]="leaveHasSufficientBalance()"
+                    [class.bg-success-muted]="leaveHasSufficientBalance()"
+                    [class.border-danger]="!leaveHasSufficientBalance()"
+                    [class.bg-danger-muted]="!leaveHasSufficientBalance()">
+                    <p class="text-xs font-semibold"
+                      [class.text-success]="leaveHasSufficientBalance()"
+                      [class.text-danger]="!leaveHasSufficientBalance()">
+                      {{ leaveBalancePreviewKey() | translate:{
+                        requested: leaveRequestedDays(),
+                        remaining: leaveRemainingAfter()
+                      } }}
+                    </p>
+                  </div>
+                }
+                @if (isAnnualLeaveRequest() && leaveRequestedDays() > 0 && !leaveHasSufficientBalance()) {
+                  <p class="text-xs text-danger font-medium">{{ 'leaveBalance.insufficient' | translate }}</p>
+                }
+                <button type="submit" [disabled]="leaveForm.invalid || sending() || !leaveCanSubmit()" class="btn-accent w-full mt-2">
                   @if (sending()) {
                     <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   }
@@ -432,6 +471,8 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
   leaves = signal<Leave[]>([]);
   permissions = signal<Permission[]>([]);
   overtime = signal<Overtime[]>([]);
+  leaveBalance = signal<AnnualLeaveSummary | null>(null);
+  private leaveFormRevision = signal(0);
 
   leaveForm!: FormGroup;
   permissionForm!: FormGroup;
@@ -463,6 +504,34 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
     this.permissions().filter(p => p.status === 'approved').length +
     this.overtime().filter(o => o.status === 'approved').length
   );
+
+  leaveRequestedDays = computed(() => {
+    this.leaveFormRevision();
+    const value = this.leaveForm?.value as { leaveType?: string; startDate?: string; endDate?: string } | undefined;
+    if (!value || value.leaveType !== 'annual' || !value.startDate || !value.endDate) return 0;
+    return leaveDurationDays(value.startDate, value.endDate);
+  });
+
+  leaveRemainingAfter = computed(() => {
+    const balance = this.leaveBalance();
+    const requested = this.leaveRequestedDays();
+    if (!balance || requested <= 0) return balance?.available ?? 0;
+    return balance.available - requested;
+  });
+
+  isAnnualLeaveRequest = computed(() => {
+    this.leaveFormRevision();
+    return this.leaveForm?.get('leaveType')?.value === 'annual';
+  });
+
+  leaveHasSufficientBalance = computed(() => {
+    if (!this.isAnnualLeaveRequest()) return true;
+    const requested = this.leaveRequestedDays();
+    if (requested <= 0) return true;
+    return this.leaveRemainingAfter() >= 0;
+  });
+
+  leaveCanSubmit = computed(() => this.leaveHasSufficientBalance());
 
   currentHistoryCount = computed(() => {
     switch (this.activeTab()) {
@@ -504,8 +573,15 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
     }
   });
 
+  leaveBalancePreviewKey(): string {
+    return this.leaveHasSufficientBalance()
+      ? 'leaveBalance.previewOk'
+      : 'leaveBalance.previewOver';
+  }
+
   ngOnInit() {
     this.initForms();
+    this.loadLeaveBalance();
     this.loadLeaves();
     this.loadPermissions();
     this.loadOvertime();
@@ -531,8 +607,9 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
         endDate: ['', Validators.required],
         reason: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(500)]],
       },
-      { validators: [leaveAdvanceNoticeValidator(), dateRangeValidator()] }
+      { validators: [dateRangeValidator()] }
     );
+    this.leaveForm.valueChanges.subscribe(() => this.leaveFormRevision.update((n) => n + 1));
     this.permissionForm = this.fb.group({
       type: ['hourly', Validators.required],
       date: [todayDateString(), Validators.required],
@@ -543,6 +620,14 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
       startTime: ['', Validators.required],
       endTime:   ['', Validators.required],
       reason:    ['', [Validators.required, Validators.minLength(5)]],
+    });
+  }
+
+  loadLeaveBalance() {
+    this.hrService.getLeaveBalances().subscribe({
+      next: (res) => {
+        if (res.success) this.leaveBalance.set(res.data);
+      },
     });
   }
 
@@ -565,9 +650,14 @@ export class RequestCenterComponent implements OnInit, OnDestroy {
           this.toast.success(this.locale.t('requestCenter.toast.leaveSubmitted'));
           this.leaveForm.reset({ leaveType: 'annual' });
           this.loadLeaves();
+          this.loadLeaveBalance();
         }
       },
-      error: () => { this.sending.set(false); },
+      error: (err) => {
+        this.sending.set(false);
+        const msg = err?.error?.error;
+        this.toast.error(typeof msg === 'string' ? msg : this.locale.t('common.genericError'));
+      },
     });
   }
 

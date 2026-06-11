@@ -26,6 +26,7 @@ export interface EmployeeProfile {
   salaryType?: 'monthly' | 'daily' | 'hourly';
   workingDays?: number;
   workingHours?: number;
+  annualLeaveEntitlement?: number;
   annualLeaveBalance?: number;
   attendancePolicyId?: string;
   overtimePolicyId?: string;
@@ -167,6 +168,16 @@ export interface Leave {
   approvedBy?: string | User;
   approvedAt?: string;
   rejectionReason?: string;
+}
+
+export interface AnnualLeaveSummary {
+  annualLeaveEntitlement: number;
+  remaining: number;
+  used: number;
+  pendingDays: number;
+  available: number;
+  /** @deprecated Use `remaining` — kept for backward compatibility */
+  annualLeaveBalance?: number;
 }
 
 export interface Permission {

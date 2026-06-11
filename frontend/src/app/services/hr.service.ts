@@ -8,6 +8,7 @@ import {
   EmployeeProfile,
   Attendance,
   Leave,
+  AnnualLeaveSummary,
   Permission,
   Overtime
 } from '../models/types';
@@ -98,8 +99,8 @@ export class HRService {
     return this.http.get<ApiResponse<Leave[]>>(`${this.baseUrl}/leaves/my-requests`);
   }
 
-  getLeaveBalances(): Observable<ApiResponse<{ annualLeaveBalance: number }>> {
-    return this.http.get<ApiResponse<{ annualLeaveBalance: number }>>(`${this.baseUrl}/leaves/balances`);
+  getLeaveBalances(): Observable<ApiResponse<AnnualLeaveSummary>> {
+    return this.http.get<ApiResponse<AnnualLeaveSummary>>(`${this.baseUrl}/leaves/balances`);
   }
 
   getPendingLeaves(): Observable<ApiResponse<Leave[]>> {

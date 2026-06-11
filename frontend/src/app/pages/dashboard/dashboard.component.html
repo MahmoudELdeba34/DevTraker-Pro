@@ -16,28 +16,8 @@
     </div>
   </div>
 
-  <!-- Currently Tracking Banner -->
-  <div class="tracking-banner group transition-opacity"
-       [class.opacity-70]="!anyTimerRunning()">
-    <div class="flex items-center gap-2 mb-3 text-[10px] font-bold text-text-muted tracking-widest uppercase">
-      @if (anyTimerRunning()) {
-        <div class="w-2 h-2 rounded-full bg-danger animate-pulse"></div>
-        {{ 'dashboard.currentlyTracking' | translate }}
-      } @else {
-        <div class="w-2 h-2 rounded-full bg-text-muted/40"></div>
-        {{ 'dashboard.notTracking' | translate }}
-      }
-    </div>
-    <div class="flex flex-col gap-1">
-      <span class="text-2xl font-display font-bold tracking-tight"
-            [class.text-white]="anyTimerRunning()"
-            [class.text-text-secondary]="!anyTimerRunning()">{{ runningLabel() }}</span>
-      <span class="text-5xl font-mono font-bold tracking-wider tabular-nums"
-            [class.text-accent]="anyTimerRunning()"
-            [class.text-text-muted]="!anyTimerRunning()">{{ globalDisplayTime() }}</span>
-    </div>
-  </div>
-  
+  <app-tracking-banner />
+
   <!-- Analytics Cards -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger">
     <div class="stat-tile surface-card p-6 border border-border">

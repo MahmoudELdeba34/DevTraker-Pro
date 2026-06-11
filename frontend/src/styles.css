@@ -368,6 +368,9 @@ h1, h2, h3, h4, h5, h6, .display-font {
   pointer-events: none;
 }
 .tracking-banner > * { position: relative; z-index: 1; }
+.tracking-banner--compact {
+  padding: 1rem 1.25rem;
+}
 
 .app-header {
   background: var(--glass-bg);

@@ -12,9 +12,6 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { TaskService } from '../../services/task.service';
-import { ActiveTimerService } from '../../services/active-timer.service';
-import { TimeEntryService } from '../../services/time-entry.service';
-import { TimeEntry } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { WorkspaceService } from '../../services/workspace.service';
 import { Project, Task } from '../../models/types';
@@ -27,6 +24,7 @@ import { ProjectListComponent } from '../../components/projects/project-list/pro
 import { WorkspaceMember } from '../../services/workspace.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TrackingBannerComponent } from '../../components/ui/tracking-banner/tracking-banner.component';
 import { ActivityService } from '../../services/activity.service';
 import { ActivityReport } from '../../models/types';
 
@@ -54,6 +52,7 @@ interface WorkspaceTask extends Task {
     ProjectFormModalComponent,
     ProjectListComponent,
     TranslatePipe,
+    TrackingBannerComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
@@ -67,8 +66,6 @@ export class DashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  public activeTimerService = inject(ActiveTimerService);
-  private timeEntryService = inject(TimeEntryService);
   locale = inject(LocaleService);
   private toast = inject(ToastService);
   private activityService = inject(ActivityService);
@@ -97,29 +94,6 @@ export class DashboardComponent implements OnInit {
   // New properties for UI
   weekStart: Date = new Date();
   weekEnd: Date = new Date();
-  globalDisplayTime = signal('00:00:00');
-  private timerInterval?: ReturnType<typeof setInterval>;
-  
-  /** Unified label — task title OR quick session description. */
-  runningLabel = computed(() => {
-    this.locale.locale();
-    const task = this.activeTimerService.activeTask();
-    if (task) return task.title;
-    const entry = this.timeEntryService.active();
-    if (entry) return entry.description?.trim() || this.locale.t('shell.quickSession');
-    return this.locale.t('dashboard.noActiveTask');
-  });
-
-  anyTimerRunning = computed(
-    () => !!this.activeTimerService.activeTask() || !!this.timeEntryService.active()
-  );
-
-  trackingKind = computed<'task' | 'quick' | null>(() => {
-    if (this.activeTimerService.activeTask()) return 'task';
-    if (this.timeEntryService.active()) return 'quick';
-    return null;
-  });
-
   constructor() {
     effect(() => {
       // Re-run loadProjects whenever activeWorkspace changes
@@ -131,18 +105,6 @@ export class DashboardComponent implements OnInit {
       }
     }, { allowSignalWrites: true });
 
-    effect(() => {
-      const task = this.activeTimerService.activeTask();
-      const entry = this.timeEntryService.active();
-      if (task) {
-        this.startTickForTask(task);
-      } else if (entry) {
-        this.startTickForEntry(entry);
-      } else {
-        this.stopTick();
-      }
-    }, { allowSignalWrites: true });
-    
     // Set current week dates
     const curr = new Date();
     const first = curr.getDate() - curr.getDay() + 1; // First day is Monday
@@ -313,8 +275,6 @@ export class DashboardComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.activeTimerService.loadActive().subscribe();
-    this.timeEntryService.loadActive().subscribe();
     this.loadWeekAnalytics();
 
     this.projectForm = this.fb.group({
@@ -606,42 +566,4 @@ export class DashboardComponent implements OnInit {
     return map[priority] || 'text-text-muted bg-bg-base border-border';
   }
 
-  private startTickForTask(task: any) {
-    this.stopTick();
-    const loggedMs = task.timeLogs?.reduce((acc: number, l: any) => acc + l.duration, 0) || 0;
-
-    const tick = () => {
-      const elapsed = task.activeTimerStart
-        ? Date.now() - new Date(task.activeTimerStart).getTime()
-        : 0;
-      this.updateDisplayTime(loggedMs + elapsed);
-    };
-    tick();
-    this.timerInterval = setInterval(tick, 1000);
-  }
-
-  private startTickForEntry(entry: TimeEntry) {
-    this.stopTick();
-    const startMs = new Date(entry.startedAt).getTime();
-    const tick = () => this.updateDisplayTime(Date.now() - startMs);
-    tick();
-    this.timerInterval = setInterval(tick, 1000);
-  }
-
-  private updateDisplayTime(totalMs: number) {
-    const totalSec = Math.floor(totalMs / 1000);
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-    // Format to 94:18:49
-    this.globalDisplayTime.set(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
-  }
-
-  private stopTick() {
-    if (this.timerInterval !== undefined) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = undefined;
-    }
-    this.globalDisplayTime.set('00:00:00');
-  }
 }

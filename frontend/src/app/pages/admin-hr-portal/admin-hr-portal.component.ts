@@ -342,6 +342,8 @@ interface ConfirmRequest {
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em]">{{ 'common.annualLeaveDays' | translate }}</label>
+                      <input type="number" formControlName="annualLeaveEntitlement" class="field font-mono" />
+                      <label class="text-[10px] uppercase font-bold text-text-muted tracking-[0.18em] mt-2">{{ 'leaveBalance.remainingDays' | translate }}</label>
                       <input type="number" formControlName="annualLeaveBalance" class="field font-mono" />
                     </div>
                     <div class="flex flex-col gap-1.5">
@@ -608,6 +610,7 @@ export class AdminHrPortalComponent implements OnInit {
       salaryType:         ['monthly', Validators.required],
       workingDays:        [5, [Validators.required, Validators.min(1), Validators.max(7)]],
       workingHours:       [8, [Validators.required, Validators.min(1), Validators.max(24)]],
+      annualLeaveEntitlement: [21, [Validators.required, Validators.min(0)]],
       annualLeaveBalance: [21, [Validators.required, Validators.min(0)]],
       status:             ['active', Validators.required]
     });
@@ -759,7 +762,8 @@ export class AdminHrPortalComponent implements OnInit {
       salaryType:         emp.profile?.salaryType || 'monthly',
       workingDays:        emp.profile?.workingDays || 5,
       workingHours:       emp.profile?.workingHours || 8,
-      annualLeaveBalance: emp.profile?.annualLeaveBalance || 21,
+      annualLeaveEntitlement: emp.profile?.annualLeaveEntitlement ?? emp.profile?.annualLeaveBalance ?? 21,
+      annualLeaveBalance: emp.profile?.annualLeaveBalance ?? 21,
       status:             emp.profile?.status || 'active'
     });
   }
@@ -859,7 +863,11 @@ export class AdminHrPortalComponent implements OnInit {
     this.processing.set(true);
     this.hrService.approveLeave(id).subscribe({
       next: () => { this.processing.set(false); this.toast.success(this.locale.t('hrPortal.toast.leaveApproved')); this.loadPendingLeaves(); this.loadEmployees(); },
-      error: () => { this.processing.set(false); }
+      error: (err) => {
+        this.processing.set(false);
+        const msg = err?.error?.error;
+        this.toast.error(typeof msg === 'string' ? msg : this.locale.t('common.genericError'));
+      },
     });
   }
   private doRejectLeave(id: string, reason: string) {
