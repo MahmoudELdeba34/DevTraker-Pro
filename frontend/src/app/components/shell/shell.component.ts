@@ -176,7 +176,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
       <!-- MAIN CONTENT WRAPPER -->
       <div class="app-main flex-1 flex flex-col min-w-0 h-full relative bg-bg-surface overflow-hidden rounded-ss-2xl border-t border-border">
         <!-- TOPBAR -->
-        <header class="app-header h-20 flex items-center justify-between px-8 z-10">
+        <header class="app-header h-16 md:h-20 flex items-center justify-between px-3 sm:px-4 md:px-8 z-10 gap-2 overflow-hidden">
           
           <!-- Global Search -->
           <div class="w-full max-w-md hidden md:block">
@@ -192,37 +192,46 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
           </div>
 
           <!-- Mobile Menu Button & Logo -->
-          <div class="flex items-center gap-3 md:hidden">
-            <button class="p-2 -ms-2 text-text-secondary hover:text-white" (click)="toggleMobileMenu()">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-2 md:hidden shrink-0 min-w-0">
+            <button type="button" class="p-2 -ms-1 text-text-secondary hover:text-white shrink-0" (click)="toggleMobileMenu()" aria-label="Menu">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
             </button>
-            <span class="font-display font-bold text-lg text-white">Work<span class="text-accent">Track</span></span>
+            <span class="font-display font-bold text-base sm:text-lg text-white truncate max-w-[5.5rem] min-[400px]:max-w-none">Work<span class="text-accent">Track</span></span>
           </div>
 
           <!-- Right Actions -->
-          <div class="flex items-center gap-3 ms-auto">
-            <app-ui-preferences />
+          <div class="header-actions flex items-center gap-1 sm:gap-2 md:gap-3 ms-auto min-w-0 shrink">
+            <div class="hidden md:block shrink-0">
+              <app-ui-preferences />
+            </div>
 
             <!-- Record Button (Global Timer) -->
             @if (anyTimerRunning()) {
-              <div class="relative">
-                <button class="flex items-center gap-3 px-3 py-1.5 bg-bg-elevated border border-accent/40 rounded-full hover:bg-bg-hover transition-colors group shadow-glow-soft"
-                        title="{{ locale.t('shell.timeTracking') }}"
+              <div class="relative shrink-0 flex items-center gap-1">
+                <button type="button"
+                        class="header-timer-pill flex items-center gap-1.5 md:gap-3 px-2 md:px-3 py-1.5 bg-bg-elevated border border-accent/40 rounded-full hover:bg-bg-hover transition-colors shadow-glow-soft"
+                        [title]="runningLabel()"
                         (click)="toggleTaskSelector()">
-                  <span class="w-1.5 h-1.5 rounded-full bg-danger animate-pulse"></span>
-                  <span class="text-xs font-bold font-mono tracking-wider text-accent">{{ globalDisplayTime() }}</span>
-                  <span class="text-[10px] font-semibold text-text-secondary truncate max-w-[140px]">{{ runningLabel() }}</span>
-
-                  <div class="w-6 h-6 rounded bg-danger text-white flex items-center justify-center hover:bg-danger/80 transition-colors shadow-[0_0_10px_rgba(239,68,68,0.2)]" (click)="stopAny(); $event.stopPropagation()">
+                  <span class="w-1.5 h-1.5 rounded-full bg-danger animate-pulse shrink-0"></span>
+                  <span class="text-[11px] md:text-xs font-bold font-mono tracking-wider text-accent tabular-nums shrink-0">{{ globalDisplayTime() }}</span>
+                  <span class="text-[10px] font-semibold text-text-secondary truncate max-w-[5rem] sm:max-w-[8rem] md:max-w-[140px] hidden md:inline">{{ runningLabel() }}</span>
+                  <span class="hidden md:flex w-6 h-6 rounded bg-danger text-white items-center justify-center hover:bg-danger/80 transition-colors shadow-[0_0_10px_rgba(239,68,68,0.2)] shrink-0"
+                        (click)="stopAny(); $event.stopPropagation()">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/></svg>
-                  </div>
+                  </span>
+                </button>
+                <button type="button"
+                        class="md:hidden w-7 h-7 rounded-lg bg-danger text-white flex items-center justify-center hover:bg-danger/80 transition-colors shrink-0"
+                        [attr.aria-label]="locale.t('shell.stop')"
+                        (click)="stopAny()">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/></svg>
                 </button>
 
                 <!-- Time Tracking Popover (Active) -->
                 @if (showTaskSelector()) {
-                  <div class="absolute top-full end-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
+                  <div class="absolute top-full end-0 mt-3 md:mt-4 w-[min(340px,calc(100vw-1.5rem))] max-md:fixed max-md:end-3 max-md:start-3 max-md:top-[4.25rem] max-md:w-auto bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in max-h-[min(70vh,32rem)] overflow-y-auto hide-scrollbar">
                     <div class="flex items-center justify-between mb-4">
                       <h3 class="text-sm font-bold text-white tracking-tight">{{ locale.t('shell.timeTracking') }}</h3>
                       <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-danger/20 text-danger border border-danger/30 uppercase tracking-widest animate-pulse-glow">{{ locale.t('shell.live') }}</span>
@@ -299,16 +308,17 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
                 }
               </div>
             } @else {
-              <div class="relative">
-                <button class="flex items-center gap-2 px-3 py-1.5 bg-bg-elevated border border-border rounded-full hover:bg-accent/20 hover:border-accent/50 hover:text-accent transition-colors text-text-muted group"
+              <div class="relative shrink-0">
+                <button type="button"
+                        class="flex items-center justify-center gap-2 w-8 h-8 md:w-auto md:h-auto md:px-3 md:py-1.5 bg-bg-elevated border border-border rounded-full md:rounded-full hover:bg-accent/20 hover:border-accent/50 hover:text-accent transition-colors text-text-muted group"
                         (click)="toggleTaskSelector()" [title]="locale.t('shell.startTimer')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="shrink-0"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   <span class="text-xs font-semibold hidden md:inline-block">{{ locale.t('shell.startTimer') }}</span>
                 </button>
 
                 <!-- Task Selector Dropdown (When not tracking) -->
                 @if (showTaskSelector()) {
-                  <div class="absolute top-full end-0 mt-4 w-[340px] bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in">
+                  <div class="absolute top-full end-0 mt-3 md:mt-4 w-[min(340px,calc(100vw-1.5rem))] max-md:fixed max-md:end-3 max-md:start-3 max-md:top-[4.25rem] max-md:w-auto bg-bg-elevated border border-border rounded-xl shadow-modal p-4 z-50 animate-scale-in max-h-[min(75vh,36rem)] overflow-y-auto hide-scrollbar">
                     <!-- Header (changes based on drill-in state) -->
                     <div class="flex items-center justify-between mb-4">
                       @if (popoverProject(); as pp) {
@@ -481,9 +491,9 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               </div>
             }
 
-            <!-- Notifications -->
-            <div class="relative">
-              <button class="text-text-muted hover:text-white transition-colors relative" (click)="toggleNotifications()">
+            <!-- Notifications (desktop) -->
+            <div class="relative hidden md:block shrink-0">
+              <button type="button" class="text-text-muted hover:text-white transition-colors relative" (click)="toggleNotifications()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
                 </svg>
@@ -521,8 +531,8 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               }
             </div>
 
-            <!-- Help Icon -->
-            <a routerLink="/support" class="text-text-muted hover:text-white transition-colors" [title]="locale.t('shell.title.support')">
+            <!-- Help Icon (desktop) -->
+            <a routerLink="/support" class="hidden md:inline-flex text-text-muted hover:text-white transition-colors shrink-0" [title]="locale.t('shell.title.support')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path>
@@ -530,7 +540,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               </svg>
             </a>
 
-            <a routerLink="/account" class="text-text-muted hover:text-white transition-colors" [title]="locale.t('shell.title.settings')">
+            <a routerLink="/account" class="hidden md:inline-flex text-text-muted hover:text-white transition-colors shrink-0" [title]="locale.t('shell.title.settings')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
@@ -538,8 +548,8 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
             </a>
 
             <!-- User Avatar & Dropdown -->
-            <div class="relative">
-              <button class="cursor-pointer hover:opacity-90 transition-opacity" (click)="toggleUserMenu()">
+            <div class="relative shrink-0">
+              <button type="button" class="cursor-pointer hover:opacity-90 transition-opacity" (click)="toggleUserMenu()">
                 <app-user-avatar
                   [name]="userName()"
                   [avatarUrl]="userAvatarUrl()"
@@ -574,30 +584,41 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
         </header>
 
         <!-- ROUTER OUTLET -->
-        <main class="flex-1 overflow-y-auto p-8 relative hide-scrollbar">
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-[5.5rem] md:pb-8 relative hide-scrollbar">
           <router-outlet></router-outlet>
         </main>
       </div>
 
       <!-- MOBILE BOTTOM NAVIGATION -->
-      <div class="md:hidden flex items-center justify-around bg-bg-elevated border-t border-border h-16 fixed bottom-0 left-0 right-0 z-50 pb-safe">
-        @for (item of mobileNavItems; track item.path) {
-          <a [routerLink]="item.path" 
-             routerLinkActive="text-accent"
+      <nav class="mobile-bottom-nav md:hidden" aria-label="Mobile navigation">
+        @for (item of primaryMobileNavItems(); track item.path) {
+          <a [routerLink]="item.path"
+             routerLinkActive="mobile-nav-btn--active"
              [routerLinkActiveOptions]="{exact: item.exact}"
-             class="flex flex-col items-center justify-center w-full h-full text-text-muted hover:text-white transition-colors">
-            <span [innerHTML]="item.icon" class="mb-1 transform scale-90"></span>
-            <span class="text-[10px] font-medium">{{ locale.t(item.labelKey) }}</span>
+             class="mobile-nav-btn">
+            <span [innerHTML]="item.icon" class="mobile-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-nav-label">{{ locale.t(item.labelKey) }}</span>
           </a>
         }
-      </div>
+        <button type="button"
+                class="mobile-nav-btn"
+                [class.mobile-nav-btn--active]="showMobileMenu()"
+                (click)="toggleMobileMenu()"
+                [attr.aria-label]="locale.t('nav.more')"
+                [attr.aria-expanded]="showMobileMenu()">
+          <svg class="mobile-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+          </svg>
+          <span class="mobile-nav-label">{{ locale.t('nav.more') }}</span>
+        </button>
+      </nav>
 
       <!-- MOBILE SIDEBAR OVERLAY -->
       @if (showMobileMenu()) {
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" (click)="toggleMobileMenu()"></div>
         <aside class="fixed inset-y-0 start-0 w-64 glass z-50 flex flex-col md:hidden transform transition-transform duration-300 mobile-drawer-in">
           <div class="h-20 flex items-center justify-between px-6 border-b border-border">
-            <span class="font-display font-bold text-xl">Pro<span class="text-accent">Track</span></span>
+            <span class="font-display font-bold text-xl">Work<span class="text-accent">Track</span></span>
             <button class="p-2 -me-2 text-text-secondary" (click)="toggleMobileMenu()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -614,6 +635,10 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
               </a>
             }
           </nav>
+          <div class="px-4 py-4 border-t border-border flex items-center justify-between gap-3">
+            <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">{{ locale.t('prefs.language') }}</span>
+            <app-ui-preferences [compact]="true" />
+          </div>
         </aside>
       }
 
@@ -790,15 +815,6 @@ export class ShellComponent implements OnInit {
     { path: '/account', labelKey: 'nav.account', exact: false, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
   ];
 
-  mobileNavItems: Array<{ path: string; labelKey: string; exact: boolean; icon: string }> = [
-    { path: '/dashboard', labelKey: 'nav.home', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
-    { path: '/projects', labelKey: 'nav.projects', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' },
-    { path: '/attendance/punch', labelKey: 'nav.clockTerminal', exact: true, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' },
-    { path: '/my-timesheet', labelKey: 'nav.timesheet', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>' },
-    { path: '/admin-hr-portal', labelKey: 'nav.hrPortal', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
-    { path: '/account', labelKey: 'nav.account', exact: false, icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
-  ];
-
   /** Nav items the current user is allowed to see. Items without a `roles`
    *  array are visible to everyone; with `roles`, the current role must match. */
   visibleNavItems = computed(() => {
@@ -806,6 +822,33 @@ export class ShellComponent implements OnInit {
     return (this.navItems as Array<any>).filter(
       (i) => !i.roles || (i.roles as string[]).includes(role)
     );
+  });
+
+  primaryMobileNavItems = computed(() => {
+    const role = this.authService.currentUser()?.role || '';
+    const isHrStaff = ['admin', 'hr', 'manager'].includes(role);
+    const icon = {
+      workday: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      punch: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+      timesheet: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      hr: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
+      requests: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+      dashboard: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    };
+    if (isHrStaff) {
+      return [
+        { path: '/admin-hr-portal', labelKey: 'nav.hrPortal', exact: false, icon: icon.hr },
+        { path: '/employee-home', labelKey: 'nav.workday', exact: false, icon: icon.workday },
+        { path: '/my-timesheet', labelKey: 'nav.timesheet', exact: false, icon: icon.timesheet },
+        { path: '/dashboard', labelKey: 'nav.dashboard', exact: false, icon: icon.dashboard },
+      ];
+    }
+    return [
+      { path: '/employee-home', labelKey: 'nav.workday', exact: false, icon: icon.workday },
+      { path: '/attendance/punch', labelKey: 'nav.clockTerminal', exact: true, icon: icon.punch },
+      { path: '/request-center', labelKey: 'nav.requests', exact: false, icon: icon.requests },
+      { path: '/my-timesheet', labelKey: 'nav.timesheet', exact: false, icon: icon.timesheet },
+    ];
   });
 
   ngOnInit() {

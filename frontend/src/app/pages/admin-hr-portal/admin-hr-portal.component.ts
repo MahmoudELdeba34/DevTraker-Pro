@@ -52,7 +52,7 @@ interface ConfirmRequest {
         [steps]="hrPortalSteps()"
         [tips]="hrPortalTips()"
       >
-        <div header-actions class="flex items-center gap-2.5">
+        <div header-actions class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
           <a routerLink="/employee-home" class="btn-soft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             {{ 'common.clockTerminal' | translate }}
@@ -107,10 +107,11 @@ interface ConfirmRequest {
       </div>
 
       <!-- Tabs -->
-      <div class="bg-bg-elevated border border-border rounded-xl p-1 mb-6 inline-flex gap-1 flex-wrap">
+      <div class="mb-6 -mx-1 px-1 overflow-x-auto hide-scrollbar">
+        <div class="bg-bg-elevated border border-border rounded-xl p-1 inline-flex gap-1 min-w-max">
         @for (t of tabs(); track t.key) {
           <button (click)="activeTab.set(t.key)"
-            class="relative px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 inline-flex items-center gap-2"
+            class="relative px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 inline-flex items-center gap-2 whitespace-nowrap"
             [ngClass]="activeTab() === t.key ? 'bg-bg-base text-white shadow-card' : 'text-text-secondary hover:text-white'">
             {{ t.label }}
             @if (t.badge && t.badge() > 0) {
@@ -118,6 +119,7 @@ interface ConfirmRequest {
             }
           </button>
         }
+        </div>
       </div>
 
       <!-- Tab content -->
@@ -131,7 +133,43 @@ interface ConfirmRequest {
                 <h2 class="section-title"><span class="dot"></span>{{ 'hrPortal.section.todayAttendance' | translate }}</h2>
                 <span class="text-[10px] uppercase font-bold text-text-muted tracking-widest">{{ locale.t('common.entriesCount', { count: todayAttendance().length }) }}</span>
               </div>
-              <div class="overflow-x-auto hide-scrollbar">
+              <div class="md:hidden p-4 space-y-3">
+                @for (item of todayAttendance(); track item._id) {
+                  <article class="mobile-data-card">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="font-bold text-white truncate">{{ getEmployeeName(item.userId) }}</div>
+                        <div class="text-[10px] text-text-muted truncate">{{ getEmployeeEmail(item.userId) }}</div>
+                      </div>
+                      <span class="chip shrink-0" [ngClass]="attendanceChip(item.status)">
+                        <span class="chip-dot"></span>{{ attendanceStatusLabel(item.status) }}
+                      </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-3 text-xs">
+                      <div>
+                        <div class="text-[10px] uppercase font-bold text-text-muted tracking-wider">{{ 'hrPortal.table.checkIn' | translate }}</div>
+                        <div class="font-mono text-white mt-0.5">{{ item.checkIn ? (item.checkIn | date:'h:mm a') : '—' }}</div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] uppercase font-bold text-text-muted tracking-wider">{{ 'hrPortal.table.checkOut' | translate }}</div>
+                        <div class="font-mono text-white mt-0.5">{{ item.checkOut ? (item.checkOut | date:'h:mm a') : '—' }}</div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] uppercase font-bold text-text-muted tracking-wider">{{ 'hrPortal.table.duration' | translate }}</div>
+                        <div class="font-mono text-white mt-0.5">{{ formatMinutes(item.workedMinutes) }}</div>
+                      </div>
+                      <div>
+                        <div class="text-[10px] uppercase font-bold text-text-muted tracking-wider">{{ 'hrPortal.table.break' | translate }}</div>
+                        <div class="font-mono text-text-muted mt-0.5">{{ formatBreakMinutes(item) }}</div>
+                      </div>
+                    </div>
+                  </article>
+                }
+                @if (todayAttendance().length === 0) {
+                  <p class="text-center py-10 text-text-muted text-xs">{{ 'hrPortal.empty.noAttendanceToday' | translate }}</p>
+                }
+              </div>
+              <div class="hidden md:block overflow-x-auto hide-scrollbar">
                 <table class="hr-table">
                   <thead>
                     <tr>

@@ -35,8 +35,8 @@ export interface PageHeaderTip {
   template: `
     <div class="mb-6 animate-fade-up">
       <!-- Top row -->
-      <div class="flex items-start justify-between gap-4 flex-wrap mb-2">
-        <div class="min-w-0">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-2">
+        <div class="min-w-0 flex-1">
           @if (eyebrow) {
             <div class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent font-bold mb-1.5">
               <span>{{ eyebrow }}</span>
@@ -46,14 +46,14 @@ export interface PageHeaderTip {
               }
             </div>
           }
-          <h1 class="text-3xl md:text-[34px] font-display font-bold text-white tracking-tight leading-tight">
+          <h1 class="text-2xl sm:text-3xl md:text-[34px] font-display font-bold text-white tracking-tight leading-tight">
             {{ title }}
           </h1>
           @if (description) {
             <p class="text-sm text-text-secondary mt-1.5 max-w-3xl leading-relaxed">{{ description }}</p>
           }
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto md:shrink-0">
           @if (hasSteps() || hasTips()) {
             <button
               (click)="toggleGuide()"

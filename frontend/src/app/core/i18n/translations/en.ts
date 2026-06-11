@@ -13,6 +13,7 @@ export const EN: Record<string, string> = {
   'nav.reports': 'Reports',
   'nav.account': 'Account',
   'nav.home': 'Home',
+  'nav.more': 'More',
   'nav.settings': 'Settings',
   'nav.support': 'Support',
 

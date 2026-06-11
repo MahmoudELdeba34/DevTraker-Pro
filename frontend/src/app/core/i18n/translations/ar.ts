@@ -13,6 +13,7 @@ export const AR: Record<string, string> = {
   'nav.reports': 'التقارير',
   'nav.account': 'الحساب',
   'nav.home': 'الرئيسية',
+  'nav.more': 'المزيد',
   'nav.settings': 'الإعدادات',
   'nav.support': 'الدعم',
 
