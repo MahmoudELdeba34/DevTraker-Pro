@@ -84,13 +84,19 @@ export class AttendancePunchComponent implements OnInit {
 
   ngOnInit(): void {
     const paramMode = this.route.snapshot.queryParamMap.get('mode') as FaceCaptureMode | null;
-    if (paramMode === 'check-in' || paramMode === 'check-out') {
+    if (paramMode === 'check-in' || paramMode === 'check-out' || paramMode === 'enroll') {
       this.pendingPunchMode = paramMode;
     }
     this.bootstrap();
   }
 
   private bootstrap(): void {
+    if (this.pendingPunchMode === 'enroll') {
+      this.step.set('enroll');
+      this.captureMode.set('enroll');
+      return;
+    }
+
     this.authService.getFaceStatus().subscribe({
       next: (faceRes) => {
         if (!faceRes.success || !faceRes.data.enrolled) {
@@ -164,7 +170,9 @@ export class AttendancePunchComponent implements OnInit {
         this.processing.set(false);
         if (res.success) {
           this.toast.success(this.locale.t('faceCapture.enrollSuccess'));
-          if (this.pendingPunchMode) {
+          if (this.pendingPunchMode === 'enroll') {
+            void this.router.navigate(['/account']);
+          } else if (this.pendingPunchMode) {
             this.step.set('punch');
             this.captureMode.set(this.pendingPunchMode);
           } else {

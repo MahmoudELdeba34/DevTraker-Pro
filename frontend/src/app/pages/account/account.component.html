@@ -108,7 +108,7 @@
 
           <p class="text-[11px] text-text-muted">{{ 'account.face.hint' | translate }}</p>
 
-          <a routerLink="/attendance/punch" class="btn-secondary w-full text-center">
+          <a routerLink="/attendance/punch" [queryParams]="{ mode: 'enroll' }" class="btn-secondary w-full text-center">
             {{ faceEnrolled() ? ('account.face.reRegister' | translate) : ('account.face.register' | translate) }}
           </a>
 
