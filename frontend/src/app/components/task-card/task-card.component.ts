@@ -22,7 +22,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, TimerWidgetComponent, TranslatePipe],
   template: `
-    <div class="bg-[#2B2B36] rounded-xl p-5 hover:border-accent/50 transition-colors border border-transparent hover:shadow-glow group cursor-grab active:cursor-grabbing flex flex-col gap-4 relative overflow-hidden" [class.opacity-60]="task.status === 'completed'" [attr.data-locale]="locale.locale()" (click)="taskClicked.emit(task)">
+    <div class="bg-[#2B2B36] rounded-xl p-5 hover:border-accent/50 transition-colors border border-transparent hover:shadow-glow group cursor-grab active:cursor-grabbing flex flex-col gap-4 relative hover:z-40 focus-within:z-40" [class.z-50]="showAssignMenu()" [class.opacity-60]="task.status === 'completed'" [attr.data-locale]="locale.locale()" (click)="taskClicked.emit(task)">
       
       <div class="flex justify-between items-start gap-4">
         <h4 class="text-sm font-bold text-white leading-snug" [class.line-through]="task.status === 'completed'">

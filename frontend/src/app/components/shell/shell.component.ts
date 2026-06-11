@@ -176,7 +176,7 @@ import { UserAvatarComponent } from '../ui/user-avatar/user-avatar.component';
       <!-- MAIN CONTENT WRAPPER -->
       <div class="app-main flex-1 flex flex-col min-w-0 h-full relative bg-bg-surface overflow-hidden rounded-ss-2xl border-t border-border">
         <!-- TOPBAR -->
-        <header class="app-header h-16 md:h-20 flex items-center justify-between px-3 sm:px-4 md:px-8 z-10 gap-2 overflow-hidden">
+        <header class="app-header h-16 md:h-20 flex items-center justify-between px-3 sm:px-4 md:px-8 z-10 gap-2">
           
           <!-- Global Search -->
           <div class="w-full max-w-md hidden md:block">
