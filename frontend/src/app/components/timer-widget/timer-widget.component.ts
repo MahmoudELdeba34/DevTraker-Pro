@@ -16,6 +16,7 @@ import { TaskService } from '../../services/task.service';
 import { ActiveTimerService } from '../../services/active-timer.service';
 import { TimeEntryService } from '../../services/time-entry.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthService } from '../../services/auth.service';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -83,6 +84,7 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
   private activeTimerService = inject(ActiveTimerService);
   private timeEntryService = inject(TimeEntryService);
   private toast = inject(ToastService);
+  private authService = inject(AuthService);
   locale = inject(LocaleService);
 
   constructor() {
@@ -101,14 +103,21 @@ export class TimerWidgetComponent implements OnInit, OnDestroy {
     this.loggedMs = (this.task.timeLogs || []).reduce((acc, l) => acc + l.duration, 0);
 
     const active = this.activeTimerService.activeTask();
+    const currentUserId = this.authService.currentUser()?._id;
+
     if (active?._id === this.task._id && active.activeTimerStart) {
       this.task = active;
       this.isRunning.set(true);
       this.startTick();
     } else if (this.task.activeTimerStart) {
-      this.isRunning.set(true);
-      this.activeTimerService.setActiveTask(this.task);
-      this.startTick();
+      const timerUserId = typeof this.task.activeTimerUserId === 'object' ? (this.task.activeTimerUserId as any)?._id : this.task.activeTimerUserId;
+      if (timerUserId && currentUserId && timerUserId === currentUserId) {
+        this.isRunning.set(true);
+        this.activeTimerService.setActiveTask(this.task);
+        this.startTick();
+      } else {
+        this.displayTime.set(formatMs(this.loggedMs));
+      }
     } else {
       this.displayTime.set(formatMs(this.loggedMs));
     }

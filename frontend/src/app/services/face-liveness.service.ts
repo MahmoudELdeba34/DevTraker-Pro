@@ -7,17 +7,20 @@ const LEFT_EYE = [36, 37, 38, 39, 40, 41] as const;
 const RIGHT_EYE = [42, 43, 44, 45, 46, 47] as const;
 const NOSE_TIP = 30;
 
-const EAR_CLOSED = 0.22;
-const EAR_OPEN = 0.26;
-const MIN_HEAD_SHIFT = 0.025;
-const MIN_EAR_VARIANCE = 0.0008;
+const EAR_CLOSED = 0.21;
+const EAR_OPEN = 0.25;
 /** Normalized yaw delta required for head-turn challenge. */
-const TURN_YAW_THRESHOLD = 0.14;
-const TURN_HOLD_FRAMES = 3;
-const BASELINE_FRAMES = 4;
+const TURN_YAW_THRESHOLD = 0.11;
+const TURN_HOLD_FRAMES = 2;
+const BASELINE_FRAMES = 5;
+const BLINK_WARMUP_FRAMES = 8;
+const FACE_LOST_RESET_ENROLL = 12;
+const FACE_LOST_RESET_PUNCH = 6;
 
 export type HeadTurnDirection = 'left' | 'right';
 export type LivenessStep = 'blink' | 'turn';
+/** enroll = blink only; punch = blink then head turn */
+export type LivenessProfile = 'enroll' | 'punch';
 
 export interface LivenessFrame {
   faceDetected: boolean;
@@ -38,6 +41,8 @@ function randomTurn(): HeadTurnDirection {
  * Blocks static photos and makes screen/video replay attacks much harder.
  */
 export class LivenessTracker {
+  private readonly profile: LivenessProfile;
+
   private step: LivenessStep = 'blink';
   private turnChallenge: HeadTurnDirection = randomTurn();
 
@@ -49,13 +54,18 @@ export class LivenessTracker {
   private frameCount = 0;
   private passed = false;
 
-  private noseSamples: { x: number; y: number }[] = [];
-  private earSamples: number[] = [];
-
   private turnBaselineYaw: number | null = null;
   private turnBaselineSum = 0;
   private turnBaselineSamples = 0;
   private turnHeldFrames = 0;
+
+  constructor(profile: LivenessProfile = 'punch') {
+    this.profile = profile;
+  }
+
+  faceLostResetThreshold(): number {
+    return this.profile === 'enroll' ? FACE_LOST_RESET_ENROLL : FACE_LOST_RESET_PUNCH;
+  }
 
   reset(): void {
     this.step = 'blink';
@@ -67,8 +77,6 @@ export class LivenessTracker {
     this.turnDone = false;
     this.frameCount = 0;
     this.passed = false;
-    this.noseSamples = [];
-    this.earSamples = [];
     this.turnBaselineYaw = null;
     this.turnBaselineSum = 0;
     this.turnBaselineSamples = 0;
@@ -82,14 +90,7 @@ export class LivenessTracker {
   update(landmarks: faceapi.FaceLandmarks68): LivenessFrame {
     this.frameCount++;
     const positions = landmarks.positions;
-    const faceWidth = this.faceWidth(positions);
     const ear = this.averageEar(positions);
-    this.earSamples.push(ear);
-    if (this.earSamples.length > 24) this.earSamples.shift();
-
-    const nose = positions[NOSE_TIP];
-    this.noseSamples.push({ x: nose.x / faceWidth, y: nose.y / faceWidth });
-    if (this.noseSamples.length > 24) this.noseSamples.shift();
 
     if (this.step === 'blink') {
       this.updateBlink(ear);
@@ -136,18 +137,22 @@ export class LivenessTracker {
     }
 
     const hasBlink = this.blinkCount >= 1;
-    const hasMotion = this.noseSpread() >= MIN_HEAD_SHIFT;
-    const hasLiveVariation = this.earVariance() >= MIN_EAR_VARIANCE;
-    const warmedUp = this.frameCount >= 6;
+    const warmedUp = this.frameCount >= BLINK_WARMUP_FRAMES;
 
-    if (warmedUp && hasBlink && (hasMotion || hasLiveVariation)) {
-      this.blinkDone = true;
-      this.step = 'turn';
-      this.turnBaselineYaw = null;
-      this.turnBaselineSum = 0;
-      this.turnBaselineSamples = 0;
-      this.turnHeldFrames = 0;
+    if (!warmedUp || !hasBlink) return;
+
+    this.blinkDone = true;
+    if (this.profile === 'enroll') {
+      this.turnDone = true;
+      this.passed = true;
+      return;
     }
+
+    this.step = 'turn';
+    this.turnBaselineYaw = null;
+    this.turnBaselineSum = 0;
+    this.turnBaselineSamples = 0;
+    this.turnHeldFrames = 0;
   }
 
   private updateTurn(positions: faceapi.Point[]): void {
@@ -163,8 +168,9 @@ export class LivenessTracker {
     }
 
     const delta = yaw - this.turnBaselineYaw;
-    const turnedLeft = delta > TURN_YAW_THRESHOLD;
-    const turnedRight = delta < -TURN_YAW_THRESHOLD;
+    // Match user-facing left/right (physical head turn, not mirrored screen coords).
+    const turnedLeft = delta < -TURN_YAW_THRESHOLD;
+    const turnedRight = delta > TURN_YAW_THRESHOLD;
     const matched =
       (this.turnChallenge === 'left' && turnedLeft) ||
       (this.turnChallenge === 'right' && turnedRight);
@@ -186,10 +192,11 @@ export class LivenessTracker {
       let p = 0;
       if (this.eyesWereOpen) p += 0.2;
       if (this.eyesWereClosed || this.blinkCount > 0) p += 0.25;
-      if (this.blinkCount >= 1) p += 0.25;
-      if (this.noseSpread() >= MIN_HEAD_SHIFT || this.earVariance() >= MIN_EAR_VARIANCE) p += 0.1;
-      if (this.blinkDone) p = 0.5;
-      return Math.min(0.5, p);
+      if (this.blinkCount >= 1) p += 0.35;
+      if (this.blinkDone) {
+        return this.profile === 'enroll' ? 1 : 0.5;
+      }
+      return Math.min(this.profile === 'enroll' ? 0.95 : 0.5, p);
     }
 
     let p = 0.5;
@@ -218,12 +225,6 @@ export class LivenessTracker {
     return { x: x / indices.length, y: y / indices.length };
   }
 
-  private faceWidth(positions: faceapi.Point[]): number {
-    const xs = positions.map((p) => p.x);
-    const width = Math.max(...xs) - Math.min(...xs);
-    return width > 1 ? width : 1;
-  }
-
   private distance(a: { x: number; y: number }, b: { x: number; y: number }): number {
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
@@ -246,31 +247,14 @@ export class LivenessTracker {
     return (left + right) / 2;
   }
 
-  private noseSpread(): number {
-    if (this.noseSamples.length < 4) return 0;
-    const xs = this.noseSamples.map((p) => p.x);
-    const ys = this.noseSamples.map((p) => p.y);
-    return Math.max(this.stdDev(xs), this.stdDev(ys));
-  }
-
-  private earVariance(): number {
-    if (this.earSamples.length < 4) return 0;
-    return this.stdDev(this.earSamples);
-  }
-
-  private stdDev(values: number[]): number {
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
-    return Math.sqrt(variance);
-  }
 }
 
 @Injectable({ providedIn: 'root' })
 export class FaceLivenessService {
   private faceRecognition = inject(FaceRecognitionService);
 
-  createTracker(): LivenessTracker {
-    return new LivenessTracker();
+  createTracker(profile: LivenessProfile = 'punch'): LivenessTracker {
+    return new LivenessTracker(profile);
   }
 
   async detectLandmarks(

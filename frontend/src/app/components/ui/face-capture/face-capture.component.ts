@@ -92,8 +92,8 @@ export interface FaceCaptureResult {
                 {{ statusMessageKey() | translate }}
               </span>
               @if (faceDetected() && !livenessPassed()) {
-                @if (livenessStep() === 'turn') {
-                  <p class="mt-2 text-[10px] font-bold uppercase tracking-wider text-warning/90">
+                @if (livenessStep() === 'turn' && mode !== 'enroll') {
+                  <p class="mt-2 text-2xl font-bold text-warning animate-pulse">
                     {{ turnChallenge() === 'left' ? '←' : '→' }}
                   </p>
                 }
@@ -180,13 +180,18 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.faceRecognition.ensureModels().catch(() => {});
-    this.livenessTracker = this.faceLiveness.createTracker();
+    this.livenessTracker = this.faceLiveness.createTracker(this.livenessProfile());
     void this.startCamera();
+  }
+
+  private livenessProfile(): 'enroll' | 'punch' {
+    return this.mode === 'enroll' ? 'enroll' : 'punch';
   }
 
   statusMessageKey(): string {
     if (this.livenessPassed()) return 'faceCapture.faceOk';
     if (!this.faceDetected()) return 'faceCapture.alignFace';
+    if (this.mode === 'enroll') return 'faceCapture.enrollBlink';
     if (this.livenessStep() === 'turn') {
       return this.turnChallenge() === 'left'
         ? 'faceCapture.livenessTurnLeft'
@@ -269,7 +274,7 @@ export class FaceCaptureComponent implements OnInit, OnDestroy {
       if (!detection?.landmarks) {
         this.faceLostFrames++;
         this.faceDetected.set(false);
-        if (this.faceLostFrames >= 4) {
+        if (this.faceLostFrames >= this.livenessTracker.faceLostResetThreshold()) {
           this.resetLiveness();
         } else {
           this.applyLivenessFrame(this.livenessTracker.emptyFrame());

@@ -717,7 +717,30 @@ export class ShellComponent implements OnInit {
   recentTasks = signal<Task[]>([]);
   loadingRecent = signal(false);
   startingTaskId = signal<string | null>(null);
-  dailyTrackedMs = signal(0);
+  nowMs = signal(Date.now());
+  dailyTrackedBaseMs = signal(0);
+  
+  activeElapsedTodayMs = computed(() => {
+    const now = this.nowMs();
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const startMs = startOfDay.getTime();
+    
+    const activeTask = this.activeTimerService.activeTask();
+    if (activeTask?.activeTimerStart) {
+      const startAt = new Date(activeTask.activeTimerStart).getTime();
+      return Math.max(0, now - Math.max(startAt, startMs));
+    }
+    const activeEntry = this.timeEntryService.active();
+    if (activeEntry) {
+      const sAt = new Date(activeEntry.startedAt).getTime();
+      return Math.max(0, now - Math.max(sAt, startMs));
+    }
+    return 0;
+  });
+
+  dailyTrackedMs = computed(() => this.dailyTrackedBaseMs() + this.activeElapsedTodayMs());
+
   private readonly dailyGoalMs = 7 * 60 * 60 * 1000;
 
   // ── Quick Session (ClickUp-style) ─────────────────────────────────────
@@ -1072,36 +1095,31 @@ export class ShellComponent implements OnInit {
       next: (res) => {
         const tasks = (res.data || []) as Task[];
 
-        let totalToday = 0;
+        const currentUser = this.authService.currentUser();
+        const myUserId = currentUser ? currentUser._id : null;
+
+        let baseToday = 0;
         for (const t of tasks) {
           for (const log of t.timeLogs || []) {
+            if (myUserId && log.userId !== myUserId) continue;
             const logStart = new Date(log.start).getTime();
-            if (logStart >= startMs) totalToday += log.duration || 0;
+            if (logStart >= startMs) baseToday += log.duration || 0;
           }
         }
         const activeTask = this.activeTimerService.activeTask();
-        if (activeTask?.activeTimerStart) {
-          const startAt = new Date(activeTask.activeTimerStart).getTime();
-          totalToday += Math.max(0, Date.now() - Math.max(startAt, startMs));
-        }
 
         // ── Quick sessions (TimeEntry) — fold into daily total
         this.timeEntryService.loadRecent(20).subscribe({
           next: (entries) => {
             for (const e of entries) {
               const sAt = new Date(e.startedAt).getTime();
-              if (e.endedAt) {
-                if (sAt >= startMs) totalToday += e.duration || 0;
+              if (e.endedAt && e.source === 'quick') {
+                if (sAt >= startMs) baseToday += e.duration || 0;
               }
             }
-            const activeEntry = this.timeEntryService.active();
-            if (activeEntry && !activeTask) {
-              const sAt = new Date(activeEntry.startedAt).getTime();
-              totalToday += Math.max(0, Date.now() - Math.max(sAt, startMs));
-            }
-            this.dailyTrackedMs.set(totalToday);
+            this.dailyTrackedBaseMs.set(baseToday);
           },
-          error: () => this.dailyTrackedMs.set(totalToday),
+          error: () => this.dailyTrackedBaseMs.set(baseToday),
         });
 
         // ── Recent tasks (excluding active one) for the picker
@@ -1138,8 +1156,10 @@ export class ShellComponent implements OnInit {
     this.stopGlobalTick();
     const loggedMs = task.timeLogs?.reduce((acc: number, l: any) => acc + l.duration, 0) || 0;
     this.timerInterval = setInterval(() => {
+      const now = Date.now();
+      this.nowMs.set(now);
       const elapsed = task.activeTimerStart
-        ? Date.now() - new Date(task.activeTimerStart).getTime()
+        ? now - new Date(task.activeTimerStart).getTime()
         : 0;
       this.globalDisplayTime.set(this.formatHmsShort(loggedMs + elapsed));
     }, 1000);
@@ -1149,7 +1169,9 @@ export class ShellComponent implements OnInit {
     this.stopGlobalTick();
     const startMs = new Date(entry.startedAt).getTime();
     this.timerInterval = setInterval(() => {
-      this.globalDisplayTime.set(this.formatHmsShort(Date.now() - startMs));
+      const now = Date.now();
+      this.nowMs.set(now);
+      this.globalDisplayTime.set(this.formatHmsShort(now - startMs));
     }, 1000);
   }
 
